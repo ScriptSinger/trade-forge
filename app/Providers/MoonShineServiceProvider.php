@@ -4,6 +4,15 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\MoonShine\Resources\Trading\BotResource;
+use App\MoonShine\Resources\Trading\BotRunResource;
+use App\MoonShine\Resources\Trading\BotStatResource;
+use App\MoonShine\Resources\Trading\ExchangeAccountResource;
+use App\MoonShine\Resources\Trading\OrderResource;
+use App\MoonShine\Resources\Trading\PositionResource;
+use App\MoonShine\Resources\Trading\StrategyResource;
+use App\MoonShine\Resources\Trading\TradeResource;
+use App\MoonShine\Resources\Trading\UserResource;
 use Illuminate\Support\ServiceProvider;
 use MoonShine\Contracts\Core\DependencyInjection\CoreContract;
 use MoonShine\Laravel\DependencyInjection\MoonShine;
@@ -20,6 +29,15 @@ class MoonShineServiceProvider extends ServiceProvider
     {
         $core
             ->resources([
+                UserResource::class,
+                ExchangeAccountResource::class,
+                StrategyResource::class,
+                BotResource::class,
+                BotRunResource::class,
+                OrderResource::class,
+                PositionResource::class,
+                TradeResource::class,
+                BotStatResource::class,
                 MoonShineUserResource::class,
                 MoonShineUserRoleResource::class,
             ])
