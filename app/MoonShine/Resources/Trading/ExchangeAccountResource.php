@@ -8,14 +8,18 @@ use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use App\Models\ExchangeAccount;
 use App\Models\User;
+use App\MoonShine\Resources\Trading\Handlers\CheckConnectionHandler;
+use App\MoonShine\Resources\Trading\Pages\ExchangeAccountFormPage;
 use Illuminate\Validation\Rules\Enum as EnumRule;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
+use MoonShine\Crud\Handlers\Handler;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
+use MoonShine\Laravel\Pages\Crud\DetailPage;
+use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Support\Attributes\Icon;
+use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
@@ -35,6 +39,22 @@ final class ExchangeAccountResource extends TradingResource
 
     protected array $with = ['user'];
 
+    protected function handlers(): ListOf
+    {
+        return new ListOf(Handler::class, [
+            CheckConnectionHandler::make('Check connection')->alias('check-connection'),
+        ]);
+    }
+
+    protected function pages(): array
+    {
+        return [
+            IndexPage::class,
+            ExchangeAccountFormPage::class,
+            DetailPage::class,
+        ];
+    }
+
     public function getTitle(): string
     {
         return 'Exchange Accounts';
@@ -47,7 +67,7 @@ final class ExchangeAccountResource extends TradingResource
             BelongsTo::make(
                 'User',
                 'user',
-                formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             Enum::make('Exchange', 'exchange')->attach(ExchangeProvider::class),
@@ -68,7 +88,7 @@ final class ExchangeAccountResource extends TradingResource
                 BelongsTo::make(
                     'User',
                     'user',
-                    formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                    formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
@@ -77,8 +97,8 @@ final class ExchangeAccountResource extends TradingResource
                     ->attach(ExchangeProvider::class)
                     ->required(),
                 Text::make('Name', 'name')->nullable(),
-                Password::make('API key', 'api_key')->eye(),
-                Password::make('API secret', 'api_secret')->eye(),
+                Text::make('API key', 'api_key')->eye(),
+                Text::make('API secret', 'api_secret')->eye(),
                 Switcher::make('Testnet', 'testnet'),
                 Enum::make('Status', 'status')
                     ->attach(ExchangeAccountStatus::class)
@@ -97,7 +117,7 @@ final class ExchangeAccountResource extends TradingResource
             BelongsTo::make(
                 'User',
                 'user',
-                formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             Enum::make('Exchange', 'exchange')->attach(ExchangeProvider::class),
@@ -126,4 +146,3 @@ final class ExchangeAccountResource extends TradingResource
         ];
     }
 }
-
