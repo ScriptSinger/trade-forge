@@ -17,9 +17,9 @@ return new class extends Migration
             $table->foreignId('bot_id')->constrained()->restrictOnDelete();
 
             $table->string('symbol');
-            $table->decimal('market_price', 18, 8);
+            $table->decimal('market_price', 18, 8)->nullable();
 
-            $table->string('signal'); // buy, sell, hold
+            $table->string('signal')->nullable(); // buy, sell, hold
 
             $table->json('indicators')->nullable(); // EMA, RSI, ADX
             $table->text('reason')->nullable();

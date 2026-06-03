@@ -14,6 +14,7 @@ use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
 use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
+use MoonShine\Laravel\Fields\Relationships\HasMany;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
@@ -47,15 +48,15 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'User',
                 'user',
-                formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
                 'Exchange account',
                 'exchangeAccount',
-                formatted: static fn (ExchangeAccount $model): string => sprintf(
+                formatted: static fn(ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #'.$model->id,
+                    $model->name ?: 'Account #' . $model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
@@ -63,7 +64,7 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Strategy',
                 'strategy',
-                formatted: static fn (Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
+                formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                 resource: StrategyResource::class,
             ),
             Text::make('Name', 'name')->sortable(),
@@ -84,7 +85,7 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'User',
                     'user',
-                    formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                    formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
@@ -92,9 +93,9 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Exchange account',
                     'exchangeAccount',
-                    formatted: static fn (ExchangeAccount $model): string => sprintf(
+                    formatted: static fn(ExchangeAccount $model): string => sprintf(
                         '%s (%s)',
-                        $model->name ?: 'Account #'.$model->id,
+                        $model->name ?: 'Account #' . $model->id,
                         $model->exchange->value,
                     ),
                     resource: ExchangeAccountResource::class,
@@ -104,12 +105,13 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Strategy',
                     'strategy',
-                    formatted: static fn (Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
+                    formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                     resource: StrategyResource::class,
                 )
                     ->creatable()
                     ->required(),
                 Text::make('Name', 'name')->required(),
+                Text::make('Symbol', 'symbol')->required(),
                 Number::make('Risk per trade', 'risk_per_trade')
                     ->min(0.01)
                     ->step(0.01)
@@ -137,15 +139,15 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'User',
                 'user',
-                formatted: static fn (User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
                 'Exchange account',
                 'exchangeAccount',
-                formatted: static fn (ExchangeAccount $model): string => sprintf(
+                formatted: static fn(ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #'.$model->id,
+                    $model->name ?: 'Account #' . $model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
@@ -153,7 +155,7 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Strategy',
                 'strategy',
-                formatted: static fn (Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
+                formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                 resource: StrategyResource::class,
             ),
             Enum::make('Status', 'status')->attach(BotStatus::class),
@@ -174,4 +176,3 @@ final class BotResource extends TradingResource
         ];
     }
 }
-

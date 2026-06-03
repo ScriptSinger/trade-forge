@@ -70,6 +70,7 @@ final class ExchangeAccountResource extends TradingResource
                 formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
+
             Enum::make('Exchange', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Name', 'name'),
             Switcher::make('Testnet', 'testnet'),

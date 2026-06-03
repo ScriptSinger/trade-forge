@@ -80,6 +80,7 @@ class TradingDemoSeeder extends Seeder
                 'name' => 'BTC Trend Bot',
             ],
             [
+                'symbol' => 'BTCUSDT',
                 'risk_per_trade' => 1.00,
                 'max_open_positions' => 1,
                 'status' => BotStatus::Active->value,

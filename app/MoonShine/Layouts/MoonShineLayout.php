@@ -69,12 +69,12 @@ final class MoonShineLayout extends AppLayout
             ])->class('menu-logo'),
             Div::make([
                 When::make(
-                    fn (): bool => $this->isUseNotifications(),
-                    static fn (): array => [Notifications::make()],
+                    fn(): bool => $this->isUseNotifications(),
+                    static fn(): array => [Notifications::make()],
                 ),
                 When::make(
-                    fn (): bool => $this->hasThemes() && ! $this->isAlwaysDark(),
-                    static fn (): array => [ThemeSwitcher::make()],
+                    fn(): bool => $this->hasThemes() && ! $this->isAlwaysDark(),
+                    static fn(): array => [ThemeSwitcher::make()],
                 ),
             ])->class('menu-actions'),
             Div::make(array_filter([

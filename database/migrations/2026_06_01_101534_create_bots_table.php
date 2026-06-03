@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('strategy_id')->constrained()->restrictOnDelete();
 
             $table->string('name');
-
+            $table->string('symbol');
             $table->decimal('risk_per_trade', 5, 2)->default(1.00);
             $table->integer('max_open_positions')->default(1);
 

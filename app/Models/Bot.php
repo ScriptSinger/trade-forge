@@ -17,6 +17,7 @@ class Bot extends Model
         'exchange_account_id',
         'strategy_id',
         'name',
+        'symbol',
         'risk_per_trade',
         'max_open_positions',
         'status',

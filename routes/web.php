@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\TestQueueJob;
+use App\Services\Bot\BotEngine;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 
@@ -19,4 +20,12 @@ Route::get('/bybit-test', function () {
     ]);
 
     return $response->json();
+});
+
+Route::get('/debug/bybit', function (BotEngine $engine) {
+    $bot = \App\Models\Bot::first();
+
+    $engine->run($bot);
+
+    return 'ok';
 });
