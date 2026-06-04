@@ -10,20 +10,18 @@ use App\Enums\OrderType;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Order;
-use Illuminate\Validation\Rules\Enum as EnumRule;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
-use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order as MenuOrder;
 use MoonShine\Support\Attributes\Icon;
-use MoonShine\UI\Components\Layout\Box;
+use MoonShine\Support\Enums\Action;
+use MoonShine\Support\ListOf;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Json;
 use MoonShine\UI\Fields\Number;
+use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('clipboard-document-list')]
@@ -37,9 +35,16 @@ final class OrderResource extends TradingResource
 
     protected array $with = ['bot', 'exchangeAccount'];
 
+    protected function activeActions(): ListOf
+    {
+        return parent::activeActions()
+            ->except(Action::CREATE, Action::UPDATE)
+            ->prepend(Action::VIEW);
+    }
+
     public function getTitle(): string
     {
-        return 'Orders';
+        return 'Ордера';
     }
 
     protected function indexFields(): iterable
@@ -47,124 +52,83 @@ final class OrderResource extends TradingResource
         return [
             ID::make()->sortable(),
             BelongsTo::make(
-                'Bot',
+                'Бот',
                 'bot',
                 formatted: static fn (Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             BelongsTo::make(
-                'Exchange account',
+                'Аккаунт',
                 'exchangeAccount',
                 formatted: static fn (ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #'.$model->id,
+                    $model->name ?: 'ID: '.$model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
             ),
-            Text::make('Symbol', 'symbol')->sortable(),
-            Enum::make('Side', 'side')->attach(OrderSide::class),
-            Enum::make('Type', 'type')->attach(OrderType::class),
-            Number::make('Price', 'price')->sortable(),
-            Number::make('Quantity', 'quantity')->sortable(),
-            Enum::make('Status', 'status')->attach(OrderStatus::class),
-            Text::make('Exchange order id', 'exchange_order_id'),
-            Date::make('Created at', 'created_at')
+            Text::make('Пара', 'symbol')->sortable(),
+            Enum::make('Сторона', 'side')->attach(OrderSide::class),
+            Enum::make('Статус', 'status')->attach(OrderStatus::class),
+            Number::make('Цена', 'price')->sortable(),
+            Number::make('Кол-во', 'quantity')->sortable(),
+            Date::make('Дата', 'created_at')
                 ->format('d.m.Y H:i')
                 ->sortable(),
         ];
     }
 
-    protected function formFields(): iterable
+    protected function detailFields(): iterable
     {
         return [
-            Box::make([
-                ID::make(),
-                BelongsTo::make(
-                    'Bot',
-                    'bot',
-                    formatted: static fn (Bot $model): string => $model->name,
-                    resource: BotResource::class,
-                )
-                    ->creatable()
-                    ->required(),
-                BelongsTo::make(
-                    'Exchange account',
-                    'exchangeAccount',
-                    formatted: static fn (ExchangeAccount $model): string => sprintf(
-                        '%s (%s)',
-                        $model->name ?: 'Account #'.$model->id,
-                        $model->exchange->value,
-                    ),
-                    resource: ExchangeAccountResource::class,
-                )
-                    ->creatable()
-                    ->required(),
-                Text::make('Symbol', 'symbol')->required(),
-                Enum::make('Side', 'side')
-                    ->attach(OrderSide::class)
-                    ->required(),
-                Enum::make('Type', 'type')
-                    ->attach(OrderType::class)
-                    ->required(),
-                Number::make('Price', 'price')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->nullable(),
-                Number::make('Quantity', 'quantity')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->required(),
-                Enum::make('Status', 'status')
-                    ->attach(OrderStatus::class)
-                    ->required(),
-                Text::make('Exchange order id', 'exchange_order_id')->nullable(),
-                Json::make('Raw response', 'raw_response')
-                    ->keyValue('Key', 'Value')
-                    ->nullable(),
-            ]),
-        ];
-    }
+            Preview::make()->changePreview(fn() => 
+                \MoonShine\UI\Components\Alert::make(
+                    icon: 'receipt-percent',
+                    type: 'info',
+                )->content('<b>Ордера</b> — это финансовые транзакции на бирже. Данные загружаются напрямую из отчетов биржи и не подлежат ручному изменению для обеспечения точности баланса.')
+            )->withoutWrapper(),
 
-    protected function filters(): iterable
-    {
-        return [
+            ID::make(),
             BelongsTo::make(
-                'Bot',
+                'Торговый бот',
                 'bot',
                 formatted: static fn (Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             BelongsTo::make(
-                'Exchange account',
+                'Аккаунт биржи',
                 'exchangeAccount',
                 formatted: static fn (ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #'.$model->id,
+                    $model->name ?: 'ID: '.$model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
             ),
-            Text::make('Symbol', 'symbol'),
-            Enum::make('Side', 'side')->attach(OrderSide::class),
-            Enum::make('Type', 'type')->attach(OrderType::class),
-            Enum::make('Status', 'status')->attach(OrderStatus::class),
+            Text::make('Торговая пара', 'symbol'),
+            Enum::make('Направление (Buy/Sell)', 'side')->attach(OrderSide::class),
+            Enum::make('Тип ордера (Market/Limit)', 'type')->attach(OrderType::class),
+            Number::make('Цена исполнения (USDT за 1 ед.)', 'price'),
+            Number::make('Исполненное количество', 'quantity'),
+            Enum::make('Статус исполнения', 'status')->attach(OrderStatus::class),
+            Text::make('ID ордера на бирже (Exchange ID)', 'exchange_order_id'),
+            Json::make('Сырой ответ от API биржи', 'raw_response'),
+            Date::make('Дата и время сделки', 'created_at')->format('d.m.Y H:i:s'),
         ];
     }
 
-    public function formRules(DataWrapperContract $item): array
+    protected function formFields(): iterable
+    {
+        return [];
+    }
+
+    protected function filters(): iterable
     {
         return [
-            'bot_id' => ['required', 'integer', 'exists:bots,id'],
-            'exchange_account_id' => ['required', 'integer', 'exists:exchange_accounts,id'],
-            'symbol' => ['required', 'string', 'max:255'],
-            'side' => ['required', new EnumRule(OrderSide::class)],
-            'type' => ['required', new EnumRule(OrderType::class)],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'quantity' => ['required', 'numeric', 'min:0'],
-            'status' => ['required', new EnumRule(OrderStatus::class)],
-            'exchange_order_id' => ['nullable', 'string', 'max:255'],
-            'raw_response' => ['nullable', 'array'],
+            BelongsTo::make('Бот', 'bot', resource: BotResource::class),
+            Text::make('Пара', 'symbol'),
+            Enum::make('Сторона', 'side')->attach(OrderSide::class),
+            Enum::make('Статус', 'status')->attach(OrderStatus::class),
         ];
     }
 }

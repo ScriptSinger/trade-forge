@@ -6,17 +6,16 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Models\Bot;
 use App\Models\Trade;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
-use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
-use MoonShine\UI\Components\Layout\Box;
+use MoonShine\Support\Enums\Action;
+use MoonShine\Support\ListOf;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
+use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('banknotes')]
@@ -30,9 +29,16 @@ final class TradeResource extends TradingResource
 
     protected array $with = ['bot'];
 
+    protected function activeActions(): ListOf
+    {
+        return parent::activeActions()
+            ->except(Action::CREATE, Action::UPDATE)
+            ->prepend(Action::VIEW);
+    }
+
     public function getTitle(): string
     {
-        return 'Trades';
+        return 'Сделки';
     }
 
     protected function indexFields(): iterable
@@ -40,104 +46,72 @@ final class TradeResource extends TradingResource
         return [
             ID::make()->sortable(),
             BelongsTo::make(
-                'Bot',
+                'Бот',
                 'bot',
                 formatted: static fn (Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
-            Text::make('Symbol', 'symbol')->sortable(),
-            Number::make('Entry price', 'entry_price')->sortable(),
-            Number::make('Exit price', 'exit_price')->sortable(),
-            Number::make('Quantity', 'quantity')->sortable(),
-            Number::make('Profit / loss', 'profit_loss')->sortable(),
-            Number::make('Profit %', 'profit_percent')->sortable(),
-            Number::make('Fees', 'fees')->sortable(),
-            Date::make('Opened at', 'opened_at')
+            Text::make('Пара', 'symbol')->sortable(),
+            Number::make('Профит', 'profit_loss')->sortable(),
+            Number::make('%', 'profit_percent')->sortable(),
+            Date::make('Дата закрытия', 'closed_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
-            Date::make('Closed at', 'closed_at')
-                ->withTime()
-                ->format('d.m.Y H:i'),
+        ];
+    }
+
+    protected function detailFields(): iterable
+    {
+        return [
+            Preview::make()->changePreview(fn() => 
+                \MoonShine\UI\Components\Alert::make(
+                    icon: 'currency-dollar',
+                    type: 'info',
+                )->content('<b>Сделки</b> — это итоговый финансовый результат. Запись объединяет в себе покупку (вход) и продажу (выход). Здесь рассчитывается чистая прибыль или убыток за вычетом комиссий биржи.')
+            )->withoutWrapper(),
+
+            ID::make(),
+            BelongsTo::make(
+                'Торговый бот',
+                'bot',
+                formatted: static fn (Bot $model): string => $model->name,
+                resource: BotResource::class,
+            ),
+            Text::make('Торговая пара', 'symbol'),
+            
+            Number::make('Цена входа', 'entry_price')
+                ->hint('Цена, по которой актив был куплен'),
+            
+            Number::make('Цена выхода', 'exit_price')
+                ->hint('Цена, по которой актив был полностью продан'),
+            
+            Number::make('Количество', 'quantity')
+                ->hint('Объем торговой позиции'),
+            
+            Number::make('Прибыль/Убыток', 'profit_loss')
+                ->hint('Чистый результат в валюте котировки (например, в USDT)'),
+            
+            Number::make('Прибыль %', 'profit_percent')
+                ->hint('Процентное изменение капитала в этой сделке'),
+            
+            Number::make('Комиссии', 'fees')
+                ->hint('Суммарные затраты на оплату услуг биржи за вход и выход'),
+
+            Date::make('Время открытия', 'opened_at')->withTime()->format('d.m.Y H:i:s'),
+            Date::make('Время закрытия', 'closed_at')->withTime()->format('d.m.Y H:i:s'),
         ];
     }
 
     protected function formFields(): iterable
     {
-        return [
-            Box::make([
-                ID::make(),
-                BelongsTo::make(
-                    'Bot',
-                    'bot',
-                    formatted: static fn (Bot $model): string => $model->name,
-                    resource: BotResource::class,
-                )
-                    ->creatable()
-                    ->required(),
-                Text::make('Symbol', 'symbol')->required(),
-                Number::make('Entry price', 'entry_price')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->required(),
-                Number::make('Exit price', 'exit_price')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->required(),
-                Number::make('Quantity', 'quantity')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->required(),
-                Number::make('Profit / loss', 'profit_loss')
-                    ->step(0.00000001)
-                    ->required(),
-                Number::make('Profit %', 'profit_percent')
-                    ->step(0.01)
-                    ->required(),
-                Number::make('Fees', 'fees')
-                    ->min(0)
-                    ->step(0.00000001)
-                    ->default(0)
-                    ->required(),
-                Date::make('Opened at', 'opened_at')
-                    ->withTime()
-                    ->format('d.m.Y H:i')
-                    ->default(now()->format('Y-m-d\TH:i'))
-                    ->required(),
-                Date::make('Closed at', 'closed_at')
-                    ->withTime()
-                    ->format('d.m.Y H:i')
-                    ->default(now()->format('Y-m-d\TH:i'))
-                    ->required(),
-            ]),
-        ];
+        return [];
     }
 
     protected function filters(): iterable
     {
         return [
-            BelongsTo::make(
-                'Bot',
-                'bot',
-                formatted: static fn (Bot $model): string => $model->name,
-                resource: BotResource::class,
-            ),
-            Text::make('Symbol', 'symbol'),
-        ];
-    }
-
-    public function formRules(DataWrapperContract $item): array
-    {
-        return [
-            'bot_id' => ['required', 'integer', 'exists:bots,id'],
-            'symbol' => ['required', 'string', 'max:255'],
-            'entry_price' => ['required', 'numeric', 'min:0'],
-            'exit_price' => ['required', 'numeric', 'min:0'],
-            'quantity' => ['required', 'numeric', 'min:0'],
-            'profit_loss' => ['required', 'numeric'],
-            'profit_percent' => ['required', 'numeric'],
-            'fees' => ['required', 'numeric', 'min:0'],
-            'opened_at' => ['required', 'date'],
-            'closed_at' => ['required', 'date'],
+            BelongsTo::make('Бот', 'bot', resource: BotResource::class),
+            Text::make('Пара', 'symbol'),
         ];
     }
 }
