@@ -15,10 +15,10 @@ class BotEngine
 {
     public function __construct(
         private BybitExchangeService $exchange,
-        // private StrategyService $strategy,
-        // private RiskService $risk,
-        // private OrderService $orders,
-        // private PositionService $positions,
+        private StrategyService $strategy,
+        private RiskService $risk,
+        private OrderService $orders,
+        private PositionService $positions,
         private BotRunLogger $logger,
     ) {}
 
@@ -35,15 +35,17 @@ class BotEngine
         }
 
         $symbol = $bot->symbol;
+        $interval = $bot->strategy->settings['interval'] ?? '1';
 
         /**
          * 2. Market data
          */
-        $market = $this->exchange->getMarketData($symbol);
+        $market = $this->exchange->getMarketData($symbol, $interval);
 
 
         $price = $market['price'] ?? null;
         $candles = $market['candles'] ?? [];
+
 
         if (!$price || empty($candles)) {
             $this->logger->error($bot, 'EMPTY_MARKET_DATA', $market);
@@ -53,7 +55,7 @@ class BotEngine
         /**
          * 3. Strategy
          */
-        $signal = $this->strategy->execute($candles);
+        $signal = $this->strategy->execute($bot, $candles);
 
         /**
          * 4. Log BEFORE execution (важно для трейдинга)
@@ -75,7 +77,7 @@ class BotEngine
         /**
          * 6. HOLD skip
          */
-        if ($signal === 'HOLD') {
+        if ($signal === \App\Enums\TradeSignal::Hold || (is_string($signal) && strtoupper($signal) === 'HOLD')) {
             return;
         }
 
@@ -87,7 +89,7 @@ class BotEngine
         $orderResponse = $this->exchange->placeMarketOrder(
             account: $account,
             symbol: $symbol,
-            side: $signal,
+            side: is_string($signal) ? $signal : $signal->value,
             qty: $qty
         );
 

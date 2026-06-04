@@ -38,7 +38,7 @@ final class BotResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Bots';
+        return 'Боты';
     }
 
     protected function indexFields(): iterable
@@ -46,32 +46,32 @@ final class BotResource extends TradingResource
         return [
             ID::make()->sortable(),
             BelongsTo::make(
-                'User',
+                'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
-                'Exchange account',
+                'Аккаунт биржи',
                 'exchangeAccount',
                 formatted: static fn(ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #' . $model->id,
+                    $model->name ?: 'Аккаунт #' . $model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
             ),
             BelongsTo::make(
-                'Strategy',
+                'Стратегия',
                 'strategy',
                 formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                 resource: StrategyResource::class,
             ),
-            Text::make('Name', 'name')->sortable(),
-            Number::make('Risk per trade', 'risk_per_trade')->sortable(),
-            Number::make('Max open positions', 'max_open_positions')->sortable(),
-            Enum::make('Status', 'status')->attach(BotStatus::class),
-            Date::make('Last run at', 'last_run_at')
+            Text::make('Название', 'name')->sortable(),
+            Number::make('Риск на сделку', 'risk_per_trade')->sortable(),
+            Number::make('Макс. позиций', 'max_open_positions')->sortable(),
+            Enum::make('Статус', 'status')->attach(BotStatus::class),
+            Date::make('Последний запуск', 'last_run_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
         ];
@@ -83,49 +83,60 @@ final class BotResource extends TradingResource
             Box::make([
                 ID::make(),
                 BelongsTo::make(
-                    'User',
+                    'Пользователь',
                     'user',
-                    formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                    formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
+                    ->hint('Владелец данного торгового бота')
                     ->required(),
                 BelongsTo::make(
-                    'Exchange account',
+                    'Аккаунт биржи',
                     'exchangeAccount',
                     formatted: static fn(ExchangeAccount $model): string => sprintf(
                         '%s (%s)',
-                        $model->name ?: 'Account #' . $model->id,
+                        $model->name ?: 'Аккаунт #' . $model->id,
                         $model->exchange->value,
                     ),
                     resource: ExchangeAccountResource::class,
                 )
                     ->creatable()
+                    ->hint('API-ключи биржи, которые будет использовать бот')
                     ->required(),
                 BelongsTo::make(
-                    'Strategy',
+                    'Стратегия',
                     'strategy',
                     formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                     resource: StrategyResource::class,
                 )
                     ->creatable()
+                    ->hint('Алгоритм, по которому бот будет принимать решения')
                     ->required(),
-                Text::make('Name', 'name')->required(),
-                Text::make('Symbol', 'symbol')->required(),
-                Number::make('Risk per trade', 'risk_per_trade')
+                Text::make('Название', 'name')
+                    ->hint('Произвольное имя для этого экземпляра бота')
+                    ->required(),
+                Text::make('Торговая пара', 'symbol')
+                    ->hint('Например, BTCUSDT или ETHUSDT')
+                    ->required(),
+                Number::make('Риск на сделку', 'risk_per_trade')
+                    ->hint('Размер одного ордера (в валюте котировки или %)')
                     ->min(0.01)
                     ->step(0.01)
                     ->default(1.00)
                     ->required(),
-                Number::make('Max open positions', 'max_open_positions')
+                Number::make('Макс. позиций', 'max_open_positions')
+                    ->hint('Лимит одновременно открытых сделок для этого бота')
                     ->min(1)
                     ->step(1)
                     ->default(1)
                     ->required(),
-                Enum::make('Status', 'status')
+                Enum::make('Статус', 'status')
                     ->attach(BotStatus::class)
+                    ->hint('Текущее состояние бота (Активен/Пауза)')
                     ->required(),
-                Date::make('Last run at', 'last_run_at')
+                Date::make('Последний запуск', 'last_run_at')
+                    ->hint('Время последней итерации торгового алгоритма')
                     ->withTime()
                     ->format('d.m.Y H:i')
                     ->nullable(),
@@ -137,28 +148,28 @@ final class BotResource extends TradingResource
     {
         return [
             BelongsTo::make(
-                'User',
+                'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s <%s>', $model->name, $model->email),
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
-                'Exchange account',
+                'Аккаунт биржи',
                 'exchangeAccount',
                 formatted: static fn(ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Account #' . $model->id,
+                    $model->name ?: 'Аккаунт #' . $model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
             ),
             BelongsTo::make(
-                'Strategy',
+                'Стратегия',
                 'strategy',
                 formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
                 resource: StrategyResource::class,
             ),
-            Enum::make('Status', 'status')->attach(BotStatus::class),
+            Enum::make('Статус', 'status')->attach(BotStatus::class),
         ];
     }
 

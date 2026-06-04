@@ -54,12 +54,30 @@ final class BotRunResource extends TradingResource
             Text::make('Symbol', 'symbol')->sortable(),
             Number::make('Market price', 'market_price')->sortable(),
             Enum::make('Signal', 'signal')->attach(TradeSignal::class),
-            Textarea::make('Reason', 'reason'),
-            Json::make('Indicators', 'indicators')->keyValue('Key', 'Value'),
             Enum::make('Status', 'status')->attach(BotRunStatus::class),
             Date::make('Created at', 'created_at')
                 ->format('d.m.Y H:i')
                 ->sortable(),
+        ];
+    }
+
+    protected function detailFields(): iterable
+    {
+        return [
+            ID::make(),
+            BelongsTo::make(
+                'Bot',
+                'bot',
+                formatted: static fn (Bot $model): string => $model->name,
+                resource: BotResource::class,
+            ),
+            Text::make('Symbol', 'symbol'),
+            Number::make('Market price', 'market_price'),
+            Enum::make('Signal', 'signal')->attach(TradeSignal::class),
+            Textarea::make('Reason', 'reason'),
+            Json::make('Indicators', 'indicators')->keyValue('Key', 'Value'),
+            Enum::make('Status', 'status')->attach(BotRunStatus::class),
+            Date::make('Created at', 'created_at')->format('d.m.Y H:i'),
         ];
     }
 
