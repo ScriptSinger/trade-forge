@@ -9,21 +9,24 @@ use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\User;
+use App\Services\Bot\BotEngine;
 use Illuminate\Validation\Rules\Enum as EnumRule;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\Laravel\Fields\Relationships\HasMany;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
+use MoonShine\Support\Enums\Action;
+use MoonShine\Support\ListOf;
+use MoonShine\UI\Components\ActionButton;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
+use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
+use MoonShine\Notifications\MoonShineNotification;
 
 #[Icon('cpu-chip')]
 #[Group('Trading', 'cpu-chip')]
@@ -35,6 +38,11 @@ final class BotResource extends TradingResource
     protected string $column = 'name';
 
     protected array $with = ['user', 'exchangeAccount', 'strategy'];
+
+    protected function activeActions(): ListOf
+    {
+        return parent::activeActions()->prepend(Action::VIEW);
+    }
 
     public function getTitle(): string
     {
@@ -69,8 +77,45 @@ final class BotResource extends TradingResource
             ),
             Text::make('Название', 'name')->sortable(),
             Number::make('Риск на сделку', 'risk_per_trade')->sortable(),
-            Number::make('Макс. позиций', 'max_open_positions')->sortable(),
             Enum::make('Статус', 'status')->attach(BotStatus::class),
+            Date::make('Последний запуск', 'last_run_at')
+                ->withTime()
+                ->format('d.m.Y H:i'),
+        ];
+    }
+
+    protected function detailFields(): iterable
+    {
+        return [
+            Preview::make()->changePreview(fn() => 
+                \MoonShine\UI\Components\Alert::make(
+                    icon: 'information-circle',
+                    type: 'info',
+                )->content('<b>Боты</b> — это основные рабочие единицы системы. Здесь вы связываете торговый аккаунт биржи со стратегией и задаете лимиты рисков. Бот регулярно запускает алгоритм, анализирует рынок и принимает решение о сделках.')
+            )->withoutWrapper(),
+
+            ID::make(),
+            BelongsTo::make(
+                'Владелец',
+                'user',
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                resource: UserResource::class,
+            ),
+            BelongsTo::make(
+                'Аккаунт биржи',
+                'exchangeAccount',
+                resource: ExchangeAccountResource::class,
+            ),
+            BelongsTo::make(
+                'Стратегия',
+                'strategy',
+                resource: StrategyResource::class,
+            ),
+            Text::make('Название', 'name'),
+            Text::make('Торговая пара', 'symbol'),
+            Number::make('Риск на сделку', 'risk_per_trade'),
+            Number::make('Макс. позиций', 'max_open_positions'),
+            Enum::make('Текущий статус', 'status')->attach(BotStatus::class),
             Date::make('Последний запуск', 'last_run_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
@@ -80,6 +125,13 @@ final class BotResource extends TradingResource
     protected function formFields(): iterable
     {
         return [
+            Preview::make()->changePreview(fn() => 
+                \MoonShine\UI\Components\Alert::make(
+                    icon: 'information-circle',
+                    type: 'info',
+                )->content('<b>Боты</b> — это основные рабочие единицы системы. Здесь вы связываете торговый аккаунт биржи со стратегией и задаете лимиты рисков. Бот регулярно запускает алгоритм, анализирует рынок и принимает решение о сделках.')
+            )->withoutWrapper(),
+
             Box::make([
                 ID::make(),
                 BelongsTo::make(
@@ -144,6 +196,19 @@ final class BotResource extends TradingResource
         ];
     }
 
+    protected function indexButtons(): iterable
+    {
+        return [
+            ActionButton::make(
+                'Запустить',
+                fn(Bot $item) => route('bot.run.manual', ['bot' => $item->id])
+            )
+            ->icon('play-circle')
+            ->primary()
+            ->canSee(fn(Bot $item) => $item->status === BotStatus::Active),
+        ];
+    }
+
     protected function filters(): iterable
     {
         return [
@@ -152,22 +217,6 @@ final class BotResource extends TradingResource
                 'user',
                 formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
-            ),
-            BelongsTo::make(
-                'Аккаунт биржи',
-                'exchangeAccount',
-                formatted: static fn(ExchangeAccount $model): string => sprintf(
-                    '%s (%s)',
-                    $model->name ?: 'Аккаунт #' . $model->id,
-                    $model->exchange->value,
-                ),
-                resource: ExchangeAccountResource::class,
-            ),
-            BelongsTo::make(
-                'Стратегия',
-                'strategy',
-                formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
-                resource: StrategyResource::class,
             ),
             Enum::make('Статус', 'status')->attach(BotStatus::class),
         ];
@@ -183,7 +232,7 @@ final class BotResource extends TradingResource
             'risk_per_trade' => ['required', 'numeric', 'min:0.01'],
             'max_open_positions' => ['required', 'integer', 'min:1'],
             'status' => ['required', new EnumRule(BotStatus::class)],
-            'last_run_at' => ['nullable', 'date'],
+            'last_checked_at' => ['nullable', 'date'],
         ];
     }
 }

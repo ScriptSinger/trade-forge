@@ -25,6 +25,13 @@ class BotEngine
     public function run(Bot $bot): void
     {
         /**
+         * 0. Update last run time
+         * We use update() to ensure only this field is changed, 
+         * preserving existing JSON settings.
+         */
+        $bot->update(['last_run_at' => now()]);
+
+        /**
          * 1. Execution context (ВАЖНО)
          */
         $account = $bot->exchangeAccount;

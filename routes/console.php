@@ -10,4 +10,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 
-// Schedule::job(new TestQueueJob())->everyMinute();
+Schedule::command('bot:run')->everyMinute();

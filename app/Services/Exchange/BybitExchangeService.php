@@ -45,6 +45,29 @@ class BybitExchangeService
 
     /*
     |--------------------------------------------------------------------------
+    | ACCOUNT DATA
+    |--------------------------------------------------------------------------
+    */
+
+    public function getWalletBalance(ExchangeAccount $account, string $coin = 'USDT'): array
+    {
+        $params = [
+            'accountType' => 'UNIFIED', 
+            'coin' => $coin,
+        ];
+
+        $response = Http::withHeaders(
+            $this->authHeaders($account, $params, 'GET')
+        )->get(
+            $this->baseUrl($account) . '/v5/account/wallet-balance',
+            $params
+        );
+
+        return $response->json();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | ORDER EXECUTION (SPOT)
     |--------------------------------------------------------------------------
     */
@@ -94,13 +117,18 @@ class BybitExchangeService
     |--------------------------------------------------------------------------
     */
 
-    private function authHeaders(ExchangeAccount $account, array $payload): array
+    private function authHeaders(ExchangeAccount $account, array $payload, string $method = 'POST'): array
     {
         $timestamp = (string) round(microtime(true) * 1000);
-        $body = json_encode($payload);
+        
+        if ($method === 'GET') {
+            $body = http_build_query($payload);
+        } else {
+            $body = json_encode($payload);
+        }
 
-        $apiKey = decrypt($account->api_key);
-        $apiSecret = decrypt($account->api_secret);
+        $apiKey = $account->api_key;
+        $apiSecret = $account->api_secret;
 
         $sign = $this->sign(
             $timestamp,

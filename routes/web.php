@@ -29,3 +29,13 @@ Route::get('/debug/bybit', function (BotEngine $engine) {
 
     return 'ok';
 });
+
+Route::get('/bot/run/{bot}', function (\App\Models\Bot $bot, BotEngine $engine) {
+    $engine->run($bot);
+    
+    \MoonShine\Notifications\MoonShineNotification::make(
+        "Бот {$bot->name} запущен вручную"
+    )->show();
+
+    return back();
+})->name('bot.run.manual');

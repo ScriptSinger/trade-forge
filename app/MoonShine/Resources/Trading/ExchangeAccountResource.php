@@ -8,6 +8,7 @@ use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use App\Models\ExchangeAccount;
 use App\Models\User;
+use App\Services\Exchange\BybitExchangeService;
 use App\MoonShine\Resources\Trading\Handlers\CheckConnectionHandler;
 use App\MoonShine\Resources\Trading\Pages\ExchangeAccountFormPage;
 use Illuminate\Validation\Rules\Enum as EnumRule;
@@ -19,12 +20,13 @@ use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Support\Attributes\Icon;
+use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Password;
+use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
@@ -39,10 +41,15 @@ final class ExchangeAccountResource extends TradingResource
 
     protected array $with = ['user'];
 
+    protected function activeActions(): ListOf
+    {
+        return parent::activeActions()->prepend(Action::VIEW);
+    }
+
     protected function handlers(): ListOf
     {
         return new ListOf(Handler::class, [
-            CheckConnectionHandler::make('Check connection')->alias('check-connection'),
+            CheckConnectionHandler::make('Проверить соединение')->alias('check-connection'),
         ]);
     }
 
@@ -57,7 +64,7 @@ final class ExchangeAccountResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Exchange Accounts';
+        return 'Аккаунты бирж';
     }
 
     protected function indexFields(): iterable
@@ -65,17 +72,83 @@ final class ExchangeAccountResource extends TradingResource
         return [
             ID::make()->sortable(),
             BelongsTo::make(
-                'User',
+                'Пользователь',
                 'user',
                 formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
 
-            Enum::make('Exchange', 'exchange')->attach(ExchangeProvider::class),
-            Text::make('Name', 'name'),
+            Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
+            Text::make('Название', 'name'),
             Switcher::make('Testnet', 'testnet'),
-            Enum::make('Status', 'status')->attach(ExchangeAccountStatus::class),
-            Date::make('Last checked at', 'last_checked_at')
+            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
+            Date::make('Проверен', 'last_checked_at')
+                ->withTime()
+                ->format('d.m.Y H:i'),
+        ];
+    }
+
+    protected function detailFields(): iterable
+    {
+        return [
+            ID::make(),
+            BelongsTo::make(
+                'Пользователь',
+                'user',
+                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                resource: UserResource::class,
+            ),
+            Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
+            Text::make('Название', 'name'),
+            Switcher::make('Testnet', 'testnet'),
+            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
+            
+            Preview::make('Текущий баланс (USDT)', 'balance')
+                ->changePreview(function($value, $field) {
+                    $item = $field->getData()?->getOriginal();
+
+                    if (! $item instanceof ExchangeAccount) {
+                        return '<span class="text-gray-400">—</span>';
+                    }
+
+                    try {
+                        $service = app(BybitExchangeService::class);
+                        $data = $service->getWalletBalance($item);
+                        
+                        $retCode = $data['retCode'] ?? -1;
+                        $retMsg = $data['retMsg'] ?? 'Unknown error';
+
+                        if ($retCode === 0) {
+                            $list = $data['result']['list'] ?? [];
+                            $totalBalance = 0;
+                            $found = false;
+
+                            foreach ($list as $acc) {
+                                foreach ($acc['coin'] ?? [] as $coinData) {
+                                    if ($coinData['coin'] === 'USDT') {
+                                        $totalBalance = (float) ($coinData['walletBalance'] ?? 0);
+                                        $found = true;
+                                        break 2;
+                                    }
+                                }
+                            }
+
+                            if ($found) {
+                                return '<span class="text-green-500 font-bold">' . number_format($totalBalance, 2) . ' USDT</span>';
+                            }
+                            
+                            return '<span class="text-yellow-500">USDT не найден (баланс 0?)</span>';
+                        }
+                        
+                        return '<span class="text-red-500">Ошибка Bybit [' . $retCode . ']: ' . $retMsg . '</span>';
+                    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                        return '<span class="text-red-500 italic">Ошибка: Ключи не зашифрованы</span>';
+                    } catch (\Exception $e) {
+                        return '<span class="text-red-500 italic">Ошибка: ' . $e->getMessage() . '</span>';
+                    }
+                }),
+
+            Date::make('Последняя проверка', 'last_checked_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
         ];
@@ -87,24 +160,24 @@ final class ExchangeAccountResource extends TradingResource
             Box::make([
                 ID::make(),
                 BelongsTo::make(
-                    'User',
+                    'Пользователь',
                     'user',
                     formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
                     ->required(),
-                Enum::make('Exchange', 'exchange')
+                Enum::make('Биржа', 'exchange')
                     ->attach(ExchangeProvider::class)
                     ->required(),
-                Text::make('Name', 'name')->nullable(),
-                Text::make('API key', 'api_key')->eye(),
-                Text::make('API secret', 'api_secret')->eye(),
+                Text::make('Название', 'name')->nullable(),
+                Text::make('API ключ', 'api_key')->eye(),
+                Text::make('API секрет', 'api_secret')->eye(),
                 Switcher::make('Testnet', 'testnet'),
-                Enum::make('Status', 'status')
+                Enum::make('Статус', 'status')
                     ->attach(ExchangeAccountStatus::class)
                     ->required(),
-                Date::make('Last checked at', 'last_checked_at')
+                Date::make('Последняя проверка', 'last_checked_at')
                     ->withTime()
                     ->format('d.m.Y H:i')
                     ->nullable(),
@@ -116,13 +189,13 @@ final class ExchangeAccountResource extends TradingResource
     {
         return [
             BelongsTo::make(
-                'User',
+                'Пользователь',
                 'user',
                 formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
-            Enum::make('Exchange', 'exchange')->attach(ExchangeProvider::class),
-            Enum::make('Status', 'status')->attach(ExchangeAccountStatus::class),
+            Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
+            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
             Switcher::make('Testnet', 'testnet'),
         ];
     }
