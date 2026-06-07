@@ -76,8 +76,17 @@ final class BotResource extends TradingResource
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name')->sortable(),
+            Text::make('Торговая пара', 'symbol'),
             Number::make('Риск на сделку', 'risk_per_trade')->sortable(),
-            Enum::make('Статус', 'status')->attach(BotStatus::class),
+            Number::make('Макс. позиций', 'max_open_positions'),
+            Enum::make('Статус', 'status')
+                ->attach(BotStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    BotStatus::Active->value => 'green',
+                    BotStatus::Paused->value => 'yellow',
+                    BotStatus::Archived->value => 'red',
+                    default => 'gray',
+                }),
             Date::make('Последний запуск', 'last_run_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
@@ -87,7 +96,8 @@ final class BotResource extends TradingResource
     protected function detailFields(): iterable
     {
         return [
-            Preview::make()->changePreview(fn() => 
+            Preview::make()->changePreview(
+                fn() =>
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'information-circle',
                     type: 'info',
@@ -125,7 +135,8 @@ final class BotResource extends TradingResource
     protected function formFields(): iterable
     {
         return [
-            Preview::make()->changePreview(fn() => 
+            Preview::make()->changePreview(
+                fn() =>
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'information-circle',
                     type: 'info',
@@ -203,9 +214,9 @@ final class BotResource extends TradingResource
                 'Запустить',
                 fn(Bot $item) => route('bot.run.manual', ['bot' => $item->id])
             )
-            ->icon('play-circle')
-            ->primary()
-            ->canSee(fn(Bot $item) => $item->status === BotStatus::Active),
+                ->icon('play-circle')
+                ->primary()
+                ->canSee(fn(Bot $item) => $item->status === BotStatus::Active),
         ];
     }
 
@@ -218,7 +229,14 @@ final class BotResource extends TradingResource
                 formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
-            Enum::make('Статус', 'status')->attach(BotStatus::class),
+            Enum::make('Статус', 'status')
+                ->attach(BotStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    BotStatus::Active->value => 'green',
+                    BotStatus::Paused->value => 'yellow',
+                    BotStatus::Archived->value => 'red',
+                    default => 'gray',
+                }),
         ];
     }
 

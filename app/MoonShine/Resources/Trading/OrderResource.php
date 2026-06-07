@@ -68,8 +68,22 @@ final class OrderResource extends TradingResource
                 resource: ExchangeAccountResource::class,
             ),
             Text::make('Пара', 'symbol')->sortable(),
-            Enum::make('Сторона', 'side')->attach(OrderSide::class),
-            Enum::make('Статус', 'status')->attach(OrderStatus::class),
+            Enum::make('Сторона', 'side')
+                ->attach(OrderSide::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    OrderSide::Buy->value => 'green',
+                    OrderSide::Sell->value => 'red',
+                    default => 'gray',
+                }),
+            Enum::make('Статус', 'status')
+                ->attach(OrderStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    OrderStatus::Filled->value => 'green',
+                    OrderStatus::Failed->value, OrderStatus::Rejected->value => 'red',
+                    OrderStatus::New->value, OrderStatus::Placed->value => 'blue',
+                    OrderStatus::PartiallyFilled->value => 'yellow',
+                    default => 'gray',
+                }),
             Number::make('Цена', 'price')->sortable(),
             Number::make('Кол-во', 'quantity')->sortable(),
             Date::make('Дата', 'created_at')
@@ -106,11 +120,25 @@ final class OrderResource extends TradingResource
                 resource: ExchangeAccountResource::class,
             ),
             Text::make('Торговая пара', 'symbol'),
-            Enum::make('Направление (Buy/Sell)', 'side')->attach(OrderSide::class),
+            Enum::make('Направление (Buy/Sell)', 'side')
+                ->attach(OrderSide::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    OrderSide::Buy->value => 'green',
+                    OrderSide::Sell->value => 'red',
+                    default => 'gray',
+                }),
             Enum::make('Тип ордера (Market/Limit)', 'type')->attach(OrderType::class),
             Number::make('Цена исполнения (USDT за 1 ед.)', 'price'),
             Number::make('Исполненное количество', 'quantity'),
-            Enum::make('Статус исполнения', 'status')->attach(OrderStatus::class),
+            Enum::make('Статус исполнения', 'status')
+                ->attach(OrderStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    OrderStatus::Filled->value => 'green',
+                    OrderStatus::Failed->value, OrderStatus::Rejected->value => 'red',
+                    OrderStatus::New->value, OrderStatus::Placed->value => 'blue',
+                    OrderStatus::PartiallyFilled->value => 'yellow',
+                    default => 'gray',
+                }),
             Text::make('ID ордера на бирже (Exchange ID)', 'exchange_order_id'),
             Json::make('Сырой ответ от API биржи', 'raw_response'),
             Date::make('Дата и время сделки', 'created_at')->format('d.m.Y H:i:s'),

@@ -86,10 +86,14 @@ final class ExchangeAccountResource extends TradingResource
 
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Название', 'name'),
-            Number::make('Ботов', 'bots_count')
-                ->badge('gray')
+            Text::make('Ботов', 'bots_count', static function($item) {
+                return $item->bots_count ?? $item->bots()->count();
+            })
+                ->badge('blue')
                 ->sortable(),
-            Number::make('Ордеров', 'orders_count')
+            Text::make('Ордеров', 'orders_count', static function($item) {
+                return $item->orders_count ?? $item->orders()->count();
+            })
                 ->badge('gray')
                 ->sortable(),
             Text::make('API URL', 'api_url'),
