@@ -14,10 +14,6 @@ use RuntimeException;
 
 final class ExchangeService
 {
-    private const MAINNET_BASE_URL = 'https://api.bybit.com';
-
-    private const TESTNET_BASE_URL = 'https://api-testnet.bybit.com';
-
     /**
      * Проверяет, что Bybit API доступен и ключи валидны.
      *
@@ -36,11 +32,6 @@ final class ExchangeService
         $queryString = '';
         $timestamp = $this->timestamp();
         $sign = $this->sign($timestamp, $apiKey, $apiSecret, $recvWindow, $queryString);
-
-
-
-
-
 
         $response = Http::baseUrl($baseUrl)
             ->timeout(15)
@@ -65,15 +56,13 @@ final class ExchangeService
             throw new InvalidArgumentException('Only Bybit accounts are supported for now.');
         }
 
-        $baseUrl = $account->testnet
-            ? self::TESTNET_BASE_URL
-            : self::MAINNET_BASE_URL;
+        $baseUrl = rtrim($account->api_url, '/');
 
-        $apiKey = trim((string) $account->api_key);
-        $apiSecret = trim((string) $account->api_secret);
+        $apiKey = $account->api_key;
+        $apiSecret = $account->api_secret;
         $recvWindow = 5000;
 
-        if ($apiKey === '' || $apiSecret === '') {
+        if (empty($apiKey) || empty($apiSecret)) {
             throw new RuntimeException('Bybit credentials are not configured on the exchange account.');
         }
 

@@ -37,24 +37,51 @@ class PositionService
         Position::create([
             'bot_id' => $bot->id,
             'symbol' => $order->symbol,
-            'entry_price' => $order->price ?? 0, // In reality, we'd get this from fill details
-            'quantity' => $order->quantity,
+            'entry_price' => (float) $order->price,
+            'quantity' => (float) $order->quantity,
             'status' => PositionStatus::Open,
             'opened_at' => now(),
         ]);
     }
 
     /**
-     * Close existing open positions for the bot and symbol.
+     * Close existing open positions and record a Trade.
      */
     private function closePositions(Bot $bot, Order $order): void
     {
-        $bot->positions()
+        $openPositions = $bot->positions()
             ->where('symbol', $order->symbol)
             ->where('status', PositionStatus::Open)
-            ->update([
+            ->get();
+
+        foreach ($openPositions as $position) {
+            $exitPrice = (float) $order->price;
+            $entryPrice = (float) $position->entry_price;
+            $qty = (float) $position->quantity;
+
+            // Simple profit calculation
+            $profit = ($exitPrice - $entryPrice) * $qty;
+            $profitPercent = ($entryPrice > 0) ? ($profit / ($entryPrice * $qty)) * 100 : 0;
+
+            // Create final trade record
+            \App\Models\Trade::create([
+                'bot_id' => $bot->id,
+                'symbol' => $position->symbol,
+                'entry_price' => $entryPrice,
+                'exit_price' => $exitPrice,
+                'quantity' => $qty,
+                'profit_loss' => $profit,
+                'profit_percent' => $profitPercent,
+                'fees' => 0, // In real world, we should extract fees from exchange response
+                'opened_at' => $position->opened_at,
+                'closed_at' => now(),
+            ]);
+
+            // Mark position as closed
+            $position->update([
                 'status' => PositionStatus::Closed,
                 'closed_at' => now(),
             ]);
+        }
     }
 }

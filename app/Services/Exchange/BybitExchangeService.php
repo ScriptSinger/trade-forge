@@ -4,6 +4,7 @@ namespace App\Services\Exchange;
 
 use App\Models\ExchangeAccount;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class BybitExchangeService
 {
@@ -13,17 +14,24 @@ class BybitExchangeService
     |--------------------------------------------------------------------------
     */
 
-    public function getMarketData(string $symbol, string $interval = '1'): array
+    public function getMarketData(ExchangeAccount $account, string $symbol, string $interval = '1'): array
     {
         return [
-            'price' => $this->getTicker($symbol),
-            'candles' => $this->getKlines($symbol, $interval),
+            'price' => $this->getTicker($account, $symbol),
+            'candles' => $this->getKlines($account, $symbol, $interval),
         ];
     }
 
-    public function getTicker(string $symbol): float
+    public function getTicker(ExchangeAccount $account, string $symbol): float
     {
-        $response = Http::get($this->baseUrl(null) . '/v5/market/tickers', [
+        $url = $this->baseUrl($account) . '/v5/market/tickers';
+        
+        Log::info("Bybit Request: GET {$url}", [
+            'category' => 'spot',
+            'symbol' => $symbol
+        ]);
+
+        $response = Http::get($url, [
             'category' => 'spot',
             'symbol' => $symbol,
         ]);
@@ -31,9 +39,17 @@ class BybitExchangeService
         return (float) ($response->json('result.list.0.lastPrice') ?? 0);
     }
 
-    public function getKlines(string $symbol, string $interval = '1', int $limit = 100): array
+    public function getKlines(ExchangeAccount $account, string $symbol, string $interval = '1', int $limit = 100): array
     {
-        $response = Http::get($this->baseUrl(null) . '/v5/market/kline', [
+        $url = $this->baseUrl($account) . '/v5/market/kline';
+
+        Log::info("Bybit Request: GET {$url}", [
+            'category' => 'spot',
+            'symbol' => $symbol,
+            'interval' => $interval
+        ]);
+
+        $response = Http::get($url, [
             'category' => 'spot',
             'symbol' => $symbol,
             'interval' => $interval,
@@ -51,17 +67,18 @@ class BybitExchangeService
 
     public function getWalletBalance(ExchangeAccount $account, string $coin = 'USDT'): array
     {
+        $url = $this->baseUrl($account) . '/v5/account/wallet-balance';
+        
         $params = [
             'accountType' => 'UNIFIED', 
             'coin' => $coin,
         ];
 
+        Log::info("Bybit Request: GET {$url}", $params);
+
         $response = Http::withHeaders(
             $this->authHeaders($account, $params, 'GET')
-        )->get(
-            $this->baseUrl($account) . '/v5/account/wallet-balance',
-            $params
-        );
+        )->get($url, $params);
 
         return $response->json();
     }
@@ -78,22 +95,32 @@ class BybitExchangeService
         string $side,
         float $qty
     ): array {
+        $url = $this->baseUrl($account) . '/v5/order/create';
+
         $payload = [
             'category' => 'spot',
             'symbol' => $symbol,
-            'side' => ucfirst($side), // Buy / Sell
+            'side' => ucfirst(strtolower($side)), // Buy / Sell
             'orderType' => 'Market',
             'qty' => (string) $qty,
         ];
 
-        $response = Http::withHeaders(
-            $this->authHeaders($account, $payload)
-        )->post(
-            $this->baseUrl($account) . '/v5/order/create',
-            $payload
-        );
+        Log::info("Bybit Request: POST {$url}", $payload);
 
-        return $response->json();
+        try {
+            $response = Http::withHeaders(
+                $this->authHeaders($account, $payload)
+            )->post($url, $payload);
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error("Bybit Order Error: " . $e->getMessage());
+            return [
+                'retCode' => -1,
+                'retMsg' => 'Exception: ' . $e->getMessage(),
+                'result' => []
+            ];
+        }
     }
 
     /*
@@ -102,13 +129,9 @@ class BybitExchangeService
     |--------------------------------------------------------------------------
     */
 
-    private function baseUrl(?ExchangeAccount $account): string
+    private function baseUrl(ExchangeAccount $account): string
     {
-        if ($account && $account->testnet) {
-            return 'https://api-testnet.bybit.com';
-        }
-
-        return 'https://api.bybit.com';
+        return rtrim($account->api_url, '/');
     }
 
     /*

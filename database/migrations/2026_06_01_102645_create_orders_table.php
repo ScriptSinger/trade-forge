@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('bot_id')->constrained()->restrictOnDelete();
-            $table->foreignId('exchange_account_id')->constrained()->restrictOnDelete();
+            $table->foreignId('bot_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('exchange_account_id')->constrained()->cascadeOnDelete();
 
             $table->string('symbol');
 

@@ -23,7 +23,7 @@ return new class extends Migration
             $table->text('api_key');
             $table->text('api_secret');
 
-            $table->boolean('testnet')->default(false);
+            $table->string('api_url')->default('https://api.bybit.com');
 
             $table->string('status')->default('active');
             $table->timestamp('last_checked_at')->nullable();

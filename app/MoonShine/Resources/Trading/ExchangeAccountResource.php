@@ -26,6 +26,7 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
+use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
@@ -40,6 +41,11 @@ final class ExchangeAccountResource extends TradingResource
     protected string $column = 'name';
 
     protected array $with = ['user'];
+
+    public function query(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::query()->withCount(['bots', 'orders']);
+    }
 
     protected function activeActions(): ListOf
     {
@@ -80,7 +86,13 @@ final class ExchangeAccountResource extends TradingResource
 
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Название', 'name'),
-            Switcher::make('Testnet', 'testnet'),
+            Number::make('Ботов', 'bots_count')
+                ->badge('gray')
+                ->sortable(),
+            Number::make('Ордеров', 'orders_count')
+                ->badge('gray')
+                ->sortable(),
+            Text::make('API URL', 'api_url'),
             Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
             Date::make('Проверен', 'last_checked_at')
                 ->withTime()
@@ -100,7 +112,7 @@ final class ExchangeAccountResource extends TradingResource
             ),
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Название', 'name'),
-            Switcher::make('Testnet', 'testnet'),
+            Text::make('API URL', 'api_url'),
             Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
             
             Preview::make('Текущий баланс (USDT)', 'balance')
@@ -141,8 +153,6 @@ final class ExchangeAccountResource extends TradingResource
                         }
                         
                         return '<span class="text-red-500">Ошибка Bybit [' . $retCode . ']: ' . $retMsg . '</span>';
-                    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                        return '<span class="text-red-500 italic">Ошибка: Ключи не зашифрованы</span>';
                     } catch (\Exception $e) {
                         return '<span class="text-red-500 italic">Ошибка: ' . $e->getMessage() . '</span>';
                     }
@@ -173,7 +183,10 @@ final class ExchangeAccountResource extends TradingResource
                 Text::make('Название', 'name')->nullable(),
                 Text::make('API ключ', 'api_key')->eye(),
                 Text::make('API секрет', 'api_secret')->eye(),
-                Switcher::make('Testnet', 'testnet'),
+                Text::make('API URL', 'api_url')
+                    ->default('https://api.bybit.com')
+                    ->hint('Mainnet: https://api.bybit.com | Testnet: https://api-testnet.bybit.com')
+                    ->required(),
                 Enum::make('Статус', 'status')
                     ->attach(ExchangeAccountStatus::class)
                     ->required(),
@@ -196,7 +209,6 @@ final class ExchangeAccountResource extends TradingResource
             ),
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
-            Switcher::make('Testnet', 'testnet'),
         ];
     }
 
@@ -205,16 +217,18 @@ final class ExchangeAccountResource extends TradingResource
         return [
             'user_id' => ['required', 'integer', 'exists:users,id'],
             'exchange' => ['required', new EnumRule(ExchangeProvider::class)],
-            'name' => ['nullable', 'string', 'max:255'],
+            'name' => ['required', 'string', 'min:3', 'max:255'],
             'api_key' => [
-                ...$item->getKey() !== null ? ['sometimes', 'nullable'] : ['required'],
+                $item->exists ? 'sometimes' : 'required',
                 'string',
+                'min:10',
             ],
             'api_secret' => [
-                ...$item->getKey() !== null ? ['sometimes', 'nullable'] : ['required'],
+                $item->exists ? 'sometimes' : 'required',
                 'string',
+                'min:10',
             ],
-            'testnet' => ['boolean'],
+            'api_url' => ['required', 'url', 'max:255'],
             'status' => ['required', new EnumRule(ExchangeAccountStatus::class)],
             'last_checked_at' => ['nullable', 'date'],
         ];

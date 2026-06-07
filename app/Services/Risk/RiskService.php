@@ -31,12 +31,21 @@ class RiskService
     }
 
     /**
-     * Calculate the size of the order based on bot settings.
+     * Calculate the size of the order based on bot settings and current positions.
      */
-    public function calculateSize(Bot $bot): float
+    public function calculateSize(Bot $bot, $signal): float
     {
-        // Currently returns the fixed risk_per_trade amount defined in bot settings.
-        // In the future, this can be expanded to calculate size based on account balance or % of equity.
+        $side = is_string($signal) ? strtolower($signal) : $signal->value;
+
+        if ($side === 'sell') {
+            // Calculate total quantity of all open positions for this bot and symbol
+            return (float) $bot->positions()
+                ->where('status', PositionStatus::Open)
+                ->where('symbol', $bot->symbol)
+                ->sum('quantity');
+        }
+
+        // For BUY, we return the amount in USDT (risk_per_trade)
         return (float) $bot->risk_per_trade;
     }
 }

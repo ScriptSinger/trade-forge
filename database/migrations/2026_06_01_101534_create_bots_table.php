@@ -16,8 +16,8 @@ return new class extends Migration
 
 
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
-            $table->foreignId('exchange_account_id')->constrained()->restrictOnDelete();
-            $table->foreignId('strategy_id')->constrained()->restrictOnDelete();
+            $table->foreignId('exchange_account_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('strategy_id')->constrained()->cascadeOnDelete();
 
             $table->string('name');
             $table->string('symbol');

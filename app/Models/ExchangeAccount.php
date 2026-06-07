@@ -18,7 +18,7 @@ class ExchangeAccount extends Model
         'name',
         'api_key',
         'api_secret',
-        'testnet',
+        'api_url',
         'status',
         'last_checked_at',
     ];
@@ -29,7 +29,6 @@ class ExchangeAccount extends Model
             'exchange' => ExchangeProvider::class,
             'api_key' => 'encrypted',
             'api_secret' => 'encrypted',
-            'testnet' => 'bool',
             'status' => ExchangeAccountStatus::class,
             'last_checked_at' => 'datetime',
         ];

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('bot_runs', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('bot_id')->constrained()->restrictOnDelete();
+            $table->foreignId('bot_id')->constrained()->cascadeOnDelete();
 
             $table->string('symbol');
             $table->decimal('market_price', 18, 8)->nullable();

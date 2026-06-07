@@ -128,24 +128,24 @@ class TradingDemoSeeder extends Seeder
             ],
         );
 
-        Position::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'symbol' => 'BTCUSDT',
-                'status' => PositionStatus::Open->value,
-            ],
-            [
-                'entry_price' => '95000.00000000',
-                'quantity' => '0.01000000',
-                'sl' => '93000.00000000',
-                'tp' => '98000.00000000',
-                'be_activated' => true,
-                'trailing_active' => false,
-                'half_sold' => false,
-                'opened_at' => $now->subHours(4),
-                'closed_at' => null,
-            ],
-        );
+        // Position::query()->updateOrCreate(
+        //     [
+        //         'bot_id' => $bot->id,
+        //         'symbol' => 'BTCUSDT',
+        //         'status' => PositionStatus::Open->value,
+        //     ],
+        //     [
+        //         'entry_price' => '95000.00000000',
+        //         'quantity' => '0.01000000',
+        //         'sl' => '93000.00000000',
+        //         'tp' => '98000.00000000',
+        //         'be_activated' => true,
+        //         'trailing_active' => false,
+        //         'half_sold' => false,
+        //         'opened_at' => $now->subHours(4),
+        //         'closed_at' => null,
+        //     ],
+        // );
 
         Trade::query()->updateOrCreate(
             [

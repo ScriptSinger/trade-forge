@@ -20,14 +20,30 @@ class OrderService
         string $symbol,
         $side,
         float $qty,
-        array $response
+        array $response,
+        float $marketPrice = 0
     ): Order {
         $retCode = $response['retCode'] ?? -1;
         $orderId = $response['result']['orderId'] ?? null;
+        
+        // In Bybit V5 market orders, the exact price is known after execution.
+        // If not in response, we use the market price at the moment of analysis.
+        $execPrice = $response['result']['avgPrice'] ?? $response['result']['price'] ?? $marketPrice;
 
-        // Map side to enum
+        // Map side to OrderSide enum
+        if ($side instanceof \App\Enums\TradeSignal) {
+            $side = $side->value;
+        }
+
         if (is_string($side)) {
             $side = OrderSide::tryFrom(strtolower($side)) ?? OrderSide::Buy;
+        }
+
+        // IMPORTANT: For Market BUY on Bybit Spot, $qty is in USDT.
+        // We need to store quantity in base asset (e.g. BTC) for positions.
+        $actualQty = (float) $qty;
+        if ($side === OrderSide::Buy && $execPrice > 0) {
+            $actualQty = $qty / (float) $execPrice;
         }
 
         return Order::create([
@@ -35,8 +51,9 @@ class OrderService
             'exchange_account_id' => $account->id,
             'symbol' => $symbol,
             'side' => $side,
-            'type' => OrderType::Market, // Currently only market orders are supported in BotEngine
-            'quantity' => $qty,
+            'price' => (float) $execPrice,
+            'type' => OrderType::Market, 
+            'quantity' => $actualQty,
             'status' => $retCode === 0 ? OrderStatus::Filled : OrderStatus::Failed,
             'exchange_order_id' => $orderId,
             'raw_response' => $response,
