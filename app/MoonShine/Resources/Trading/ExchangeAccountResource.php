@@ -97,7 +97,14 @@ final class ExchangeAccountResource extends TradingResource
                 ->badge('gray')
                 ->sortable(),
             Text::make('API URL', 'api_url'),
-            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
+            Enum::make('Статус', 'status')
+                ->attach(ExchangeAccountStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    ExchangeAccountStatus::Active->value => 'green',
+                    ExchangeAccountStatus::Disabled->value => 'yellow',
+                    ExchangeAccountStatus::Error->value => 'red',
+                    default => 'gray',
+                }),
             Date::make('Проверен', 'last_checked_at')
                 ->withTime()
                 ->format('d.m.Y H:i'),
@@ -117,7 +124,14 @@ final class ExchangeAccountResource extends TradingResource
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Название', 'name'),
             Text::make('API URL', 'api_url'),
-            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
+            Enum::make('Статус', 'status')
+                ->attach(ExchangeAccountStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    ExchangeAccountStatus::Active->value => 'green',
+                    ExchangeAccountStatus::Disabled->value => 'yellow',
+                    ExchangeAccountStatus::Error->value => 'red',
+                    default => 'gray',
+                }),
             
             Preview::make('Текущий баланс (USDT)', 'balance')
                 ->changePreview(function($value, $field) {
@@ -212,7 +226,14 @@ final class ExchangeAccountResource extends TradingResource
                 resource: UserResource::class,
             ),
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
-            Enum::make('Статус', 'status')->attach(ExchangeAccountStatus::class),
+            Enum::make('Статус', 'status')
+                ->attach(ExchangeAccountStatus::class)
+                ->badge(fn($value) => match($value?->value ?? $value) {
+                    ExchangeAccountStatus::Active->value => 'green',
+                    ExchangeAccountStatus::Disabled->value => 'yellow',
+                    ExchangeAccountStatus::Error->value => 'red',
+                    default => 'gray',
+                }),
         ];
     }
 
