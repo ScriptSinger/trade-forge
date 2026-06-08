@@ -6,6 +6,8 @@ use App\Enums\BotStatus;
 use App\Models\Bot;
 use App\Services\Bot\BotEngine;
 use Illuminate\Console\Command;
+use MoonShine\Laravel\Notifications\MoonShineNotification;
+use MoonShine\Support\Enums\Color;
 
 class BotRunCommand extends Command
 {
@@ -37,10 +39,15 @@ class BotRunCommand extends Command
 
         foreach ($bots as $bot) {
             $this->info("Executing bot: {$bot->name} ({$bot->symbol})");
-            
+
             try {
                 $engine->run($bot);
                 $this->info("Bot {$bot->name} finished successfully.");
+
+                MoonShineNotification::send(
+                    message: "Бот {$bot->name} завершил анализ рынка",
+                    color: Color::SUCCESS
+                );
             } catch (\Exception $e) {
                 $this->error("Error running bot {$bot->name}: {$e->getMessage()}");
             }

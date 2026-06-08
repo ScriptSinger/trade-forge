@@ -33,9 +33,10 @@ Route::get('/debug/bybit', function (BotEngine $engine) {
 Route::get('/bot/run/{bot}', function (\App\Models\Bot $bot, BotEngine $engine) {
     $engine->run($bot);
     
-    \MoonShine\Notifications\MoonShineNotification::make(
-        "Бот {$bot->name} запущен вручную"
-    )->show();
+    \MoonShine\Laravel\Notifications\MoonShineNotification::send(
+        message: "Бот {$bot->name} запущен вручную",
+        color: \MoonShine\Support\Enums\Color::SUCCESS
+    );
 
     return back();
 })->name('bot.run.manual');

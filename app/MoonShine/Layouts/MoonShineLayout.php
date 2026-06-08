@@ -13,6 +13,8 @@ use App\MoonShine\Resources\Trading\PositionResource;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use App\MoonShine\Resources\Trading\TradeResource;
 use App\MoonShine\Resources\Trading\UserResource;
+use Illuminate\Support\Facades\Vite;
+use MoonShine\AssetManager\Raw;
 use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\ColorManager\Palettes\RetroPalette;
 use MoonShine\ColorManager\ColorManager;
@@ -39,6 +41,9 @@ final class MoonShineLayout extends AppLayout
     {
         return [
             ...parent::assets(),
+            Raw::make(
+                Vite::withEntryPoints(['resources/js/app.js', 'resources/css/app.css'])->toHtml()
+            ),
         ];
     }
 

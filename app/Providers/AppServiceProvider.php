@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\MoonShine\Notifications\ReverbNotificationSystem;
 use Illuminate\Support\ServiceProvider;
+use MoonShine\Crud\Contracts\Notifications\MoonShineNotificationContract;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            MoonShineNotificationContract::class,
+            ReverbNotificationSystem::class
+        );
     }
 
     /**

@@ -65,6 +65,27 @@ services:
     networks:
       - laravel
 
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/php.dockerfile
+    user: "${UID}:${GID}"
+    command: php artisan reverb:start --host="0.0.0.0" --port="8080"
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_started
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
+    working_dir: /var/www/html
+    networks:
+      - laravel
+
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
