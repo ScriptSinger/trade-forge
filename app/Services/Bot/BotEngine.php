@@ -11,6 +11,13 @@ use App\Services\Position\PositionService;
 use App\Services\Bot\BotRunLogger;
 use App\Services\Exchange\BybitExchangeService;
 
+use App\Services\Bot\MarketScannerService;
+use App\Services\Bot\Strategy\TradeContext;
+use Illuminate\Support\Facades\Pipeline;
+
+use App\Services\Bot\Strategy\StrategyPipeline;
+use Illuminate\Support\Facades\Cache;
+
 class BotEngine
 {
     public function __construct(
@@ -20,20 +27,28 @@ class BotEngine
         private OrderService $orders,
         private PositionService $positions,
         private BotRunLogger $logger,
+        private MarketScannerService $scanner,
+        private StrategyPipeline $pipeline,
     ) {}
 
     public function run(Bot $bot): void
     {
+        // Пункт 7: Distributed Lock to prevent concurrent runs
+        $lock = Cache::lock("bot_run_{$bot->id}", 60);
+
+        try {
+            $lock->get(function () use ($bot) {
+                $this->executeBotCycle($bot);
+            });
+        } catch (\Throwable $e) {
+            Log::error("BotEngine: Lock failed or critical error for bot #{$bot->id}: {$e->getMessage()}");
+        }
+    }
+
+    private function executeBotCycle(Bot $bot): void
+    {
         Log::info("BotEngine: Starting run for bot #{$bot->id} ({$bot->name})");
 
-        /**
-         * 0. Update last run time
-         */
-        $bot->update(['last_run_at' => now()]);
-
-        /**
-         * 1. Execution context (ВАЖНО)
-         */
         $account = $bot->exchangeAccount;
 
         if (!$account || $account->status->value !== 'active') {
@@ -42,112 +57,65 @@ class BotEngine
             return;
         }
 
-        $symbol = $bot->symbol;
-        $interval = $bot->strategy->settings['interval'] ?? '1';
+        // ШАГ 1: Сканирование рынка
+        $targets = $this->scanner->getTopVolatileSymbols($account);
 
-        Log::info("BotEngine: Fetching market data for {$symbol} ({$interval})");
+        if (empty($targets)) {
+            Log::warning("BotEngine: No symbols found during scan.");
+            return;
+        }
+
+        Log::info("BotEngine: Market Scan Results for Bot #{$bot->id}:");
+        foreach ($targets as $target) {
+            // Пункт 4: Try-catch for each symbol
+            try {
+                $this->processSymbol($bot, $target);
+            } catch (\Throwable $e) {
+                Log::error("BotEngine: Failed to process {$target['symbol']}: {$e->getMessage()}");
+            }
+        }
+
+        // Пункт 6: Update last run time once at the end
+        $bot->forceFill(['last_run_at' => now()])->saveQuietly();
+        
+        Log::info("BotEngine: Cycle finished successfully.");
+    }
+
+    private function processSymbol(Bot $bot, array $target): void
+    {
+        $symbol = $target['symbol'];
+        Log::info("BotEngine: Processing symbol {$symbol} (Vol: {$target['volatility']}%)");
+
+        $account = $bot->exchangeAccount;
+        $interval = $bot->strategy->settings['interval'] ?? '15'; 
 
         /**
-         * 2. Market data
+         * 2. Market data for the symbol
          */
         $market = $this->exchange->getMarketData($account, $symbol, $interval);
-
         $price = $market['price'] ?? null;
         $candles = $market['candles'] ?? [];
 
-        Log::info("BotEngine: Market price is {$price}");
-
         if (!$price || empty($candles)) {
-            Log::error("BotEngine: Empty market data for {$symbol}");
-            $this->logger->error($bot, 'EMPTY_MARKET_DATA', $market);
             return;
         }
 
-        /**
-         * 3. Strategy
-         */
-        $signal = $this->strategy->execute($bot, $candles);
+        $context = new TradeContext($bot, $symbol, $candles);
 
-        Log::info("BotEngine: Strategy signal is: " . (is_string($signal) ? $signal : $signal->value));
+        // Run the encapsulated pipeline
+        $result = $this->pipeline->run($context);
 
-        /**
-         * 4. Log BEFORE execution (важно для трейдинга)
-         */
-        $this->logger->log($bot, $signal, $price, $candles);
+        $this->logFinalStatus($result);
+    }
 
-        /**
-         * 5. Risk check
-         */
-        if (!$this->risk->allowTrade($bot, $signal)) {
-            Log::warning("BotEngine: Risk check FAILED for bot #{$bot->id}");
-            $this->logger->info($bot, 'RISK_BLOCKED', [
-                'signal' => $signal,
-                'price' => $price,
-            ]);
-
-            return;
+    private function logFinalStatus(TradeContext $context): void
+    {
+        if ($context->isBlocked) {
+            Log::info("BotEngine: Symbol {$context->symbol} rejected [{$context->status->value}]. Reason: {$context->reason}");
+        } elseif ($context->status === \App\Enums\TradeContextStatus::Executed) {
+            Log::info("BotEngine: Symbol {$context->symbol} processed successfully. Order placed.");
+        } else {
+            Log::info("BotEngine: Symbol {$context->symbol} finished with status: {$context->status->value}");
         }
-
-        /**
-         * 6. HOLD skip
-         */
-        if ($signal === \App\Enums\TradeSignal::Hold || (is_string($signal) && strtoupper($signal) === 'HOLD')) {
-            Log::info("BotEngine: Signal is HOLD, skipping execution.");
-            return;
-        }
-
-        /**
-         * 7. Order execution (IMPORTANT: exchange account injected)
-         */
-        $qty = $this->risk->calculateSize($bot, $signal);
-
-        if ($qty <= 0) {
-            Log::info("BotEngine: Calculated quantity is 0 (nothing to sell), skipping order.");
-            return;
-        }
-
-        Log::info("BotEngine: ATTEMPTING to place order: {$signal->value} {$qty} units");
-
-        $orderResponse = $this->exchange->placeMarketOrder(
-            account: $account,
-            symbol: $symbol,
-            side: is_string($signal) ? $signal : $signal->value,
-            qty: $qty
-        );
-
-        Log::info("BotEngine: Exchange response: " . json_encode($orderResponse));
-
-        /**
-         * 8. Persist order
-         */
-        $order = $this->orders->storeFromResponse(
-            bot: $bot,
-            account: $account,
-            symbol: $symbol,
-            side: $signal,
-            qty: $qty,
-            response: $orderResponse,
-            marketPrice: (float) $price
-        );
-
-        Log::info("BotEngine: Order stored with ID #{$order->id}, Status: {$order->status->value}");
-
-        /**
-         * 9. Position sync
-         */
-        $this->positions->syncFromOrder($bot, $order, $signal);
-
-        Log::info("BotEngine: Position sync finished.");
-
-        /**
-         * 10. Final log
-         */
-        $this->logger->success($bot, $signal, [
-            'price' => $price,
-            'qty' => $qty,
-            'order_id' => $order->id ?? null,
-        ]);
-
-        Log::info("BotEngine: Cycle finished successfully.");
     }
 }

@@ -1,0 +1,12 @@
+{
+  "HBAR/USDT": {
+    "entry": 0.09623,
+    "sl": 0.09551,
+    "tp": 0.09731,
+    "qty": 311.4,
+    "be_activated": false,
+    "trailing_active": false,
+    "half_sold": false,
+    "time": "01:08:27"
+  }
+}

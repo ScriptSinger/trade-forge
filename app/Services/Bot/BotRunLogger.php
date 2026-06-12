@@ -12,10 +12,10 @@ class BotRunLogger
     /**
      * Log a failed bot run.
      */
-    public function error(Bot $bot, string $reason, array $context = []): void
+    public function error(Bot $bot, string $reason, array $context = [], ?string $symbol = null): void
     {
         $bot->runs()->create([
-            'symbol' => $bot->symbol,
+            'symbol' => $symbol ?? $bot->symbol,
             'reason' => $reason,
             'indicators' => $context,
             'status' => BotRunStatus::Failed,
@@ -27,10 +27,10 @@ class BotRunLogger
     /**
      * Log general information during a run.
      */
-    public function info(Bot $bot, string $reason, array $context = []): void
+    public function info(Bot $bot, string $reason, array $context = [], ?string $symbol = null): void
     {
         $bot->runs()->create([
-            'symbol' => $bot->symbol,
+            'symbol' => $symbol ?? $bot->symbol,
             'reason' => $reason,
             'indicators' => $context,
             'status' => BotRunStatus::Processing,
@@ -42,14 +42,14 @@ class BotRunLogger
     /**
      * Log the decision (signal) before execution.
      */
-    public function log(Bot $bot, TradeSignal|string $signal, $price, array $indicators = []): void
+    public function log(Bot $bot, TradeSignal|string $signal, $price, array $indicators = [], ?string $symbol = null): void
     {
         if (is_string($signal)) {
             $signal = TradeSignal::tryFrom(strtolower($signal)) ?? TradeSignal::Hold;
         }
 
         $bot->runs()->create([
-            'symbol' => $bot->symbol,
+            'symbol' => $symbol ?? $bot->symbol,
             'market_price' => $price,
             'signal' => $signal,
             'indicators' => $indicators,
@@ -60,14 +60,14 @@ class BotRunLogger
     /**
      * Log a successful completion of the bot run.
      */
-    public function success(Bot $bot, TradeSignal|string $signal, array $context = []): void
+    public function success(Bot $bot, TradeSignal|string $signal, array $context = [], ?string $symbol = null): void
     {
         if (is_string($signal)) {
             $signal = TradeSignal::tryFrom(strtolower($signal)) ?? TradeSignal::Hold;
         }
 
         $bot->runs()->create([
-            'symbol' => $bot->symbol,
+            'symbol' => $symbol ?? $bot->symbol,
             'signal' => $signal,
             'indicators' => $context,
             'status' => BotRunStatus::Success,

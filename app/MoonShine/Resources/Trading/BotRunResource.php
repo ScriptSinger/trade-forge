@@ -34,6 +34,9 @@ final class BotRunResource extends TradingResource
 
     protected array $with = ['bot'];
 
+
+    protected bool $isAsync = true;
+
     protected function activeActions(): ListOf
     {
         return parent::activeActions()
@@ -53,21 +56,21 @@ final class BotRunResource extends TradingResource
             BelongsTo::make(
                 'Бот',
                 'bot',
-                formatted: static fn (Bot $model): string => $model->name,
+                formatted: static fn(Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             Text::make('Пара', 'symbol')->sortable(),
             Number::make('Цена', 'market_price')->sortable(),
             Enum::make('Сигнал', 'signal')
                 ->attach(TradeSignal::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn($value) => match ($value?->value ?? $value) {
                     TradeSignal::Buy->value => 'green',
                     TradeSignal::Sell->value => 'red',
                     default => 'gray',
                 }),
             Enum::make('Статус', 'status')
                 ->attach(BotRunStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn($value) => match ($value?->value ?? $value) {
                     BotRunStatus::Success->value => 'green',
                     BotRunStatus::Failed->value => 'red',
                     BotRunStatus::Processing->value => 'blue',
@@ -82,7 +85,8 @@ final class BotRunResource extends TradingResource
     protected function detailFields(): iterable
     {
         return [
-            Preview::make()->changePreview(fn() => 
+            Preview::make()->changePreview(
+                fn() =>
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'document-text',
                     type: 'info',
@@ -93,14 +97,14 @@ final class BotRunResource extends TradingResource
             BelongsTo::make(
                 'Торговый бот',
                 'bot',
-                formatted: static fn (Bot $model): string => $model->name,
+                formatted: static fn(Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             Text::make('Торговая пара', 'symbol'),
             Number::make('Рыночная цена (на момент анализа)', 'market_price'),
             Enum::make('Сигнал стратегии', 'signal')
                 ->attach(TradeSignal::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn($value) => match ($value?->value ?? $value) {
                     TradeSignal::Buy->value => 'green',
                     TradeSignal::Sell->value => 'red',
                     default => 'gray',
@@ -109,7 +113,7 @@ final class BotRunResource extends TradingResource
             Json::make('Технические индикаторы (JSON)', 'indicators'),
             Enum::make('Статус выполнения', 'status')
                 ->attach(BotRunStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn($value) => match ($value?->value ?? $value) {
                     BotRunStatus::Success->value => 'green',
                     BotRunStatus::Failed->value => 'red',
                     BotRunStatus::Processing->value => 'blue',

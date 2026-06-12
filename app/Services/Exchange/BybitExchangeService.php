@@ -39,7 +39,22 @@ class BybitExchangeService
         return (float) ($response->json('result.list.0.lastPrice') ?? 0);
     }
 
-    public function getKlines(ExchangeAccount $account, string $symbol, string $interval = '1', int $limit = 100): array
+    public function getAllTickers(ExchangeAccount $account): array
+    {
+        $url = $this->baseUrl($account) . '/v5/market/tickers';
+
+        Log::info("Bybit Request: GET {$url}", [
+            'category' => 'spot'
+        ]);
+
+        $response = Http::get($url, [
+            'category' => 'spot',
+        ]);
+
+        return $response->json('result.list') ?? [];
+    }
+
+    public function getKlines(ExchangeAccount $account, string $symbol, string $interval = '15', int $limit = 250): array
     {
         $url = $this->baseUrl($account) . '/v5/market/kline';
 
