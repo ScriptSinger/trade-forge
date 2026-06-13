@@ -104,9 +104,36 @@ final class StrategyResource extends TradingResource
                     ->min(1)
                     ->required(),
 
-                Json::make('Доп. настройки', 'settings')
-                    ->hint('Технические параметры в формате JSON')
-                    ->keyValue('Ключ', 'Значение')
+                Box::make('⚙️ Настройка фильтров', [
+                    Number::make('Минимум ADX', 'settings->min_adx')
+                        ->default(20),
+
+                    Number::make('EMA Fast', 'settings->ema_fast')
+                        ->default(50)
+                        ->hint('Быстрая скользящая (обычно 50)'),
+
+                    Number::make('EMA Slow', 'settings->ema_slow')
+                        ->default(200)
+                        ->hint('Медленная скользящая (обычно 200)'),
+
+                    Number::make('ATR SL Множитель', 'settings->sl_multiplier')
+                        ->default(2.0)
+                        ->step(0.1),
+
+                    Number::make('ATR TP Множитель', 'settings->tp_multiplier')
+                        ->default(3.0)
+                        ->step(0.1),
+
+                    Number::make('Трейлинг отступ (%)', 'settings->trailing_pct')
+                        ->default(1.5)
+                        ->step(0.1)
+                        ->hint('На сколько % цена может упасть от пика до закрытия'),
+
+                    Switcher::make('Проверять BTC', 'settings->check_btc_trend')
+                        ->default(true),
+                ]),
+
+                Json::make('Прочие настройки', 'settings')
                     ->creatable()
                     ->removable(),
 

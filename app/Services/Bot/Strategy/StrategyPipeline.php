@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Pipeline;
 
 class StrategyPipeline
 {
+    /**
+     * The array of class pipes to through.
+     * All pipes must implement PipeContract.
+     */
     protected array $pipes = [
         Pipes\CheckKillSwitch::class,
         Pipes\CalculateIndicators::class,

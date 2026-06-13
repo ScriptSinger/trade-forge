@@ -98,7 +98,11 @@ class PositionService
 
         // Подтяжка стопа (Трейлинг)
         if ($position->trailing_active) {
-            $dynamicSl = $currentPrice * 0.985; // 1.5% отступ
+            $trailingPct = $position->bot->strategy->settings['trailing_pct'] ?? 1.5;
+            $multiplier = (100 - $trailingPct) / 100;
+            
+            $dynamicSl = $currentPrice * $multiplier; 
+            
             if ($dynamicSl > $position->sl) {
                 $position->update(['sl' => $dynamicSl]);
             }

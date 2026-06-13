@@ -37,10 +37,13 @@ class CalculateIndicators implements PipeContract
         $context->candles = $mappedCandles;
 
         $closePrices = array_column($mappedCandles, 'close');
+        $settings = $context->bot->strategy->settings;
 
-        // 2. Calculate EMA 50 & 200
-        $context->indicators['ema50'] = $this->indicators->ema($closePrices, 50);
-        $context->indicators['ema200'] = $this->indicators->ema($closePrices, 200);
+        // 2. Calculate EMA Fast & Slow (dynamic)
+        $emaFast = $settings['ema_fast'] ?? 50;
+        $emaSlow = $settings['ema_slow'] ?? 200;
+        $context->indicators['ema50'] = $this->indicators->ema($closePrices, (int)$emaFast);
+        $context->indicators['ema200'] = $this->indicators->ema($closePrices, (int)$emaSlow);
 
         // 3. Calculate ADX 14
         $context->indicators['adx'] = $this->indicators->adx($mappedCandles, 14);
@@ -51,12 +54,13 @@ class CalculateIndicators implements PipeContract
         // 5. Calculate ATR 14
         $context->indicators['atr'] = $this->indicators->atr($mappedCandles, 14);
 
-        // 6. Resistance (Max high of last 20 candles)
-        $last20 = array_slice($mappedCandles, -21, 20); // Exclude current candle
-        $context->indicators['resistance'] = !empty($last20) ? max(array_column($last20, 'high')) : 0;
+        // 6. Resistance (Max high of last N candles from 'period')
+        $period = $settings['period'] ?? 20;
+        $lookback = array_slice($mappedCandles, -($period + 1), (int)$period); 
+        $context->indicators['resistance'] = !empty($lookback) ? max(array_column($lookback, 'high')) : 0;
 
-        // 7. Average Volume (last 20 candles)
-        $context->indicators['avg_volume'] = !empty($last20) ? array_sum(array_column($last20, 'vol')) / count($last20) : 0;
+        // 7. Average Volume (last N candles)
+        $context->indicators['avg_volume'] = !empty($lookback) ? array_sum(array_column($lookback, 'vol')) / count($lookback) : 0;
 
         return $next($context);
     }

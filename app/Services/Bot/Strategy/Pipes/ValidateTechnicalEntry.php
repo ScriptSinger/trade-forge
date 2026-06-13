@@ -28,12 +28,14 @@ class ValidateTechnicalEntry implements PipeContract
         $currentClose = $lastCandle['close'];
         $currentVol = $lastCandle['vol'];
 
-        Log::info("Checking conditions for {$context->symbol}: ADX:{$adx}, EMA50:{$ema50}, EMA200:{$ema200}, Price:{$currentClose}, Res:{$resistance}, Vol:{$currentVol}, AvgVol:{$avgVol}");
+        $minAdx = $context->bot->strategy->settings['min_adx'] ?? 20;
 
-        // 1. ADX > 20
-        if ($adx <= 20) {
+        Log::info("Checking conditions for {$context->symbol}: ADX:{$adx} (Min:{$minAdx}), EMA50:{$ema50}, EMA200:{$ema200}, Price:{$currentClose}, Res:{$resistance}, Vol:{$currentVol}, AvgVol:{$avgVol}");
+
+        // 1. ADX > 20 (dynamic)
+        if ($adx <= $minAdx) {
             $context->isBlocked = true;
-            $context->reason = "Low ADX ({$adx})";
+            $context->reason = "Low ADX ({$adx} <= {$minAdx})";
             return $context; // Stop pipeline
         }
 

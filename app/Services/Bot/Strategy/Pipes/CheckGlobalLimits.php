@@ -11,14 +11,16 @@ class CheckGlobalLimits implements PipeContract
 {
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        // 1. Лимит позиций: не более 3 одновременно открытых
+        $maxPositions = $context->bot->max_open_positions ?? 3;
+
+        // 1. Лимит позиций
         $openPositionsCount = $context->bot->positions()
             ->where('status', PositionStatus::Open)
             ->count();
 
-        if ($openPositionsCount >= 3) {
+        if ($openPositionsCount >= $maxPositions) {
             $context->isBlocked = true;
-            $context->reason = "Max positions reached (3)";
+            $context->reason = "Max positions reached ({$maxPositions})";
             return $context;
         }
 
