@@ -10,4 +10,5 @@ enum BotRunStatus: string
     case Processing = 'processing';
     case Success = 'success';
     case Failed = 'failed';
+    case Rejected = 'rejected';
 }

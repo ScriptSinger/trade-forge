@@ -25,6 +25,25 @@ class BotRunLogger
     }
 
     /**
+     * Log a rejection by strategy filters.
+     */
+    public function rejected(Bot $bot, string $reason, array $context = [], ?string $symbol = null, $price = null, $signal = null): void
+    {
+        if (is_string($signal)) {
+            $signal = TradeSignal::tryFrom(strtolower($signal)) ?? TradeSignal::Hold;
+        }
+
+        $bot->runs()->create([
+            'symbol' => $symbol ?? $bot->symbol,
+            'reason' => $reason,
+            'indicators' => $context,
+            'status' => BotRunStatus::Rejected,
+            'signal' => $signal ?? TradeSignal::Hold,
+            'market_price' => $price,
+        ]);
+    }
+
+    /**
      * Log general information during a run.
      */
     public function info(Bot $bot, string $reason, array $context = [], ?string $symbol = null): void
@@ -60,7 +79,7 @@ class BotRunLogger
     /**
      * Log a successful completion of the bot run.
      */
-    public function success(Bot $bot, TradeSignal|string $signal, array $context = [], ?string $symbol = null): void
+    public function success(Bot $bot, TradeSignal|string $signal, array $context = [], ?string $symbol = null, $price = null, ?string $reason = null): void
     {
         if (is_string($signal)) {
             $signal = TradeSignal::tryFrom(strtolower($signal)) ?? TradeSignal::Hold;
@@ -70,7 +89,9 @@ class BotRunLogger
             'symbol' => $symbol ?? $bot->symbol,
             'signal' => $signal,
             'indicators' => $context,
+            'reason' => $reason,
             'status' => BotRunStatus::Success,
+            'market_price' => $price,
         ]);
     }
 }

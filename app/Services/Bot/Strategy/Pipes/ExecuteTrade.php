@@ -65,7 +65,7 @@ class ExecuteTrade implements PipeContract
             'mode' => $context->mode,
             'sl' => $context->stopLoss,
             'tp' => $context->takeProfit,
-        ], $context->symbol);
+        ], $context->symbol, $price, "Order placed successfully ({$context->mode} mode)");
 
         return $next($context);
     }

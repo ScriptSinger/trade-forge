@@ -114,12 +114,36 @@ class BotEngine
 
     private function logFinalStatus(TradeContext $context): void
     {
+        $lastCandle = $context->lastCandle();
+        $price = $lastCandle['close'] ?? null;
+
         if ($context->isBlocked) {
-            Log::info("BotEngine: Symbol {$context->symbol} rejected [{$context->status->value}]. Reason: {$context->reason}");
+            // Если причина пустая, подставим дефолтную, чтобы не было пустых полей в MoonShine
+            $reason = $context->reason ?: 'Rejected by strategy filters';
+
+            $this->logger->success(
+                $context->bot, 
+                \App\Enums\TradeSignal::Hold, 
+                $context->indicators, 
+                $context->symbol,
+                $price,
+                $reason
+            );
+
+            Log::info("BotEngine: Symbol {$context->symbol} rejected [{$context->status->value}]. Reason: {$reason}");
         } elseif ($context->status === \App\Enums\TradeContextStatus::Executed) {
             Log::info("BotEngine: Symbol {$context->symbol} processed successfully. Order placed.");
         } else {
-            Log::info("BotEngine: Symbol {$context->symbol} finished with status: {$context->status->value}");
+            // Случай, когда пайплайн завершился без блокировки, но и без ордера (редкий случай)
+            $this->logger->success(
+                $context->bot, 
+                \App\Enums\TradeSignal::Hold, 
+                $context->indicators, 
+                $context->symbol,
+                $price,
+                'Analysis finished: No entry signal'
+            );
+            Log::info("BotEngine: Symbol {$context->symbol} finished without action.");
         }
     }
 }

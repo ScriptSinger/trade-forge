@@ -32,8 +32,9 @@ class CheckBitcoinTrend implements PipeContract
         $candles = $market['candles'] ?? [];
 
         if (empty($candles)) {
-            Log::warning("Pipeline: Could not fetch BTC data.");
-            return $next($context); // Пропускаем, если не смогли получить данные
+            $context->isBlocked = true;
+            $context->reason = "Could not fetch Bitcoin market data for trend check";
+            return $context;
         }
 
         $closePrices = array_map(fn($c) => (float) $c[4], array_reverse($candles));
