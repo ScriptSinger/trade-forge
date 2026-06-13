@@ -30,7 +30,6 @@ class BotEngine
         private BotRunLogger $logger,
         private MarketScannerService $scanner,
         private StrategyPipeline $pipeline,
-        private PositionMonitorService $monitor,
     ) {}
 
     public function run(Bot $bot): void
@@ -59,8 +58,8 @@ class BotEngine
             return;
         }
 
-        // ШАГ 0: Мониторинг уже открытых позиций (Активное сопровождение)
-        $this->monitor->monitor($bot);
+        // ШАГ 0: Мониторинг позиций через объединенный сервис
+        $this->positions->monitor($bot);
 
         // ШАГ 1: Сканирование рынка
         $targets = $this->scanner->getTopVolatileSymbols($account);

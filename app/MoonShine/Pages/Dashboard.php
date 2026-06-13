@@ -75,7 +75,7 @@ class Dashboard extends Page
                     TableBuilder::make()
                         ->items($openPositions)
                         ->fields([
-                            Preview::make('Символ', 'symbol', fn($item) => "<b>$item->symbol</b>"),
+                            Preview::make('Символ', 'symbol', fn($item) => "<b>{$item->symbol}</b>"),
                             Preview::make('Бот', 'bot.name'),
                             Preview::make('Вход', 'entry_price', fn($item) => number_format((float)$item->entry_price, 4)),
                             Preview::make('PnL %', 'pnl_pct', function($item) {
@@ -84,8 +84,8 @@ class Dashboard extends Page
                                        number_format((float)$item->pnl_pct, 2) . "%</span>";
                             }),
                             Preview::make('Объем', 'quantity'),
-                            Preview::make('SL', 'sl', fn($item) => '<span style="color:red">' . number_format((float)$item->sl, 4) . '</span>'),
-                            Preview::make('TP', 'tp', fn($item) => '<span style="color:green">' . number_format((float)$item->tp, 4) . '</span>'),
+                            Preview::make('SL', 'sl', fn($item) => '<span style="color:red">'.number_format((float)$item->sl, 4).'</span>'),
+                            Preview::make('TP', 'tp', fn($item) => '<span style="color:green">'.number_format((float)$item->tp, 4).'</span>'),
                             Preview::make('Открыта', 'opened_at', fn($item) => $item->opened_at?->diffForHumans() ?? '---'),
                         ]),
                 ])->columnSpan(12),
@@ -93,20 +93,19 @@ class Dashboard extends Page
                 // Секция сканера
                 Column::make([
                     Heading::make('Результаты сканирования (ТОП-30)')->tag('h3'),
-                    $scannerResults->isEmpty()
+                    $scannerResults->isEmpty() 
                         ? Alert::make(type: 'warning')->content('Сканер еще не собрал данные или кеш пуст.')
                         : TableBuilder::make()
-                        ->items($scannerResults)
-                        ->fields([
-                            Preview::make('Символ', 'symbol', fn($item) => "<b>" . ($item['symbol'] ?? 'N/A') . "</b>"),
-
-                            Preview::make('Волатильность (24ч)', 'volatility', fn($item) => 
-                                '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:4px">' . 
-                                number_format((float)($item['volatility'] ?? 0), 2) . '%</span>'
-                            ),
-                            Preview::make('Объем (USDT)', 'volume', fn($item) => number_format((float)($item['volume'] ?? 0), 0, '.', ' ') . ' $'),
-                            Preview::make('Цена', 'price', fn($item) => number_format((float)($item['price'] ?? 0), 4)),
-                        ]),
+                            ->items($scannerResults)
+                            ->fields([
+                                Preview::make('Символ', 'symbol', fn($item) => "<b>" . ($item['symbol'] ?? 'N/A') . "</b>"),
+                                Preview::make('Волатильность (24ч)', 'volatility', fn($item) => 
+                                    '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:4px">' . 
+                                    number_format((float)($item['volatility'] ?? 0), 2) . '%</span>'
+                                ),
+                                Preview::make('Объем (USDT)', 'volume', fn($item) => number_format((float)($item['volume'] ?? 0), 0, '.', ' ') . ' $'),
+                                Preview::make('Цена', 'price', fn($item) => number_format((float)($item['price'] ?? 0), 4)),
+                            ]),
                 ])->columnSpan(12),
             ]),
         ];

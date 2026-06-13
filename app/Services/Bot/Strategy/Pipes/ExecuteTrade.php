@@ -10,7 +10,7 @@ use App\Services\Bot\BotRunLogger;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class ExecuteTrade
+class ExecuteTrade implements PipeContract
 {
     public function __construct(
         private BybitExchangeService $exchange,
@@ -19,7 +19,7 @@ class ExecuteTrade
         private BotRunLogger $logger
     ) {}
 
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         Log::info("Pipeline: EXECUTING trade for {$context->symbol} ({$context->mode} mode)");
 

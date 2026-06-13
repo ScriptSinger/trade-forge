@@ -8,14 +8,14 @@ use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckBitcoinTrend
+class CheckBitcoinTrend implements PipeContract
 {
     public function __construct(
         private BybitExchangeService $exchange,
         private TechnicalIndicatorService $indicators
     ) {}
 
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         // Проверяем, включена ли опция в настройках бота/стратегии
         $checkBtc = $context->bot->strategy->settings['check_btc_trend'] ?? true;

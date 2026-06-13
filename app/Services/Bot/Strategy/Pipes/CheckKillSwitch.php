@@ -6,9 +6,9 @@ use App\Services\Bot\Strategy\TradeContext;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckKillSwitch
+class CheckKillSwitch implements PipeContract
 {
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         // 1. Получаем профит за сегодня из закрытых сделок
         $dailyProfit = $context->bot->trades()

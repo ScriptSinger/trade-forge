@@ -7,13 +7,13 @@ use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CalculateIndicators
+class CalculateIndicators implements PipeContract
 {
     public function __construct(
         private TechnicalIndicatorService $indicators
     ) {}
 
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         Log::info("Pipeline: Calculating indicators for {$context->symbol}");
 

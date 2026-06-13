@@ -7,9 +7,9 @@ use App\Enums\TradeSignal;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class DetermineStrategyMode
+class DetermineStrategyMode implements PipeContract
 {
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         $adxArr = $context->indicators['adx'];
         $adx = end($adxArr) ?: 0;

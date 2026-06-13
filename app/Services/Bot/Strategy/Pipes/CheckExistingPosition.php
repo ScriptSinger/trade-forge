@@ -8,12 +8,12 @@ use App\Enums\TradeContextStatus;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckExistingPosition
+class CheckExistingPosition implements PipeContract
 {
     /**
      * Prevents entering a trade if a position for this symbol already exists.
      */
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         $exists = $context->bot->positions()
             ->where('symbol', $context->symbol)

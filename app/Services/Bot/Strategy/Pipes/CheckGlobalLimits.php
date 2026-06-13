@@ -7,9 +7,9 @@ use App\Enums\PositionStatus;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckGlobalLimits
+class CheckGlobalLimits implements PipeContract
 {
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         // 1. Лимит позиций: не более 3 одновременно открытых
         $openPositionsCount = $context->bot->positions()

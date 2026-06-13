@@ -7,9 +7,9 @@ use App\Enums\TradeSignal;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class ValidateTechnicalEntry
+class ValidateTechnicalEntry implements PipeContract
 {
-    public function handle(TradeContext $context, Closure $next)
+    public function handle(TradeContext $context, Closure $next): mixed
     {
         $lastCandle = $context->lastCandle();
         $prevCandle = $context->prevCandle();
