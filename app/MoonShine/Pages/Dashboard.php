@@ -75,9 +75,14 @@ class Dashboard extends Page
                     TableBuilder::make()
                         ->items($openPositions)
                         ->fields([
-                            Preview::make('Символ', 'symbol', fn($item) => "<b>{$item->symbol}</b>"),
+                            Preview::make('Символ', 'symbol', fn($item) => "<b>$item->symbol</b>"),
                             Preview::make('Бот', 'bot.name'),
                             Preview::make('Вход', 'entry_price', fn($item) => number_format((float)$item->entry_price, 4)),
+                            Preview::make('PnL %', 'pnl_pct', function($item) {
+                                $color = $item->pnl_pct >= 0 ? '#28a745' : '#dc3545';
+                                return "<span style='background:{$color}; color:white; padding:2px 6px; border-radius:4px; font-weight:bold'>" . 
+                                       number_format((float)$item->pnl_pct, 2) . "%</span>";
+                            }),
                             Preview::make('Объем', 'quantity'),
                             Preview::make('SL', 'sl', fn($item) => '<span style="color:red">' . number_format((float)$item->sl, 4) . '</span>'),
                             Preview::make('TP', 'tp', fn($item) => '<span style="color:green">' . number_format((float)$item->tp, 4) . '</span>'),
@@ -94,12 +99,10 @@ class Dashboard extends Page
                         ->items($scannerResults)
                         ->fields([
                             Preview::make('Символ', 'symbol', fn($item) => "<b>" . ($item['symbol'] ?? 'N/A') . "</b>"),
-                            Preview::make(
-                                '24ч %',
-                                'volatility',
-                                fn($item) =>
-                                '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:4px">' .
-                                    number_format((float)($item['volatility'] ?? 0), 2) . '%</span>'
+
+                            Preview::make('Волатильность (24ч)', 'volatility', fn($item) => 
+                                '<span style="background:#28a745; color:white; padding:2px 8px; border-radius:4px">' . 
+                                number_format((float)($item['volatility'] ?? 0), 2) . '%</span>'
                             ),
                             Preview::make('Объем (USDT)', 'volume', fn($item) => number_format((float)($item['volume'] ?? 0), 0, '.', ' ') . ' $'),
                             Preview::make('Цена', 'price', fn($item) => number_format((float)($item['price'] ?? 0), 4)),

@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('symbol');
 
             $table->decimal('entry_price', 18, 8);
+            $table->decimal('current_price', 18, 8)->nullable();
+            $table->decimal('pnl_pct', 10, 2)->default(0);
             $table->decimal('quantity', 18, 8);
 
             $table->decimal('sl', 18, 8)->nullable();
@@ -29,6 +31,7 @@ return new class extends Migration
             $table->boolean('half_sold')->default(false);
 
             $table->string('status')->default('open');
+            $table->string('exit_reason')->nullable();
 
             $table->timestamp('opened_at');
             $table->timestamp('closed_at')->nullable();
