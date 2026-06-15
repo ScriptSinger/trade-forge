@@ -20,7 +20,7 @@ class MarketScannerService
     {
         $cacheKey = 'bot_top_volatile_symbols_' . $account->id;
 
-        return Cache::remember($cacheKey, 600, function () use ($account) {
+        return Cache::remember($cacheKey, 7200, function () use ($account) {
             Log::info("MarketScanner: Scanning Bybit for volatile assets...");
 
             $allTickers = $this->exchange->getAllTickers($account);
