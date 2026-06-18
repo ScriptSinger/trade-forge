@@ -16,7 +16,13 @@ class StrategyPipeline
         Pipes\CheckExistingPosition::class,
         Pipes\CheckGlobalLimits::class,
         Pipes\CheckBitcoinTrend::class,
-        Pipes\ValidateTechnicalEntry::class,
+
+        // Modular Entry Conditions
+        Pipes\CheckAdxStrength::class,
+        Pipes\CheckEmaTrend::class,
+        Pipes\CheckBreakoutLevel::class,
+        Pipes\CheckVolumeSpike::class,
+
         Pipes\DetermineStrategyMode::class,
         Pipes\ApplyRiskManagement::class,
         Pipes\ExecuteTrade::class,

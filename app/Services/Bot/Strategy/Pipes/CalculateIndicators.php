@@ -30,8 +30,8 @@ class CalculateIndicators implements PipeContract
             ];
         }, $context->candles);
 
-        // Reverse to have chronological order (oldest first) if needed, 
-        // but Bybit v5 kline returns newest first. 
+        // Reverse to have chronological order (oldest first) if needed,
+        // but Bybit v5 kline returns newest first.
         // Indicators usually need chronological order.
         $mappedCandles = array_reverse($mappedCandles);
         $context->candles = $mappedCandles;
@@ -56,7 +56,7 @@ class CalculateIndicators implements PipeContract
 
         // 6. Resistance (Max high of last N candles from 'period')
         $period = $settings['period'] ?? 20;
-        $lookback = array_slice($mappedCandles, -($period + 1), (int)$period); 
+        $lookback = array_slice($mappedCandles, - ($period + 1), (int)$period);
         $context->indicators['resistance'] = !empty($lookback) ? max(array_column($lookback, 'high')) : 0;
 
         // 7. Average Volume (last N candles)
