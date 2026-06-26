@@ -8,7 +8,7 @@ use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckBitcoinTrend implements PipeContract
+class CheckMarketRegime implements PipeContract
 {
     public function __construct(
         private BybitExchangeService $exchange,
@@ -18,40 +18,43 @@ class CheckBitcoinTrend implements PipeContract
     public function handle(TradeContext $context, Closure $next): mixed
     {
         // Проверяем, включена ли опция в настройках бота/стратегии
-        $checkBtc = $context->bot->strategy->settings['check_btc_trend'] ?? true;
+        $settings = $context->bot->strategy->settings ?? [];
+        $checkMarketRegime = $settings['check_market_regime'] ?? $settings['check_btc_trend'] ?? true;
         
-        if (!$checkBtc) {
+        if (!$checkMarketRegime) {
             return $next($context);
         }
 
-        Log::info("Pipeline: Checking Bitcoin trend...");
+        Log::info("Pipeline: Checking EMA fast/slow filter...");
 
-        // Получаем данные по BTC/USDT (1h таймфрейм)
+        // Используем BTC как рыночный бенчмарк и EMA-периоды из настроек стратегии
         $account = $context->bot->exchangeAccount;
         $market = $this->exchange->getMarketData($account, 'BTCUSDT', '60');
         $candles = $market['candles'] ?? [];
 
         if (empty($candles)) {
             $context->isBlocked = true;
-            $context->reason = "Could not fetch Bitcoin market data for trend check";
+            $context->reason = "Could not fetch BTC data for EMA fast/slow filter";
             return $context;
         }
 
         $closePrices = array_map(fn($c) => (float) $c[4], array_reverse($candles));
+        $emaFastPeriod = (int) ($settings['ema_fast'] ?? 50);
+        $emaSlowPeriod = (int) ($settings['ema_slow'] ?? 200);
         
-        $ema50Arr = $this->indicators->ema($closePrices, 50);
-        $ema200Arr = $this->indicators->ema($closePrices, 200);
+        $emaFastArr = $this->indicators->ema($closePrices, $emaFastPeriod);
+        $emaSlowArr = $this->indicators->ema($closePrices, $emaSlowPeriod);
         
-        $ema50 = end($ema50Arr);
-        $ema200 = end($ema200Arr);
+        $emaFast = end($emaFastArr);
+        $emaSlow = end($emaSlowArr);
 
-        if ($ema50 < $ema200) {
+        if ($emaFast < $emaSlow) {
             $context->isBlocked = true;
-            $context->reason = "Bitcoin is bearish (EMA50 < EMA200)";
+            $context->reason = "EMA{$emaFastPeriod} is below EMA{$emaSlowPeriod}";
             return $context;
         }
 
-        Log::info("Pipeline: Bitcoin is bullish. Proceeding.");
+        Log::info("Pipeline: EMA{$emaFastPeriod} is above EMA{$emaSlowPeriod}. Proceeding.");
         return $next($context);
     }
 }

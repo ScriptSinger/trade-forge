@@ -15,7 +15,7 @@ class StrategyPipeline
         Pipes\CalculateIndicators::class,
         Pipes\CheckExistingPosition::class,
         Pipes\CheckGlobalLimits::class,
-        Pipes\CheckBitcoinTrend::class,
+        Pipes\CheckMarketRegime::class,
 
         // Modular Entry Conditions
         Pipes\CheckAdxStrength::class,

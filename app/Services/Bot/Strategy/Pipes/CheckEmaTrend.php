@@ -13,14 +13,14 @@ class CheckEmaTrend implements PipeContract
             return $next($context);
         }
 
-        $ema50Arr = $context->indicators['ema50'] ?? [];
-        $ema200Arr = $context->indicators['ema200'] ?? [];
-        $ema50 = end($ema50Arr) ?: 0;
-        $ema200 = end($ema200Arr) ?: 0;
+        $emaFastArr = $context->indicators['ema_fast'] ?? $context->indicators['ema50'] ?? [];
+        $emaSlowArr = $context->indicators['ema_slow'] ?? $context->indicators['ema200'] ?? [];
+        $emaFast = end($emaFastArr) ?: 0;
+        $emaSlow = end($emaSlowArr) ?: 0;
         
-        if ($ema50 <= $ema200) {
+        if ($emaFast <= $emaSlow) {
             $context->isBlocked = true;
-            $context->reason = "Bearish EMA alignment (Fast:{$ema50} <= Slow:{$ema200})";
+            $context->reason = "Bearish EMA alignment (Fast:{$emaFast} <= Slow:{$emaSlow})";
             return $context;
         }
         

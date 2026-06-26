@@ -62,12 +62,12 @@ final class StrategyResource extends TradingResource
                     FlexibleRender::make('Самая простая логика: сравнивает текущую цену со средней (SMA) за указанный <b>Период</b>. <br>
                         • <b>BUY:</b> Цена выше средней.<br>
                         • <b>SELL:</b> Цена ниже средней.'),
-                    
+
                     Heading::make('📉 Breakout (Пробойная)')->class('mt-4'),
                     FlexibleRender::make('Ищет выход цены за пределы диапазона (High/Low) последних свечей.<br>
                         • <b>BUY:</b> Цена пробила максимум за <b>Период</b>.<br>
                         • <b>SELL:</b> Цена пробила минимум за <b>Период</b>.'),
-                    
+
                     Heading::make('⚖️ Hybrid (Гибридная)')->class('mt-4'),
                     FlexibleRender::make('Комбинирует оба метода. Подает сигнал только в том случае, если <b>и Trend, и Breakout</b> показывают одинаковое направление.'),
                 ])
@@ -83,59 +83,58 @@ final class StrategyResource extends TradingResource
                     ->hint('Выберите базовую логику (Trend, Breakout и т.д.)')
                     ->required(),
 
-                Select::make('Таймфрейм', 'settings->interval')
-                    ->options([
-                        '1' => '1 минута',
-                        '3' => '3 минуты',
-                        '5' => '5 минут',
-                        '15' => '15 минут',
-                        '30' => '30 минут',
-                        '60' => '1 час',
-                        '240' => '4 часа',
-                        'D' => '1 день',
-                    ])
-                    ->hint('Интервал свечей, которые бот запрашивает с биржи')
-                    ->default('1')
-                    ->required(),
+                Json::make('⚙️ Настройка фильтров', 'settings')
+                    ->object()
+                    ->fields([
+                        Select::make('Таймфрейм', 'interval')
+                            ->options([
+                                '1' => '1 минута',
+                                '3' => '3 минуты',
+                                '5' => '5 минут',
+                                '15' => '15 минут',
+                                '30' => '30 минут',
+                                '60' => '1 час',
+                                '240' => '4 часа',
+                                'D' => '1 день',
+                            ])
+                            ->hint('Интервал свечей, которые бот запрашивает с биржи')
+                            ->default('1')
+                            ->required(),
 
-                Number::make('Период', 'settings->period')
-                    ->hint('Количество свечей для расчета (SMA, Max/Min)')
-                    ->default(20)
-                    ->min(1)
-                    ->required(),
+                        Number::make('Период', 'period')
+                            ->hint('Количество свечей для расчета (SMA, Max/Min)')
+                            ->default(20)
+                            ->min(1)
+                            ->required(),
 
-                Box::make('⚙️ Настройка фильтров', [
-                    Number::make('Минимум ADX', 'settings->min_adx')
-                        ->default(20),
+                        Number::make('Минимум ADX', 'min_adx')
+                            ->default(20),
 
-                    Number::make('EMA Fast', 'settings->ema_fast')
-                        ->default(50)
-                        ->hint('Быстрая скользящая (обычно 50)'),
+                        Number::make('EMA Fast', 'ema_fast')
+                            ->default(50)
+                            ->hint('Быстрая EMA, по умолчанию 50'),
 
-                    Number::make('EMA Slow', 'settings->ema_slow')
-                        ->default(200)
-                        ->hint('Медленная скользящая (обычно 200)'),
+                        Number::make('EMA Slow', 'ema_slow')
+                            ->default(200)
+                            ->hint('Медленная EMA, по умолчанию 200'),
 
-                    Number::make('ATR SL Множитель', 'settings->sl_multiplier')
-                        ->default(2.0)
-                        ->step(0.1),
+                        Number::make('ATR SL Множитель', 'sl_multiplier')
+                            ->default(2.0)
+                            ->step(0.1),
 
-                    Number::make('ATR TP Множитель', 'settings->tp_multiplier')
-                        ->default(3.0)
-                        ->step(0.1),
+                        Number::make('ATR TP Множитель', 'tp_multiplier')
+                            ->default(3.0)
+                            ->step(0.1),
 
-                    Number::make('Трейлинг отступ (%)', 'settings->trailing_pct')
-                        ->default(1.5)
-                        ->step(0.1)
-                        ->hint('На сколько % цена может упасть от пика до закрытия'),
+                        Number::make('Трейлинг отступ (%)', 'trailing_pct')
+                            ->default(1.5)
+                            ->step(0.1)
+                            ->hint('На сколько % цена может упасть от пика до закрытия'),
 
-                    Switcher::make('Проверять BTC', 'settings->check_btc_trend')
-                        ->default(true),
-                ]),
-
-                Json::make('Прочие настройки', 'settings')
-                    ->creatable()
-                    ->removable(),
+                        Switcher::make('Фильтр EMA Fast / EMA Slow', 'check_market_regime')
+                            ->default(true)
+                            ->hint('Если, например, EMA 50 ниже EMA 200, бот не открывает сделки.'),
+                    ]),
 
                 Switcher::make('Активна', 'is_active')
                     ->hint('Разрешить использование этой стратегии ботами'),
@@ -158,6 +157,15 @@ final class StrategyResource extends TradingResource
             'name' => ['required', 'string', 'max:255'],
             'type' => ['required', new EnumRule(StrategyType::class)],
             'settings' => ['required', 'array'],
+            'settings.interval' => ['required', 'string', 'max:10'],
+            'settings.period' => ['required', 'integer', 'min:1'],
+            'settings.min_adx' => ['nullable', 'numeric', 'min:0'],
+            'settings.ema_fast' => ['nullable', 'numeric', 'min:0'],
+            'settings.ema_slow' => ['nullable', 'numeric', 'min:0'],
+            'settings.sl_multiplier' => ['nullable', 'numeric', 'min:0'],
+            'settings.tp_multiplier' => ['nullable', 'numeric', 'min:0'],
+            'settings.trailing_pct' => ['nullable', 'numeric', 'min:0'],
+            'settings.check_market_regime' => ['boolean'],
             'is_active' => ['boolean'],
         ];
     }
