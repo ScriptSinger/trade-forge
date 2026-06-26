@@ -13,8 +13,8 @@ class CheckEmaTrend implements PipeContract
             return $next($context);
         }
 
-        $emaFastArr = $context->indicators['ema_fast'] ?? $context->indicators['ema50'] ?? [];
-        $emaSlowArr = $context->indicators['ema_slow'] ?? $context->indicators['ema200'] ?? [];
+        $emaFastArr = $context->indicators['ema_fast'] ?? [];
+        $emaSlowArr = $context->indicators['ema_slow'] ?? [];
         $emaFast = end($emaFastArr) ?: 0;
         $emaSlow = end($emaSlowArr) ?: 0;
         

@@ -45,10 +45,6 @@ class CalculateIndicators implements PipeContract
         $context->indicators['ema_fast'] = $this->indicators->ema($closePrices, (int) $emaFast);
         $context->indicators['ema_slow'] = $this->indicators->ema($closePrices, (int) $emaSlow);
 
-        // Legacy aliases for code that still expects the old keys.
-        $context->indicators['ema50'] = $context->indicators['ema_fast'];
-        $context->indicators['ema200'] = $context->indicators['ema_slow'];
-
         // 3. Calculate ADX 14
         $context->indicators['adx'] = $this->indicators->adx($mappedCandles, 14);
 
