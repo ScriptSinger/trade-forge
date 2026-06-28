@@ -15,7 +15,7 @@ class BotRunLogger
     public function error(Bot $bot, string $reason, array $context = [], ?string $symbol = null): void
     {
         $bot->runs()->create([
-            'symbol' => $symbol ?? $bot->symbol,
+            'symbol' => $symbol ?? 'N/A',
             'reason' => $reason,
             'indicators' => $context,
             'status' => BotRunStatus::Failed,
@@ -34,7 +34,7 @@ class BotRunLogger
         }
 
         $bot->runs()->create([
-            'symbol' => $symbol ?? $bot->symbol,
+            'symbol' => $symbol ?? 'N/A',
             'reason' => $reason,
             'indicators' => $context,
             'status' => BotRunStatus::Rejected,
@@ -49,7 +49,7 @@ class BotRunLogger
     public function info(Bot $bot, string $reason, array $context = [], ?string $symbol = null): void
     {
         $bot->runs()->create([
-            'symbol' => $symbol ?? $bot->symbol,
+            'symbol' => $symbol ?? 'N/A',
             'reason' => $reason,
             'indicators' => $context,
             'status' => BotRunStatus::Processing,
@@ -68,7 +68,7 @@ class BotRunLogger
         }
 
         $bot->runs()->create([
-            'symbol' => $symbol ?? $bot->symbol,
+            'symbol' => $symbol ?? 'N/A',
             'market_price' => $price,
             'signal' => $signal,
             'indicators' => $indicators,
@@ -86,7 +86,7 @@ class BotRunLogger
         }
 
         $bot->runs()->create([
-            'symbol' => $symbol ?? $bot->symbol,
+            'symbol' => $symbol ?? 'N/A',
             'signal' => $signal,
             'indicators' => $context,
             'reason' => $reason,

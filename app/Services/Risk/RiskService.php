@@ -38,10 +38,9 @@ class RiskService
         $side = is_string($signal) ? strtolower($signal) : $signal->value;
 
         if ($side === 'sell') {
-            // Calculate total quantity of all open positions for this bot and symbol
+            // Calculate total quantity of all open positions for this bot.
             return (float) $bot->positions()
                 ->where('status', PositionStatus::Open)
-                ->where('symbol', $bot->symbol)
                 ->sum('quantity');
         }
 

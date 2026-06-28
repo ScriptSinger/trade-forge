@@ -66,7 +66,7 @@ class TradingDemoSeeder extends Seeder
             [
                 'api_key' => 'demo-bybit-api-key',
                 'api_secret' => 'demo-bybit-api-secret',
-                'testnet' => true,
+                'api_url' => 'https://api-testnet.bybit.com',
                 'status' => ExchangeAccountStatus::Active->value,
                 'last_checked_at' => $now,
             ],
@@ -80,7 +80,6 @@ class TradingDemoSeeder extends Seeder
                 'name' => 'BTC Trend Bot',
             ],
             [
-                'symbol' => 'BTCUSDT',
                 'risk_per_trade' => 1.00,
                 'max_open_positions' => 1,
                 'status' => BotStatus::Active->value,

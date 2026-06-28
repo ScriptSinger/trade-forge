@@ -23,7 +23,7 @@ class ExchangeAccountFactory extends Factory
             'name' => fake()->company(),
             'api_key' => fake()->lexify('key_??????????'),
             'api_secret' => fake()->lexify('secret_????????????????'),
-            'testnet' => false,
+            'api_url' => 'https://api.bybit.com',
             'status' => ExchangeAccountStatus::Active->value,
             'last_checked_at' => now(),
         ];

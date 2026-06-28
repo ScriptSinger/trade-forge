@@ -23,7 +23,7 @@ class ExchangeServiceTest extends TestCase
             ->for($user)
             ->create([
                 'exchange' => ExchangeProvider::Bybit->value,
-                'testnet' => false,
+                'api_url' => 'https://api.bybit.com',
                 'api_key' => 'test-key',
                 'api_secret' => 'test-secret',
             ]);
@@ -51,7 +51,7 @@ class ExchangeServiceTest extends TestCase
             ->for($user)
             ->create([
                 'exchange' => ExchangeProvider::Bybit->value,
-                'testnet' => true,
+                'api_url' => 'https://api-testnet.bybit.com',
                 'api_key' => 'test-key',
                 'api_secret' => 'test-secret',
             ]);

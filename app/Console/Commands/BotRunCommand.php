@@ -38,7 +38,7 @@ class BotRunCommand extends Command
         }
 
         foreach ($bots as $bot) {
-            $this->info("Executing bot: {$bot->name} ({$bot->symbol})");
+            $this->info("Executing bot: {$bot->name}");
 
             try {
                 $engine->run($bot);

@@ -76,7 +76,6 @@ final class BotResource extends TradingResource
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name')->sortable(),
-            Text::make('Торговая пара', 'symbol'),
             Number::make('Риск на сделку', 'risk_per_trade')->sortable(),
             Number::make('Макс. позиций', 'max_open_positions'),
             Enum::make('Статус', 'status')
@@ -122,7 +121,6 @@ final class BotResource extends TradingResource
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name'),
-            Text::make('Торговая пара', 'symbol'),
             Number::make('Риск на сделку', 'risk_per_trade'),
             Number::make('Макс. позиций', 'max_open_positions'),
             Enum::make('Текущий статус', 'status')->attach(BotStatus::class),
@@ -178,9 +176,6 @@ final class BotResource extends TradingResource
                     ->required(),
                 Text::make('Название', 'name')
                     ->hint('Произвольное имя для этого экземпляра бота')
-                    ->required(),
-                Text::make('Торговая пара', 'symbol')
-                    ->hint('Например, BTCUSDT или ETHUSDT')
                     ->required(),
                 Number::make('Риск на сделку', 'risk_per_trade')
                     ->hint('Размер одного ордера (в валюте котировки или %)')
