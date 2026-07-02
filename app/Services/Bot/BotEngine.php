@@ -134,7 +134,15 @@ class BotEngine
             return;
         }
 
-        $context = new TradeContext($bot, $symbol, $candles);
+        $btcMarket = $this->exchange->getMarketData($account, 'BTCUSDT', '60');
+
+
+        $context = new TradeContext(
+            bot: $bot,
+            symbol: $symbol,
+            candles: $candles,
+            btcCandles: $btcMarket['candles'] ?? []
+        );
 
         // Run the encapsulated pipeline
         $result = $this->pipeline->run($context);

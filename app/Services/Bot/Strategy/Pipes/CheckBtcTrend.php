@@ -8,7 +8,7 @@ use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
-class CheckMarketRegime implements PipeContract
+class CheckBtcTrend implements PipeContract
 {
     public function __construct(
         private BybitExchangeService $exchange,
@@ -19,18 +19,16 @@ class CheckMarketRegime implements PipeContract
     {
         // Проверяем, включена ли опция в настройках бота/стратегии
         $settings = $context->bot->strategy->settings ?? [];
-        $checkMarketRegime = $settings['check_market_regime'] ?? $settings['check_btc_trend'] ?? true;
-        
-        if (!$checkMarketRegime) {
+        $checkBtcTrend = $settings['check_market_regime'] ?? $settings['check_btc_trend'] ?? true;
+
+        if (!$checkBtcTrend) {
             return $next($context);
         }
 
         Log::info("Pipeline: Checking EMA fast/slow filter...");
 
         // Используем BTC как рыночный бенчмарк и EMA-периоды из настроек стратегии
-        $account = $context->bot->exchangeAccount;
-        $market = $this->exchange->getMarketData($account, 'BTCUSDT', '60');
-        $candles = $market['candles'] ?? [];
+        $candles = $context->btcCandles;
 
         if (empty($candles)) {
             $context->isBlocked = true;
@@ -41,16 +39,16 @@ class CheckMarketRegime implements PipeContract
         $closePrices = array_map(fn($c) => (float) $c[4], array_reverse($candles));
         $emaFastPeriod = (int) ($settings['ema_fast'] ?? 50);
         $emaSlowPeriod = (int) ($settings['ema_slow'] ?? 200);
-        
+
         $emaFastArr = $this->indicators->ema($closePrices, $emaFastPeriod);
         $emaSlowArr = $this->indicators->ema($closePrices, $emaSlowPeriod);
-        
+
         $emaFast = end($emaFastArr);
         $emaSlow = end($emaSlowArr);
 
         if ($emaFast < $emaSlow) {
             $context->isBlocked = true;
-            $context->reason = "EMA{$emaFastPeriod} is below EMA{$emaSlowPeriod}";
+            $context->reason = "BTC trend bearish: EMA{$emaFastPeriod} < EMA{$emaSlowPeriod}";
             return $context;
         }
 

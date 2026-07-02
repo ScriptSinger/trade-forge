@@ -12,6 +12,9 @@ class TradeContext
         public Bot $bot,
         public string $symbol,
         public array $candles = [],
+
+        public array $btcCandles = [],
+
         public array $indicators = [],
         public TradeSignal $signal = TradeSignal::Hold,
         public float $stopLoss = 0,
