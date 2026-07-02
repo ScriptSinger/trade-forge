@@ -17,12 +17,12 @@ class MarketScannerService
      */
     public function getTopVolatileSymbols(ExchangeAccount $account): array
     {
-        Log::info("MarketScanner: Scanning Bybit for volatile assets...");
-
         $allTickers = $this->exchange->getAllTickers($account);
 
         if (empty($allTickers)) {
-            Log::warning("MarketScanner: No tickers received from Bybit.");
+            Log::channel('bot')->warning('MarketScanner failed: empty response', [
+                'account_id' => $account->id,
+            ]);
             return [];
         }
 
@@ -62,8 +62,6 @@ class MarketScannerService
             ->take(30)
             ->values()
             ->toArray();
-
-        Log::info("MarketScanner: Found " . count($symbols) . " volatile symbols.");
 
         return $symbols;
     }

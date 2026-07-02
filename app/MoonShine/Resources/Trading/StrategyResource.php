@@ -131,9 +131,9 @@ final class StrategyResource extends TradingResource
                             ->step(0.1)
                             ->hint('На сколько % цена может упасть от пика до закрытия'),
 
-                        Switcher::make('Фильтр EMA Fast / EMA Slow', 'check_market_regime')
+                        Switcher::make('Фильтр общего тренда рынка (BTC)', 'check_market_regime')
                             ->default(true)
-                            ->hint('Если, например, EMA 50 ниже EMA 200, бот не открывает сделки.'),
+                            ->hint('Перед открытием сделки бот проверяет тренд BTC. Если EMA Fast (50) ниже EMA Slow (200), новые сделки не открываются.'),
                     ]),
 
                 Switcher::make('Активна', 'is_active')

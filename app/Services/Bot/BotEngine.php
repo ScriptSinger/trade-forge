@@ -42,56 +42,82 @@ class BotEngine
                 $this->executeBotCycle($bot);
             });
         } catch (\Throwable $e) {
-            Log::error("BotEngine: Lock failed or critical error for bot #{$bot->id}: {$e->getMessage()}");
+            Log::channel('bot')->error('Bot execution failed', [
+                'bot_id' => $bot->id,
+                'bot_name' => $bot->name,
+                'exception' => $e->getMessage(),
+            ]);
         }
     }
 
     private function executeBotCycle(Bot $bot): void
     {
-        Log::info("BotEngine: Starting run for bot #{$bot->id} ({$bot->name})");
+        Log::channel('bot')->info('Bot cycle started', [
+            'bot_id' => $bot->id,
+            'bot_name' => $bot->name,
+        ]);
 
         $account = $bot->exchangeAccount;
 
         if (!$account || $account->status->value !== 'active') {
-            Log::error("BotEngine: Invalid or inactive exchange account for bot #{$bot->id}");
+            Log::channel('bot')->error('Exchange account is invalid', [
+                'bot_id' => $bot->id,
+                'account_id' => $account?->id,
+            ]);
+
             $this->logger->error($bot, 'INVALID_EXCHANGE_ACCOUNT');
             return;
         }
 
-        // ШАГ 0: Мониторинг позиций через объединенный сервис
         $this->positions->monitor($bot);
-
-        // ШАГ 1: Сканирование рынка
         $targets = $this->scanner->getTopVolatileSymbols($account);
 
         if (empty($targets)) {
-            Log::warning("BotEngine: No symbols found during scan.");
+            Log::channel('bot')->warning('Scanner returned no symbols', [
+                'bot_id' => $bot->id,
+            ]);
             return;
         }
 
-        Log::info("BotEngine: Market Scan Results for Bot #{$bot->id}:");
+        Log::channel('bot')->info('Market scan completed', [
+            'bot_id' => $bot->id,
+            'symbols_found' => count($targets),
+        ]);
+
+
         foreach ($targets as $target) {
             // Пункт 4: Try-catch for each symbol
             try {
                 $this->processSymbol($bot, $target);
             } catch (\Throwable $e) {
-                Log::error("BotEngine: Failed to process {$target['symbol']}: {$e->getMessage()}");
+                Log::channel('bot')->error('Symbol processing failed', [
+                    'bot_id' => $bot->id,
+                    'symbol' => $target['symbol'],
+                    'exception' => $e->getMessage(),
+                ]);
             }
         }
 
         // Пункт 6: Update last run time once at the end
         $bot->forceFill(['last_run_at' => now()])->saveQuietly();
-        
-        Log::info("BotEngine: Cycle finished successfully.");
+
+        Log::channel('bot')->info('Bot cycle finished', [
+            'bot_id' => $bot->id,
+        ]);
     }
 
     private function processSymbol(Bot $bot, array $target): void
     {
         $symbol = $target['symbol'];
-        Log::info("BotEngine: Processing symbol {$symbol} (Vol: {$target['volatility']}%)");
+
+        Log::channel('bot')->debug('Processing symbol', [
+            'bot_id' => $bot->id,
+            'symbol' => $symbol,
+            'volatility' => $target['volatility'],
+        ]);
 
         $account = $bot->exchangeAccount;
-        $interval = $bot->strategy->settings['interval'] ?? '15'; 
+        $interval = $bot->strategy->settings['interval'] ?? '15';
 
         /**
          * 2. Market data for the symbol
@@ -101,6 +127,10 @@ class BotEngine
         $candles = $market['candles'] ?? [];
 
         if (!$price || empty($candles)) {
+            Log::channel('bot')->warning('Market data unavailable', [
+                'bot_id' => $bot->id,
+                'symbol' => $symbol,
+            ]);
             return;
         }
 
@@ -122,9 +152,9 @@ class BotEngine
             $reason = $context->reason ?: 'Rejected by strategy filters';
 
             $this->logger->success(
-                $context->bot, 
-                \App\Enums\TradeSignal::Hold, 
-                $context->indicators, 
+                $context->bot,
+                \App\Enums\TradeSignal::Hold,
+                $context->indicators,
                 $context->symbol,
                 $price,
                 $reason
@@ -136,9 +166,9 @@ class BotEngine
         } else {
             // Случай, когда пайплайн завершился без блокировки, но и без ордера (редкий случай)
             $this->logger->success(
-                $context->bot, 
-                \App\Enums\TradeSignal::Hold, 
-                $context->indicators, 
+                $context->bot,
+                \App\Enums\TradeSignal::Hold,
+                $context->indicators,
                 $context->symbol,
                 $price,
                 'Analysis finished: No entry signal'
