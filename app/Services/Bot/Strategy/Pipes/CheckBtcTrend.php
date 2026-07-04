@@ -3,7 +3,6 @@
 namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Services\Bot\Strategy\TradeContext;
-use App\Services\Exchange\BybitExchangeService;
 use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
 use Illuminate\Support\Facades\Log;
@@ -11,22 +10,17 @@ use Illuminate\Support\Facades\Log;
 class CheckBtcTrend implements PipeContract
 {
     public function __construct(
-        private BybitExchangeService $exchange,
         private TechnicalIndicatorService $indicators
     ) {}
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        $btcFilter = $context->bot->strategy->btcTrendFilter;
-        $entrySettings = $context->bot->strategy->entrySettings;
-
-        if (!$btcFilter || !$btcFilter->enabled) {
+        if (!$context->btcTrendEnabled) {
             return $next($context);
         }
 
         Log::info("Pipeline: Checking EMA fast/slow filter...");
 
-        // Используем BTC как рыночный бенчмарк и EMA-периоды из настроек стратегии
         $candles = $context->btcCandles;
 
         if (empty($candles)) {
@@ -36,22 +30,20 @@ class CheckBtcTrend implements PipeContract
         }
 
         $closePrices = array_map(fn($c) => (float) $c[4], array_reverse($candles));
-        $emaFastPeriod = (int) ($btcFilter->ema_fast ?? $entrySettings->ema_fast ?? 50);
-        $emaSlowPeriod = (int) ($btcFilter->ema_slow ?? $entrySettings->ema_slow ?? 200);
 
-        $emaFastArr = $this->indicators->ema($closePrices, $emaFastPeriod);
-        $emaSlowArr = $this->indicators->ema($closePrices, $emaSlowPeriod);
+        $emaFastArr = $this->indicators->ema($closePrices, $context->btcEmaFast);
+        $emaSlowArr = $this->indicators->ema($closePrices, $context->btcEmaSlow);
 
         $emaFast = end($emaFastArr);
         $emaSlow = end($emaSlowArr);
 
         if ($emaFast < $emaSlow) {
             $context->isBlocked = true;
-            $context->reason = "BTC trend bearish: EMA{$emaFastPeriod} < EMA{$emaSlowPeriod}";
+            $context->reason = "BTC trend bearish: EMA{$context->btcEmaFast} < EMA{$context->btcEmaSlow}";
             return $context;
         }
 
-        Log::info("Pipeline: EMA{$emaFastPeriod} is above EMA{$emaSlowPeriod}. Proceeding.");
+        Log::info("Pipeline: EMA{$context->btcEmaFast} is above EMA{$context->btcEmaSlow}. Proceeding.");
         return $next($context);
     }
 }

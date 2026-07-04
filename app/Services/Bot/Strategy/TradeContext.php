@@ -2,18 +2,25 @@
 
 namespace App\Services\Bot\Strategy;
 
-use App\Models\Bot;
 use App\Enums\TradeSignal;
 use App\Enums\TradeContextStatus;
 
 class TradeContext
 {
     public function __construct(
-        public Bot $bot,
+        public int $botId,
         public string $symbol,
+        
         public array $candles = [],
-
         public array $btcCandles = [],
+
+        // Flattened configuration
+        public bool $btcTrendEnabled = false,
+        public int $btcEmaFast = 50,
+        public int $btcEmaSlow = 200,
+        public string $btcBenchmarkSymbol = 'BTCUSDT',
+        public string $btcBenchmarkInterval = '15',
+        public string $entryInterval = '15',
 
         public array $indicators = [],
         public TradeSignal $signal = TradeSignal::Hold,

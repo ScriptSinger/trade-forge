@@ -4,7 +4,6 @@ namespace App\Services\Bot;
 
 use App\Models\Bot;
 use Illuminate\Support\Facades\Log;
-use App\Services\Strategy\StrategyService;
 use App\Services\Order\OrderService;
 use App\Services\Risk\RiskService;
 use App\Services\Position\PositionService;
@@ -12,6 +11,7 @@ use App\Services\Bot\BotRunLogger;
 use App\Services\Exchange\BybitExchangeService;
 
 use App\Services\Bot\MarketScannerService;
+use App\Services\Bot\Strategy\TradeContextFactory;
 use App\Services\Bot\Strategy\TradeContext;
 use Illuminate\Support\Facades\Pipeline;
 
@@ -23,13 +23,13 @@ class BotEngine
 {
     public function __construct(
         private BybitExchangeService $exchange,
-        private StrategyService $strategy,
         private RiskService $risk,
         private OrderService $orders,
         private PositionService $positions,
         private BotRunLogger $logger,
         private MarketScannerService $scanner,
         private StrategyPipeline $pipeline,
+        private TradeContextFactory $contextFactory,
     ) {}
 
     public function run(Bot $bot): void
@@ -116,40 +116,11 @@ class BotEngine
             'volatility' => $target['volatility'],
         ]);
 
-        $account = $bot->exchangeAccount;
+        // Load settings
+        $bot->strategy->loadMissing(['entrySettings', 'btcTrendFilter']);
 
-        // Load settings from relations
-        $bot->strategy->loadMissing(['entrySettings', 'riskSettings', 'btcTrendFilter']);
-        $entrySettings = $bot->strategy->entrySettings;
-        $interval = $entrySettings->interval ?? '15';
-
-        /**
-         * 2. Market data for the symbol
-         */
-        $market = $this->exchange->getMarketData($account, $symbol, $interval);
-        $price = $market['price'] ?? null;
-        $candles = $market['candles'] ?? [];
-
-        if (!$price || empty($candles)) {
-            Log::channel('bot')->warning('Market data unavailable', [
-                'bot_id' => $bot->id,
-                'symbol' => $symbol,
-            ]);
-            return;
-        }
-
-        $btcTrendFilter = $bot->strategy->btcTrendFilter;
-        $benchmark_interval = $btcTrendFilter->benchmark_interval;
-        $benchmark_symbol = $btcTrendFilter->benchmark_symbol;
-        $btcMarket = $this->exchange->getMarketData($account, $benchmark_symbol, $benchmark_interval);
-
-
-        $context = new TradeContext(
-            bot: $bot,
-            symbol: $symbol,
-            candles: $candles,
-            btcCandles: $btcMarket['candles'] ?? []
-        );
+        // Use the factory to create the context
+        $context = $this->contextFactory->make($bot, $symbol);
 
         // Run the encapsulated pipeline
         $result = $this->pipeline->run($context);
@@ -166,8 +137,11 @@ class BotEngine
             // Если причина пустая, подставим дефолтную, чтобы не было пустых полей в MoonShine
             $reason = $context->reason ?: 'Rejected by strategy filters';
 
+            // Need to fetch bot for logging - this is acceptable in BotEngine which is the orchestrator
+            $bot = \App\Models\Bot::find($context->botId);
+
             $this->logger->success(
-                $context->bot,
+                $bot,
                 \App\Enums\TradeSignal::Hold,
                 $context->indicators,
                 $context->symbol,
@@ -179,9 +153,10 @@ class BotEngine
         } elseif ($context->status === \App\Enums\TradeContextStatus::Executed) {
             Log::info("BotEngine: Symbol {$context->symbol} processed successfully. Order placed.");
         } else {
+            $bot = \App\Models\Bot::find($context->botId);
             // Случай, когда пайплайн завершился без блокировки, но и без ордера (редкий случай)
             $this->logger->success(
-                $context->bot,
+                $bot,
                 \App\Enums\TradeSignal::Hold,
                 $context->indicators,
                 $context->symbol,
