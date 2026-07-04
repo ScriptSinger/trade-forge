@@ -9,10 +9,6 @@ class CheckBreakoutLevel implements PipeContract
 {
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        if (! ($context->bot->strategy->settings['enable_breakout'] ?? true)) {
-            return $next($context);
-        }
-
         $lastCandle = $context->lastCandle();
         $resistance = $context->indicators['resistance'] ?? 0;
         $currentClose = $lastCandle['close'] ?? 0;

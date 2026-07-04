@@ -44,15 +44,6 @@ class TradingDemoSeeder extends Seeder
             ['name' => 'BTC Trend Momentum'],
             [
                 'type' => StrategyType::Trend->value,
-                'settings' => [
-                    'symbol' => 'BTCUSDT',
-                    'timeframe' => '1h',
-                    'ema_fast' => 12,
-                    'ema_slow' => 26,
-                    'rsi_period' => 14,
-                    'adx_period' => 14,
-                    'atr_period' => 14,
-                ],
                 'is_active' => true,
             ],
         );

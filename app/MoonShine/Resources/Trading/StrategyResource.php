@@ -6,8 +6,12 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Enums\StrategyType;
 use App\Models\Strategy;
+use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
+use App\MoonShine\Resources\Trading\StrategyRiskSettingsResource;
+use App\MoonShine\Resources\Trading\StrategyBtcTrendFilterResource;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
+use MoonShine\Laravel\Fields\Relationships\HasOne;
 use MoonShine\MenuManager\Attributes\Group;
 use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
@@ -83,58 +87,54 @@ final class StrategyResource extends TradingResource
                     ->hint('Выберите базовую логику (Trend, Breakout и т.д.)')
                     ->required(),
 
-                Json::make('⚙️ Настройка фильтров', 'settings')
-                    ->object()
-                    ->fields([
-                        Select::make('Таймфрейм', 'interval')
-                            ->options([
-                                '1' => '1 минута',
-                                '3' => '3 минуты',
-                                '5' => '5 минут',
-                                '15' => '15 минут',
-                                '30' => '30 минут',
-                                '60' => '1 час',
-                                '240' => '4 часа',
-                                'D' => '1 день',
-                            ])
-                            ->hint('Интервал свечей, которые бот запрашивает с биржи')
-                            ->default('1')
-                            ->required(),
 
-                        Number::make('Период', 'period')
-                            ->hint('Количество свечей для расчета (SMA, Max/Min)')
-                            ->default(20)
-                            ->min(1)
-                            ->required(),
+                /*
+        |--------------------------------------------------------------------------
+        | ENTRY SETTINGS
+        |--------------------------------------------------------------------------
+        */
+                Box::make([
+                    Heading::make('Entry settings'),
 
-                        Number::make('Минимум ADX', 'min_adx')
-                            ->default(20),
+                    HasOne::make(
+                        'Entry Settings',
+                        'entrySettings',
+                        resource: StrategyEntrySettingsResource::class
+                    )->disableOutside(),
+                ]),
 
-                        Number::make('EMA Fast', 'ema_fast')
-                            ->default(50)
-                            ->hint('Быстрая EMA, по умолчанию 50'),
+                /*
+        |--------------------------------------------------------------------------
+        | RISK SETTINGS
+        |--------------------------------------------------------------------------
+        */
+                Box::make([
+                    Heading::make('Risk settings'),
 
-                        Number::make('EMA Slow', 'ema_slow')
-                            ->default(200)
-                            ->hint('Медленная EMA, по умолчанию 200'),
+                    HasOne::make(
+                        'Risk Settings',
+                        'riskSettings',
+                        resource: StrategyRiskSettingsResource::class
+                    )->disableOutside(),
+                ]),
 
-                        Number::make('ATR SL Множитель', 'sl_multiplier')
-                            ->default(2.0)
-                            ->step(0.1),
+                /*
+        |--------------------------------------------------------------------------
+        | MARKET FILTER (BTC)
+        |--------------------------------------------------------------------------
+        */
+                Box::make([
+                    Heading::make('Market filter (BTC trend)'),
 
-                        Number::make('ATR TP Множитель', 'tp_multiplier')
-                            ->default(3.0)
-                            ->step(0.1),
+                    HasOne::make(
+                        'BTC Trend Filter',
+                        'btcTrendFilter',
+                        resource: StrategyBtcTrendFilterResource::class
+                    )->disableOutside(),
+                ]),
 
-                        Number::make('Трейлинг отступ (%)', 'trailing_pct')
-                            ->default(1.5)
-                            ->step(0.1)
-                            ->hint('На сколько % цена может упасть от пика до закрытия'),
 
-                        Switcher::make('Фильтр общего тренда рынка (BTC)', 'check_market_regime')
-                            ->default(true)
-                            ->hint('Перед открытием сделки бот проверяет тренд BTC. Если EMA Fast (50) ниже EMA Slow (200), новые сделки не открываются.'),
-                    ]),
+
 
                 Switcher::make('Активна', 'is_active')
                     ->hint('Разрешить использование этой стратегии ботами'),

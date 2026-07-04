@@ -17,11 +17,10 @@ class CheckBtcTrend implements PipeContract
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        // Проверяем, включена ли опция в настройках бота/стратегии
-        $settings = $context->bot->strategy->settings ?? [];
-        $checkBtcTrend = $settings['check_market_regime'] ?? $settings['check_btc_trend'] ?? true;
+        $btcFilter = $context->bot->strategy->btcTrendFilter;
+        $entrySettings = $context->bot->strategy->entrySettings;
 
-        if (!$checkBtcTrend) {
+        if (!$btcFilter || !$btcFilter->enabled) {
             return $next($context);
         }
 
@@ -37,8 +36,8 @@ class CheckBtcTrend implements PipeContract
         }
 
         $closePrices = array_map(fn($c) => (float) $c[4], array_reverse($candles));
-        $emaFastPeriod = (int) ($settings['ema_fast'] ?? 50);
-        $emaSlowPeriod = (int) ($settings['ema_slow'] ?? 200);
+        $emaFastPeriod = (int) ($btcFilter->ema_fast ?? $entrySettings->ema_fast ?? 50);
+        $emaSlowPeriod = (int) ($btcFilter->ema_slow ?? $entrySettings->ema_slow ?? 200);
 
         $emaFastArr = $this->indicators->ema($closePrices, $emaFastPeriod);
         $emaSlowArr = $this->indicators->ema($closePrices, $emaSlowPeriod);

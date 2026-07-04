@@ -117,7 +117,11 @@ class BotEngine
         ]);
 
         $account = $bot->exchangeAccount;
-        $interval = $bot->strategy->settings['interval'] ?? '15';
+
+        // Load settings from relations
+        $bot->strategy->loadMissing(['entrySettings', 'riskSettings', 'btcTrendFilter']);
+        $entrySettings = $bot->strategy->entrySettings;
+        $interval = $entrySettings->interval ?? '15';
 
         /**
          * 2. Market data for the symbol
@@ -134,7 +138,10 @@ class BotEngine
             return;
         }
 
-        $btcMarket = $this->exchange->getMarketData($account, 'BTCUSDT', '60');
+        $btcTrendFilter = $bot->strategy->btcTrendFilter;
+        $benchmark_interval = $btcTrendFilter->benchmark_interval;
+        $benchmark_symbol = $btcTrendFilter->benchmark_symbol;
+        $btcMarket = $this->exchange->getMarketData($account, $benchmark_symbol, $benchmark_interval);
 
 
         $context = new TradeContext(

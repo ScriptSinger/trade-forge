@@ -13,14 +13,10 @@ return new class extends Migration
     {
         Schema::create('strategies', function (Blueprint $table) {
             $table->id();
-
             $table->string('name');
-            $table->string('type'); // breakout, hybrid, trend
-
-            $table->json('settings'); // EMA, RSI, ADX, ATR configs
+            $table->string('type');
 
             $table->boolean('is_active')->default(true);
-
             $table->timestamps();
         });
     }

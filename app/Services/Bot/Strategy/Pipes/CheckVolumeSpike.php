@@ -9,10 +9,6 @@ class CheckVolumeSpike implements PipeContract
 {
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        if (! ($context->bot->strategy->settings['enable_volume_check'] ?? true)) {
-            return $next($context);
-        }
-
         $lastCandle = $context->lastCandle();
         $avgVol = $context->indicators['avg_volume'] ?? 0;
         $currentVol = $lastCandle['vol'] ?? 0;

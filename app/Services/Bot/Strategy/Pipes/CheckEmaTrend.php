@@ -9,10 +9,6 @@ class CheckEmaTrend implements PipeContract
 {
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        if (! ($context->bot->strategy->settings['enable_ema'] ?? true)) {
-            return $next($context);
-        }
-
         $emaFastArr = $context->indicators['ema_fast'] ?? [];
         $emaSlowArr = $context->indicators['ema_slow'] ?? [];
         $emaFast = end($emaFastArr) ?: 0;

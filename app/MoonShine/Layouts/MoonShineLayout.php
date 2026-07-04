@@ -10,6 +10,7 @@ use App\MoonShine\Resources\Trading\BotStatResource;
 use App\MoonShine\Resources\Trading\ExchangeAccountResource;
 use App\MoonShine\Resources\Trading\OrderResource;
 use App\MoonShine\Resources\Trading\PositionResource;
+use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use App\MoonShine\Resources\Trading\TradeResource;
 use App\MoonShine\Resources\Trading\UserResource;
@@ -29,6 +30,7 @@ use MoonShine\UI\Components\Layout\Menu;
 use MoonShine\UI\Components\Layout\Sidebar;
 use MoonShine\UI\Components\Layout\ThemeSwitcher;
 use MoonShine\UI\Components\When;
+
 
 final class MoonShineLayout extends AppLayout
 {

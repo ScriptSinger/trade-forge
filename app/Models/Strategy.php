@@ -6,6 +6,7 @@ use App\Enums\StrategyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Strategy extends Model
 {
@@ -14,7 +15,6 @@ class Strategy extends Model
     protected $fillable = [
         'name',
         'type',
-        'settings',
         'is_active',
     ];
 
@@ -27,8 +27,29 @@ class Strategy extends Model
         ];
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relations
+    |--------------------------------------------------------------------------
+    */
+
     public function bots(): HasMany
     {
         return $this->hasMany(Bot::class);
+    }
+
+    public function entrySettings(): HasOne
+    {
+        return $this->hasOne(StrategyEntrySettings::class);
+    }
+
+    public function riskSettings(): HasOne
+    {
+        return $this->hasOne(StrategyRiskSettings::class);
+    }
+
+    public function btcTrendFilter(): HasOne
+    {
+        return $this->hasOne(StrategyBtcTrendFilter::class);
     }
 }

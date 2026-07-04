@@ -23,19 +23,17 @@ class ApplyRiskManagement implements PipeContract
         }
 
         // Множители из настроек стратегии или дефолтные
-        // Обычно SL = 2 * ATR, TP = 3 * ATR (как пример)
-        $slMult = $context->bot->strategy->settings['sl_multiplier'] ?? 2;
-        $tpMult = $context->bot->strategy->settings['tp_multiplier'] ?? 3;
+        $riskSettings = $context->bot->strategy->riskSettings;
+        $slMult = $riskSettings->sl_multiplier ?? 1.5;
+        $tpMult = $riskSettings->tp_multiplier ?? 3.0;
 
         $context->stopLoss = $entryPrice - ($atr * $slMult);
         $context->takeProfit = $entryPrice + ($atr * $tpMult);
 
-        // Расчет объема (Риск 1% от депозита на сделку)
-        // Риск в деньгах = депозит * 0.01
-        // В нашем приложении risk_per_trade может быть уже суммой в USDT
+        // Расчет объема
         $riskAmount = (float) $context->bot->risk_per_trade; 
         
-        $priceRisk = $entryPrice - $context->stopLoss;
+        $priceRisk = abs($entryPrice - $context->stopLoss);
 
         if ($priceRisk <= 0) {
             $context->isBlocked = true;

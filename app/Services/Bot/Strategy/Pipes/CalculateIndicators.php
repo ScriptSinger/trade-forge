@@ -37,11 +37,11 @@ class CalculateIndicators implements PipeContract
         $context->candles = $mappedCandles;
 
         $closePrices = array_column($mappedCandles, 'close');
-        $settings = $context->bot->strategy->settings;
+        $entrySettings = $context->bot->strategy->entrySettings;
 
         // 2. Calculate EMA Fast & Slow (dynamic)
-        $emaFast = $settings['ema_fast'] ?? 50;
-        $emaSlow = $settings['ema_slow'] ?? 200;
+        $emaFast = $entrySettings->ema_fast ?? 50;
+        $emaSlow = $entrySettings->ema_slow ?? 200;
         $context->indicators['ema_fast'] = $this->indicators->ema($closePrices, (int) $emaFast);
         $context->indicators['ema_slow'] = $this->indicators->ema($closePrices, (int) $emaSlow);
 
@@ -55,7 +55,7 @@ class CalculateIndicators implements PipeContract
         $context->indicators['atr'] = $this->indicators->atr($mappedCandles, 14);
 
         // 6. Resistance (Max high of last N candles from 'period')
-        $period = $settings['period'] ?? 20;
+        $period = $entrySettings->period ?? 20;
         $lookback = array_slice($mappedCandles, - ($period + 1), (int)$period);
         $context->indicators['resistance'] = !empty($lookback) ? max(array_column($lookback, 'high')) : 0;
 

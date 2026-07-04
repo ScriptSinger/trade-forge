@@ -19,6 +19,9 @@ use MoonShine\Laravel\DependencyInjection\MoonShine;
 use MoonShine\Laravel\DependencyInjection\MoonShineConfigurator;
 use App\MoonShine\Resources\MoonShineUser\MoonShineUserResource;
 use App\MoonShine\Resources\MoonShineUserRole\MoonShineUserRoleResource;
+use App\MoonShine\Resources\Trading\StrategyBtcTrendFilterResource;
+use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
+use App\MoonShine\Resources\Trading\StrategyRiskSettingsResource;
 
 class MoonShineServiceProvider extends ServiceProvider
 {
@@ -40,6 +43,9 @@ class MoonShineServiceProvider extends ServiceProvider
                 BotStatResource::class,
                 MoonShineUserResource::class,
                 MoonShineUserRoleResource::class,
+                StrategyEntrySettingsResource::class,
+                StrategyRiskSettingsResource::class,
+                StrategyBtcTrendFilterResource::class
             ])
             ->pages([
                 ...$core->getConfig()->getPages(),

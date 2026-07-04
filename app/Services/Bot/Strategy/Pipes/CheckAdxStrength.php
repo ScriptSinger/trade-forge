@@ -10,13 +10,13 @@ class CheckAdxStrength implements PipeContract
 {
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        if (! ($context->bot->strategy->settings['enable_adx'] ?? true)) {
-            return $next($context);
-        }
+        // For now, assuming ADX is always enabled if settings exist, 
+        // or add an 'enable_adx' field to StrategyEntrySettings if needed.
+        $entrySettings = $context->bot->strategy->entrySettings;
 
         $adxArr = $context->indicators['adx'] ?? [];
         $adx = end($adxArr) ?: 0;
-        $minAdx = $context->bot->strategy->settings['min_adx'] ?? 20;
+        $minAdx = $entrySettings->adx_min ?? 20;
 
         if ($adx <= $minAdx) {
             $context->isBlocked = true;
