@@ -29,6 +29,9 @@ class StrategyEntrySettingsResource extends ModelResource
             Number::make('EMA Fast', 'ema_fast'),
             Number::make('EMA Slow', 'ema_slow'),
             Number::make('Min ADX', 'adx_min'),
+            Number::make('Trend ADX Threshold', 'trend_adx_threshold'),
+            Number::make('RSI Limit Sniper', 'rsi_limit_sniper'),
+            Number::make('RSI Limit Hybrid', 'rsi_limit_hybrid'),
         ];
     }
 
@@ -64,7 +67,19 @@ class StrategyEntrySettingsResource extends ModelResource
                 ->min(1),
 
             Number::make('Min ADX', 'adx_min')
-                ->default(20),
+                ->default(25),
+
+            Number::make('Trend ADX Threshold', 'trend_adx_threshold')
+                ->default(30)
+                ->min(1),
+
+            Number::make('RSI Limit Sniper', 'rsi_limit_sniper')
+                ->default(55)
+                ->step(0.01),
+
+            Number::make('RSI Limit Hybrid', 'rsi_limit_hybrid')
+                ->default(75)
+                ->step(0.01),
         ];
     }
 
@@ -79,6 +94,9 @@ class StrategyEntrySettingsResource extends ModelResource
             Number::make('EMA Fast', 'ema_fast'),
             Number::make('EMA Slow', 'ema_slow'),
             Number::make('Min ADX', 'adx_min'),
+            Number::make('Trend ADX Threshold', 'trend_adx_threshold'),
+            Number::make('RSI Limit Sniper', 'rsi_limit_sniper'),
+            Number::make('RSI Limit Hybrid', 'rsi_limit_hybrid'),
         ];
     }
 }

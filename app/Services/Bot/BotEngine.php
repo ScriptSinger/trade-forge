@@ -151,17 +151,20 @@ class BotEngine
         $price = $lastCandle['close'] ?? null;
 
         if ($context->isBlocked) {
-            // Если причина пустая, подставим дефолтную, чтобы не было пустых полей в MoonShine
             $reason = $context->reason ?: 'Rejected by strategy filters';
 
-            $this->logger->success(
-                $context->bot,
-                \App\Enums\TradeSignal::Hold,
-                $context->indicators,
-                $context->symbol,
-                $price,
-                $reason
-            );
+            if ($context->status === \App\Enums\TradeContextStatus::Failed) {
+                $this->logger->error($context->bot, $reason, $context->indicators, $context->symbol);
+            } else {
+                $this->logger->rejected(
+                    $context->bot,
+                    $reason,
+                    $context->indicators,
+                    $context->symbol,
+                    $price,
+                    \App\Enums\TradeSignal::Hold,
+                );
+            }
 
             Log::info("BotEngine: Symbol {$context->symbol} rejected [{$context->status->value}]. Reason: {$reason}");
         } elseif ($context->status === \App\Enums\TradeContextStatus::Executed) {

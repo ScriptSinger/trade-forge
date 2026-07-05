@@ -39,12 +39,8 @@ class OrderService
             $side = OrderSide::tryFrom(strtolower($side)) ?? OrderSide::Buy;
         }
 
-        // IMPORTANT: For Market BUY on Bybit Spot, $qty is in USDT.
-        // We need to store quantity in base asset (e.g. BTC) for positions.
+        // Pipeline quantity is always base-asset amount (coins).
         $actualQty = (float) $qty;
-        if ($side === OrderSide::Buy && $execPrice > 0) {
-            $actualQty = $qty / (float) $execPrice;
-        }
 
         return Order::create([
             'bot_id' => $bot->id,

@@ -2,17 +2,17 @@
 
 namespace App\Services\Bot\Strategy\Pipes;
 
-use App\Services\Bot\Strategy\TradeContext;
 use App\Enums\PositionStatus;
 use App\Enums\TradeContextStatus;
+use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
+use App\Services\Bot\Strategy\TradeContext;
 use Closure;
 use Illuminate\Support\Facades\Log;
 
 class CheckExistingPosition implements PipeContract
 {
-    /**
-     * Prevents entering a trade if a position for this symbol already exists.
-     */
+    use BlocksTradeContext;
+
     public function handle(TradeContext $context, Closure $next): mixed
     {
         $exists = $context->bot->positions()
@@ -21,13 +21,13 @@ class CheckExistingPosition implements PipeContract
             ->exists();
 
         if ($exists) {
-            $context->isBlocked = true;
-            $context->status = TradeContextStatus::Skipped;
-            $context->reason = "Position already exists for {$context->symbol}";
-            
             Log::info("Pipeline: Skipping {$context->symbol} - Position already exists.");
-            
-            return $context;
+
+            return $this->block(
+                $context,
+                "Position already exists for {$context->symbol}",
+                TradeContextStatus::Skipped,
+            );
         }
 
         return $next($context);

@@ -17,6 +17,9 @@ class StrategyEntrySettings extends Model
         'ema_fast',
         'ema_slow',
         'adx_min',
+        'trend_adx_threshold',
+        'rsi_limit_sniper',
+        'rsi_limit_hybrid',
     ];
 
     protected function casts(): array
@@ -27,6 +30,9 @@ class StrategyEntrySettings extends Model
             'ema_fast' => 'integer',
             'ema_slow' => 'integer',
             'adx_min' => 'float',
+            'trend_adx_threshold' => 'integer',
+            'rsi_limit_sniper' => 'float',
+            'rsi_limit_hybrid' => 'float',
         ];
     }
 

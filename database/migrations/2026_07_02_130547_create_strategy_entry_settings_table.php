@@ -24,7 +24,10 @@ return new class extends Migration
             $table->unsignedInteger('ema_fast')->default(50);
             $table->unsignedInteger('ema_slow')->default(200);
 
-            $table->decimal('adx_min', 5, 2)->default(20);
+            $table->decimal('adx_min', 5, 2)->default(25);
+            $table->unsignedInteger('trend_adx_threshold')->default(30);
+            $table->decimal('rsi_limit_sniper', 5, 2)->default(55);
+            $table->decimal('rsi_limit_hybrid', 5, 2)->default(75);
 
             $table->timestamps();
         });

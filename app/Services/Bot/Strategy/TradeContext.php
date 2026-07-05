@@ -27,6 +27,7 @@ class TradeContext
         public TradeSignal $signal = TradeSignal::Hold,
         public float $stopLoss = 0,
         public float $takeProfit = 0,
+        /** Base-asset quantity (coins), not USDT. */
         public float $quantity = 0,
         public string $mode = 'Sniper',
         public bool $isBlocked = false,

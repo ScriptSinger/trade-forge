@@ -28,22 +28,34 @@ class BtcTrendService
             (string) ($filter->benchmark_interval ?? 60),
         );
 
-        if (empty($candles)) {
+        return $this->isBullishFromCandles(
+            $candles,
+            (int) $filter->ema_fast,
+            (int) $filter->ema_slow,
+        );
+    }
+
+    public function isBullishFromCandles(array $rawCandles, int $emaFast, int $emaSlow): bool
+    {
+        if (empty($rawCandles)) {
             return false;
         }
 
         $closePrices = array_map(
             fn (array $candle) => (float) $candle[4],
-            array_reverse($candles),
+            array_reverse($rawCandles),
         );
 
-        $emaFast = end($this->indicators->ema($closePrices, (int) $filter->ema_fast)) ?: 0;
-        $emaSlow = end($this->indicators->ema($closePrices, (int) $filter->ema_slow)) ?: 0;
+        $emaFastArr = $this->indicators->ema($closePrices, $emaFast);
+        $emaSlowArr = $this->indicators->ema($closePrices, $emaSlow);
 
-        if ($emaFast <= 0 || $emaSlow <= 0) {
+        $fast = end($emaFastArr) ?: 0;
+        $slow = end($emaSlowArr) ?: 0;
+
+        if ($fast <= 0 || $slow <= 0) {
             return false;
         }
 
-        return $emaFast > $emaSlow;
+        return $fast > $slow;
     }
 }
