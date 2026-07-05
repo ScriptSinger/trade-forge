@@ -9,13 +9,11 @@ use App\Enums\BotStatus;
 use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use App\Models\Bot;
-use App\Models\BotStat;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\StrategyBtcTrendFilter;
 use App\Models\StrategyEntrySettings;
 use App\Models\StrategyRiskSettings;
-use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -98,7 +96,7 @@ class TradingDemoSeeder extends Seeder
             ],
         );
 
-        $bot = Bot::query()->updateOrCreate(
+        Bot::query()->updateOrCreate(
             [
                 'user_id' => $user->id,
                 'exchange_account_id' => $exchangeAccount->id,
@@ -108,38 +106,6 @@ class TradingDemoSeeder extends Seeder
             [
                 'status' => BotStatus::Active->value,
                 'last_run_at' => null,
-            ],
-        );
-
-        Trade::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'symbol' => 'BTCUSDT',
-                'opened_at' => $now->subDay(),
-                'closed_at' => $now->subDay()->addHours(6),
-            ],
-            [
-                'entry_price' => '92000.00000000',
-                'exit_price' => '94800.00000000',
-                'quantity' => '0.01000000',
-                'profit_loss' => '28.00000000',
-                'profit_percent' => '3.04',
-                'fees' => '1.50000000',
-            ],
-        );
-
-        BotStat::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'date' => $now->startOfDay(),
-            ],
-            [
-                'total_trades' => 1,
-                'wins' => 1,
-                'losses' => 0,
-                'winrate' => '100.00',
-                'profit' => '28.00000000',
-                'fees' => '1.50000000',
             ],
         );
     }
