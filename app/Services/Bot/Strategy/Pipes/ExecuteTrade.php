@@ -4,14 +4,13 @@ namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Enums\TradeContextStatus;
 use App\Enums\TradeSignal;
-use App\Services\Bot\BotRunLogger;
+use App\Services\Bot\TradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Order\OrderService;
 use App\Services\Position\PositionService;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class ExecuteTrade implements PipeContract
 {
@@ -21,7 +20,7 @@ class ExecuteTrade implements PipeContract
         private BybitExchangeService $exchange,
         private OrderService $orders,
         private PositionService $positions,
-        private BotRunLogger $logger
+        private TradingLogger $log,
     ) {}
 
     public function handle(TradeContext $context, Closure $next): mixed
@@ -34,15 +33,19 @@ class ExecuteTrade implements PipeContract
             return $this->block($context, 'Invalid order quantity');
         }
 
-        Log::info("Pipeline: EXECUTING trade for {$context->symbol} ({$context->mode} mode)");
-
         $bot = $context->bot;
         $account = $bot->exchangeAccount;
         $signal = $context->signal;
         $qty = $context->quantity;
         $price = (float) $context->lastCandle()['close'];
 
-        $this->logger->log($bot, $signal, $price, $context->indicators, $context->symbol);
+        $this->log->orderInfo('Executing trade', [
+            'bot_id' => $bot->id,
+            'symbol' => $context->symbol,
+            'mode' => $context->mode,
+            'qty' => $qty,
+            'price' => $price,
+        ]);
 
         $orderResponse = $this->exchange->placeMarketOrder(
             account: $account,
@@ -51,7 +54,10 @@ class ExecuteTrade implements PipeContract
             qty: $qty,
         );
 
-        Log::info('Pipeline: Exchange response: ' . json_encode($orderResponse));
+        $this->log->orderDebug('Exchange response', [
+            'symbol' => $context->symbol,
+            'response' => $orderResponse,
+        ]);
 
         $retCode = (int) ($orderResponse['retCode'] ?? -1);
 
@@ -81,14 +87,20 @@ class ExecuteTrade implements PipeContract
         );
 
         $context->status = TradeContextStatus::Executed;
-        $this->logger->success($bot, $signal, [
-            'price' => $price,
-            'qty' => $qty,
-            'order_id' => $order->id ?? null,
-            'mode' => $context->mode,
-            'sl' => $context->stopLoss,
-            'tp' => $context->takeProfit,
-        ], $context->symbol, $price, "Order placed successfully ({$context->mode} mode)");
+
+        $this->log->auditOrderPlaced(
+            bot: $bot,
+            signal: $signal,
+            indicators: $context->indicators,
+            symbol: $context->symbol,
+            price: $price,
+            quantity: $qty,
+            mode: $context->mode,
+            stopLoss: $context->stopLoss,
+            takeProfit: $context->takeProfit,
+            orderId: $order->id ?? null,
+            reason: "Order placed successfully ({$context->mode} mode)",
+        );
 
         return $context;
     }

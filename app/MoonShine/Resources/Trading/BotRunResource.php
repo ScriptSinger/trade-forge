@@ -32,7 +32,7 @@ final class BotRunResource extends TradingResource
 
     protected string $column = 'symbol';
 
-    protected array $with = ['bot'];
+    protected array $with = ['bot', 'order'];
 
 
     protected bool $isAsync = true;
@@ -61,6 +61,13 @@ final class BotRunResource extends TradingResource
             ),
             Text::make('Пара', 'symbol')->sortable(),
             Number::make('Цена', 'market_price')->sortable(),
+            Number::make('Кол-во', 'quantity')->sortable(),
+            Preview::make('Сумма USDT', 'quantity', function (BotRun $item) {
+                $notional = $item->notionalUsdt();
+
+                return $notional !== null ? number_format($notional, 2) . ' USDT' : '—';
+            }),
+            Text::make('Режим', 'mode'),
             Enum::make('Сигнал', 'signal')
                 ->attach(TradeSignal::class)
                 ->badge(fn($value) => match ($value?->value ?? $value) {
@@ -90,7 +97,7 @@ final class BotRunResource extends TradingResource
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'document-text',
                     type: 'info',
-                )->content('<b>Логи ботов</b> — это журнал анализа рынка. Каждая запись показывает данные, на основе которых бот принимал решение в конкретный момент времени. Редактирование истории запрещено для обеспечения достоверности данных.')
+                )->content('<b>Логи ботов</b> — журнал значимых событий: вход в позицию, выход, ошибки. Для исполненных сделок отображаются объём, сумма в USDT, SL/TP и связанный ордер.')
             )->withoutWrapper(),
 
             ID::make(),
@@ -101,7 +108,21 @@ final class BotRunResource extends TradingResource
                 resource: BotResource::class,
             ),
             Text::make('Торговая пара', 'symbol'),
-            Number::make('Рыночная цена (на момент анализа)', 'market_price'),
+            Number::make('Рыночная цена (на момент сделки)', 'market_price'),
+            Number::make('Количество (base asset)', 'quantity'),
+            Preview::make('Сумма сделки (USDT)', 'quantity', function (BotRun $item) {
+                $notional = $item->notionalUsdt();
+
+                return $notional !== null ? number_format($notional, 2) . ' USDT' : '—';
+            }),
+            Text::make('Режим стратегии', 'mode'),
+            Number::make('Stop Loss', 'stop_loss'),
+            Number::make('Take Profit', 'take_profit'),
+            BelongsTo::make(
+                'Ордер',
+                'order',
+                resource: OrderResource::class,
+            ),
             Enum::make('Сигнал стратегии', 'signal')
                 ->attach(TradeSignal::class)
                 ->badge(fn($value) => match ($value?->value ?? $value) {

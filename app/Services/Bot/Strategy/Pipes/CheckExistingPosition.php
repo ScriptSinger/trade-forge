@@ -4,14 +4,15 @@ namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Enums\PositionStatus;
 use App\Enums\TradeContextStatus;
+use App\Services\Bot\Concerns\ResolvesTradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class CheckExistingPosition implements PipeContract
 {
     use BlocksTradeContext;
+    use ResolvesTradingLogger;
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
@@ -21,7 +22,9 @@ class CheckExistingPosition implements PipeContract
             ->exists();
 
         if ($exists) {
-            Log::info("Pipeline: Skipping {$context->symbol} - Position already exists.");
+            $this->tradingLog()->strategyDebug('Skipping symbol, position already exists', [
+                'symbol' => $context->symbol,
+            ]);
 
             return $this->block(
                 $context,

@@ -10,16 +10,15 @@ use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
 use App\Enums\TradeSignal;
-use App\Services\Bot\BotRunLogger;
 use App\Services\Bot\DailyPerformanceService;
+use App\Services\Bot\TradingLogger;
 use App\Services\Exchange\BybitExchangeService;
-use Illuminate\Support\Facades\Log;
 
 class PositionService
 {
     public function __construct(
         private BybitExchangeService $exchange,
-        private BotRunLogger $logger,
+        private TradingLogger $log,
         private DailyPerformanceService $dailyPerformance,
     ) {}
 
@@ -37,7 +36,10 @@ class PositionService
             return;
         }
 
-        Log::info("PositionService: Checking " . $positions->count() . " positions for bot #{$bot->id}");
+        $this->log->orderDebug('Monitoring open positions', [
+            'bot_id' => $bot->id,
+            'count' => $positions->count(),
+        ]);
 
         foreach ($positions as $position) {
             if ($sidewaysStop && $this->isSniperMode($position)) {
@@ -79,13 +81,12 @@ class PositionService
     private function checkPosition(Position $position): void
     {
         $currentPrice = $this->exchange->getTicker($position->bot->exchangeAccount, $position->symbol);
-        
+
         if ($currentPrice <= 0) return;
 
         $entryPrice = (float) $position->entry_price;
         $pnlPct = (($currentPrice - $entryPrice) / $entryPrice) * 100;
 
-        // Обновляем данные для Дашборда
         $position->update([
             'current_price' => $currentPrice,
             'pnl_pct' => $pnlPct,
@@ -93,7 +94,6 @@ class PositionService
 
         $mode = $this->resolvePositionMode($position);
 
-        // Логика выхода (SL/TP)
         if ($position->sl > 0 && $currentPrice <= $position->sl) {
             $this->executeExit($position, $currentPrice, 'Stop Loss');
         } elseif ($mode === 'Sniper' && $position->tp > 0 && $currentPrice >= $position->tp) {
@@ -105,7 +105,6 @@ class PositionService
 
     private function handleHybridLogic(Position $position, float $currentPrice): void
     {
-        // Продажа 50% и активация Трейлинга
         if (!$position->half_sold && $position->tp > 0 && $currentPrice >= $position->tp) {
             $position->update([
                 'half_sold' => true,
@@ -113,16 +112,21 @@ class PositionService
                 'trailing_active' => true,
                 'sl' => $position->entry_price * 1.0025,
             ]);
-            $this->logger->info($position->bot, "HYBRID_HALF_SELL", ['price' => $currentPrice], $position->symbol);
+
+            $this->log->auditTradeEvent(
+                $position->bot,
+                'HYBRID_HALF_SELL',
+                ['price' => $currentPrice],
+                $position->symbol,
+            );
         }
 
-        // Подтяжка стопа (Трейлинг)
         if ($position->trailing_active) {
             $trailingPct = (float) ($position->bot->strategy->riskSettings?->trailing_pct ?? 1.5);
             $multiplier = (100 - $trailingPct) / 100;
-            
-            $dynamicSl = $currentPrice * $multiplier; 
-            
+
+            $dynamicSl = $currentPrice * $multiplier;
+
             if ($dynamicSl > $position->sl) {
                 $position->update(['sl' => $dynamicSl]);
             }
@@ -131,7 +135,12 @@ class PositionService
 
     private function executeExit(Position $position, float $price, string $reason): void
     {
-        Log::info("PositionService: CLOSING {$position->symbol} ({$reason}) at {$price}");
+        $this->log->orderInfo('Closing position', [
+            'bot_id' => $position->bot_id,
+            'symbol' => $position->symbol,
+            'reason' => $reason,
+            'price' => $price,
+        ]);
 
         $this->exchange->placeMarketOrder($position->bot->exchangeAccount, $position->symbol, 'sell', $position->quantity);
 
@@ -150,7 +159,16 @@ class PositionService
         $this->dailyPerformance->recordClosedTrade($trade);
 
         $position->update(['status' => PositionStatus::Closed, 'exit_reason' => $reason, 'closed_at' => now()]);
-        $this->logger->success($position->bot, TradeSignal::Sell, ['reason' => $reason, 'price' => $price], $position->symbol);
+
+        $this->log->auditPositionExit(
+            bot: $position->bot,
+            signal: TradeSignal::Sell,
+            symbol: $position->symbol,
+            price: $price,
+            quantity: (float) $position->quantity,
+            reason: $reason,
+            mode: $this->resolvePositionMode($position),
+        );
     }
 
     private function openPosition(

@@ -28,6 +28,10 @@ class BotRunFactory extends Factory
                 'rsi' => 52.1,
             ],
             'reason' => fake()->sentence(),
+            'quantity' => fake()->randomFloat(8, 0.001, 1),
+            'mode' => 'Sniper',
+            'stop_loss' => fake()->randomFloat(8, 10000, 90000),
+            'take_profit' => fake()->randomFloat(8, 100000, 120000),
             'status' => BotRunStatus::Success->value,
         ];
     }

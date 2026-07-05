@@ -8,12 +8,12 @@ use App\Models\Trade;
 use App\Services\Exchange\BybitExchangeService;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class DailyPerformanceService
 {
     public function __construct(
         private BybitExchangeService $exchange,
+        private TradingLogger $log,
     ) {}
 
     public function tradingDay(?CarbonInterface $at = null): CarbonInterface
@@ -48,7 +48,7 @@ class DailyPerformanceService
         $balance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
 
         if ($balance === null || $balance <= 0) {
-            Log::channel('bot')->warning('DailyPerformance: could not capture start_balance', [
+            $this->log->botWarning('DailyPerformance: could not capture start_balance', [
                 'bot_id' => $bot->id,
             ]);
 

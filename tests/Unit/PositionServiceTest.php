@@ -15,7 +15,7 @@ use App\Models\Position;
 use App\Models\Strategy;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
-use App\Services\Bot\BotRunLogger;
+use App\Services\Bot\TradingLogger;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Position\PositionService;
@@ -97,7 +97,7 @@ class PositionServiceTest extends TestCase
     {
         return new PositionService(
             Mockery::mock(BybitExchangeService::class),
-            Mockery::mock(BotRunLogger::class),
+            Mockery::mock(TradingLogger::class),
             Mockery::mock(DailyPerformanceService::class),
         );
     }

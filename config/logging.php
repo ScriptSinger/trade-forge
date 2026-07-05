@@ -133,35 +133,35 @@ return [
         'bot' => [
             'driver' => 'daily',
             'path' => storage_path('logs/bot.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_BOT_LEVEL', env('LOG_LEVEL', 'info')),
             'days' => 14,
         ],
 
         'exchange' => [
             'driver' => 'daily',
             'path' => storage_path('logs/exchange.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_EXCHANGE_LEVEL', env('LOG_LEVEL', 'info')),
             'days' => 14,
         ],
 
         'strategy' => [
             'driver' => 'daily',
             'path' => storage_path('logs/strategy.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_STRATEGY_LEVEL', env('LOG_LEVEL', 'info')),
             'days' => 14,
         ],
 
         'orders' => [
             'driver' => 'daily',
             'path' => storage_path('logs/orders.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_ORDERS_LEVEL', env('LOG_LEVEL', 'info')),
             'days' => 30,
         ],
 
         'risk' => [
             'driver' => 'daily',
             'path' => storage_path('logs/risk.log'),
-            'level' => env('LOG_LEVEL', 'debug'),
+            'level' => env('LOG_RISK_LEVEL', env('LOG_LEVEL', 'info')),
             'days' => 30,
         ],
     ],

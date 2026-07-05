@@ -2,15 +2,16 @@
 
 namespace App\Services\Bot\Strategy\Pipes;
 
+use App\Services\Bot\Concerns\ResolvesTradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use App\Services\Strategy\TechnicalIndicatorService;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class CalculateIndicators implements PipeContract
 {
     use BlocksTradeContext;
+    use ResolvesTradingLogger;
 
     public function __construct(
         private TechnicalIndicatorService $indicators
@@ -18,7 +19,9 @@ class CalculateIndicators implements PipeContract
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
-        Log::info("Pipeline: Calculating indicators for {$context->symbol}");
+        $this->tradingLog()->strategyDebug('Calculating indicators', [
+            'symbol' => $context->symbol,
+        ]);
 
         $mappedCandles = array_map(function ($c) {
             return [

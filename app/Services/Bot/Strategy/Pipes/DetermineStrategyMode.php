@@ -3,14 +3,15 @@
 namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Enums\TradeSignal;
+use App\Services\Bot\Concerns\ResolvesTradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class DetermineStrategyMode implements PipeContract
 {
     use BlocksTradeContext;
+    use ResolvesTradingLogger;
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
@@ -34,7 +35,13 @@ class DetermineStrategyMode implements PipeContract
             $rsiLimit = $rsiSniper;
         }
 
-        Log::info("Pipeline: Mode determined as {$context->mode} (ADX: {$adx}, RSI: {$rsi}, Limit: {$rsiLimit})");
+        $this->tradingLog()->strategyDebug('Strategy mode determined', [
+            'symbol' => $context->symbol,
+            'mode' => $context->mode,
+            'adx' => $adx,
+            'rsi' => $rsi,
+            'rsi_limit' => $rsiLimit,
+        ]);
 
         if ($rsi > $rsiLimit) {
             return $this->block($context, "Overbought for {$context->mode} mode (RSI: {$rsi} > {$rsiLimit})");

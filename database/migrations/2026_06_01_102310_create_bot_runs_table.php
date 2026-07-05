@@ -24,6 +24,12 @@ return new class extends Migration
             $table->json('indicators')->nullable(); // EMA, RSI, ADX
             $table->text('reason')->nullable();
 
+            $table->decimal('quantity', 18, 8)->nullable();
+            $table->string('mode')->nullable();
+            $table->decimal('stop_loss', 18, 8)->nullable();
+            $table->decimal('take_profit', 18, 8)->nullable();
+            $table->unsignedBigInteger('order_id')->nullable();
+
             $table->string('status')->default('success');
 
 

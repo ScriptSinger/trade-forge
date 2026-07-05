@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\Bot\BtcTrendService;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Bot\SidewaysMarketGuard;
+use App\Services\Bot\TradingLogger;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -145,6 +146,10 @@ class SidewaysMarketGuardTest extends TestCase
         $btcTrend = Mockery::mock(BtcTrendService::class);
         $btcTrend->shouldReceive('isBullish')->andReturn($btcBullish);
 
-        return new SidewaysMarketGuard($performance, $btcTrend);
+        $log = Mockery::mock(TradingLogger::class);
+        $log->shouldReceive('riskInfo')->zeroOrMoreTimes();
+        $log->shouldReceive('riskDebug')->zeroOrMoreTimes();
+
+        return new SidewaysMarketGuard($performance, $btcTrend, $log);
     }
 }

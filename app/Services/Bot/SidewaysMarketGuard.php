@@ -3,13 +3,13 @@
 namespace App\Services\Bot;
 
 use App\Models\Bot;
-use Illuminate\Support\Facades\Log;
 
 class SidewaysMarketGuard
 {
     public function __construct(
         private DailyPerformanceService $performance,
         private BtcTrendService $btcTrend,
+        private TradingLogger $log,
     ) {}
 
     /**
@@ -29,7 +29,7 @@ class SidewaysMarketGuard
         $startBalance = $this->performance->startBalance($bot);
 
         if ($startBalance <= 0) {
-            Log::channel('bot')->debug('SidewaysMarketGuard: skipped, no start_balance', [
+            $this->log->riskDebug('SidewaysMarketGuard skipped, no start_balance', [
                 'bot_id' => $bot->id,
             ]);
 
@@ -44,7 +44,7 @@ class SidewaysMarketGuard
         }
 
         if ($this->btcTrend->isBullish($bot)) {
-            Log::channel('bot')->info('SidewaysMarketGuard: target reached but BTC bullish, trading continues', [
+            $this->log->riskInfo('SidewaysMarketGuard: target reached but BTC bullish, trading continues', [
                 'bot_id' => $bot->id,
                 'profit_pct' => round($profitPct, 2),
                 'target_pct' => $targetPct,
@@ -53,7 +53,7 @@ class SidewaysMarketGuard
             return false;
         }
 
-        Log::channel('bot')->info('SidewaysMarketGuard: blocking new entries', [
+        $this->log->riskInfo('SidewaysMarketGuard: blocking new entries', [
             'bot_id' => $bot->id,
             'profit_pct' => round($profitPct, 2),
             'target_pct' => $targetPct,

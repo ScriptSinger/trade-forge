@@ -79,8 +79,19 @@ class BotRunLogger
     /**
      * Log a successful completion of the bot run.
      */
-    public function success(Bot $bot, TradeSignal|string $signal, array $context = [], ?string $symbol = null, $price = null, ?string $reason = null): void
-    {
+    public function success(
+        Bot $bot,
+        TradeSignal|string $signal,
+        array $indicators = [],
+        ?string $symbol = null,
+        $price = null,
+        ?string $reason = null,
+        ?float $quantity = null,
+        ?string $mode = null,
+        ?float $stopLoss = null,
+        ?float $takeProfit = null,
+        ?int $orderId = null,
+    ): void {
         if (is_string($signal)) {
             $signal = TradeSignal::tryFrom(strtolower($signal)) ?? TradeSignal::Hold;
         }
@@ -88,10 +99,15 @@ class BotRunLogger
         $bot->runs()->create([
             'symbol' => $symbol ?? 'N/A',
             'signal' => $signal,
-            'indicators' => $context,
+            'indicators' => $indicators,
             'reason' => $reason,
             'status' => BotRunStatus::Success,
             'market_price' => $price,
+            'quantity' => $quantity,
+            'mode' => $mode,
+            'stop_loss' => $stopLoss,
+            'take_profit' => $takeProfit,
+            'order_id' => $orderId,
         ]);
     }
 }

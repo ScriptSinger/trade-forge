@@ -12,6 +12,7 @@ use App\Models\Strategy;
 use App\Models\Trade;
 use App\Models\User;
 use App\Services\Bot\DailyPerformanceService;
+use App\Services\Bot\TradingLogger;
 use App\Services\Exchange\BybitExchangeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -39,7 +40,10 @@ class DailyPerformanceServiceTest extends TestCase
             'profit' => 23,
         ]);
 
-        $service = new DailyPerformanceService(Mockery::mock(BybitExchangeService::class));
+        $service = new DailyPerformanceService(
+            Mockery::mock(BybitExchangeService::class),
+            Mockery::mock(TradingLogger::class),
+        );
 
         $this->assertEqualsWithDelta(2.3, $service->profitPct($bot), 0.001);
     }
@@ -64,7 +68,10 @@ class DailyPerformanceServiceTest extends TestCase
             'closed_at' => now(),
         ]);
 
-        $service = new DailyPerformanceService(Mockery::mock(BybitExchangeService::class));
+        $service = new DailyPerformanceService(
+            Mockery::mock(BybitExchangeService::class),
+            Mockery::mock(TradingLogger::class),
+        );
         $service->recordClosedTrade($trade);
 
         $stat = BotStat::query()->where('bot_id', $bot->id)->first();

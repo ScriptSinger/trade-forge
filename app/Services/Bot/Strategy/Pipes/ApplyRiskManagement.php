@@ -2,14 +2,15 @@
 
 namespace App\Services\Bot\Strategy\Pipes;
 
+use App\Services\Bot\Concerns\ResolvesTradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use Closure;
-use Illuminate\Support\Facades\Log;
 
 class ApplyRiskManagement implements PipeContract
 {
     use BlocksTradeContext;
+    use ResolvesTradingLogger;
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
@@ -44,7 +45,12 @@ class ApplyRiskManagement implements PipeContract
         // Base-asset quantity (coins), aligned with Python: risk_usdt / (entry - sl)
         $context->quantity = $riskAmountUsdt / $priceRisk;
 
-        Log::info("Pipeline: Risk applied for {$context->symbol}. SL: {$context->stopLoss}, TP: {$context->takeProfit}, Qty: {$context->quantity}");
+        $this->tradingLog()->riskDebug('Risk applied', [
+            'symbol' => $context->symbol,
+            'sl' => $context->stopLoss,
+            'tp' => $context->takeProfit,
+            'qty' => $context->quantity,
+        ]);
 
         return $next($context);
     }

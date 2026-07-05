@@ -3,11 +3,13 @@
 namespace App\Services\Exchange;
 
 use App\Models\ExchangeAccount;
+use App\Services\Bot\Concerns\ResolvesTradingLogger;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class BybitExchangeService
 {
+    use ResolvesTradingLogger;
+
     /*
     |--------------------------------------------------------------------------
     | MARKET DATA (SPOT)
@@ -25,10 +27,12 @@ class BybitExchangeService
     public function getTicker(ExchangeAccount $account, string $symbol): float
     {
         $url = $this->baseUrl($account) . '/v5/market/tickers';
-        
-        Log::info("Bybit Request: GET {$url}", [
+
+        $this->tradingLog()->exchangeDebug('Bybit request', [
+            'method' => 'GET',
+            'url' => $url,
             'category' => 'spot',
-            'symbol' => $symbol
+            'symbol' => $symbol,
         ]);
 
         $response = Http::get($url, [
@@ -43,8 +47,10 @@ class BybitExchangeService
     {
         $url = $this->baseUrl($account) . '/v5/market/tickers';
 
-        Log::info("Bybit Request: GET {$url}", [
-            'category' => 'spot'
+        $this->tradingLog()->exchangeDebug('Bybit request', [
+            'method' => 'GET',
+            'url' => $url,
+            'category' => 'spot',
         ]);
 
         $response = Http::get($url, [
@@ -58,10 +64,12 @@ class BybitExchangeService
     {
         $url = $this->baseUrl($account) . '/v5/market/kline';
 
-        Log::info("Bybit Request: GET {$url}", [
+        $this->tradingLog()->exchangeDebug('Bybit request', [
+            'method' => 'GET',
+            'url' => $url,
             'category' => 'spot',
             'symbol' => $symbol,
-            'interval' => $interval
+            'interval' => $interval,
         ]);
 
         $response = Http::get($url, [
@@ -83,13 +91,17 @@ class BybitExchangeService
     public function getWalletBalance(ExchangeAccount $account, string $coin = 'USDT'): array
     {
         $url = $this->baseUrl($account) . '/v5/account/wallet-balance';
-        
+
         $params = [
-            'accountType' => 'UNIFIED', 
+            'accountType' => 'UNIFIED',
             'coin' => $coin,
         ];
 
-        Log::info("Bybit Request: GET {$url}", $params);
+        $this->tradingLog()->exchangeDebug('Bybit request', [
+            'method' => 'GET',
+            'url' => $url,
+            'params' => $params,
+        ]);
 
         $response = Http::withHeaders(
             $this->authHeaders($account, $params, 'GET')
@@ -133,12 +145,16 @@ class BybitExchangeService
         $payload = [
             'category' => 'spot',
             'symbol' => $symbol,
-            'side' => ucfirst(strtolower($side)), // Buy / Sell
+            'side' => ucfirst(strtolower($side)),
             'orderType' => 'Market',
             'qty' => (string) $qty,
         ];
 
-        Log::info("Bybit Request: POST {$url}", $payload);
+        $this->tradingLog()->exchangeDebug('Bybit request', [
+            'method' => 'POST',
+            'url' => $url,
+            'payload' => $payload,
+        ]);
 
         try {
             $response = Http::withHeaders(
@@ -147,11 +163,15 @@ class BybitExchangeService
 
             return $response->json();
         } catch (\Exception $e) {
-            Log::error("Bybit Order Error: " . $e->getMessage());
+            $this->tradingLog()->exchangeError('Bybit order request failed', [
+                'symbol' => $symbol,
+                'exception' => $e->getMessage(),
+            ]);
+
             return [
                 'retCode' => -1,
                 'retMsg' => 'Exception: ' . $e->getMessage(),
-                'result' => []
+                'result' => [],
             ];
         }
     }
@@ -176,7 +196,7 @@ class BybitExchangeService
     private function authHeaders(ExchangeAccount $account, array $payload, string $method = 'POST'): array
     {
         $timestamp = (string) round(microtime(true) * 1000);
-        
+
         if ($method === 'GET') {
             $body = http_build_query($payload);
         } else {

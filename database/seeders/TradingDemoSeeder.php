@@ -22,6 +22,9 @@ use App\Models\ExchangeAccount;
 use App\Models\Order;
 use App\Models\Position;
 use App\Models\Strategy;
+use App\Models\StrategyBtcTrendFilter;
+use App\Models\StrategyEntrySettings;
+use App\Models\StrategyRiskSettings;
 use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -45,6 +48,44 @@ class TradingDemoSeeder extends Seeder
             [
                 'type' => StrategyType::Trend->value,
                 'is_active' => true,
+            ],
+        );
+
+        StrategyEntrySettings::query()->updateOrCreate(
+            ['strategy_id' => $strategy->id],
+            [
+                'interval' => 1,
+                'period' => 20,
+                'ema_fast' => 50,
+                'ema_slow' => 200,
+                'adx_min' => 25,
+                'trend_adx_threshold' => 30,
+                'rsi_limit_sniper' => 55,
+                'rsi_limit_hybrid' => 75,
+            ],
+        );
+
+        StrategyRiskSettings::query()->updateOrCreate(
+            ['strategy_id' => $strategy->id],
+            [
+                'sl_multiplier' => 2.0,
+                'tp_multiplier' => 3.0,
+                'trailing_pct' => 1.5,
+                'max_positions' => 3,
+                'max_risk_per_trade' => 1.0,
+                'daily_target_enabled' => true,
+                'daily_profit_target_pct' => 2.30,
+            ],
+        );
+
+        StrategyBtcTrendFilter::query()->updateOrCreate(
+            ['strategy_id' => $strategy->id],
+            [
+                'enabled' => true,
+                'benchmark_symbol' => 'BTCUSDT',
+                'benchmark_interval' => 60,
+                'ema_fast' => 50,
+                'ema_slow' => 200,
             ],
         );
 
@@ -78,27 +119,7 @@ class TradingDemoSeeder extends Seeder
             ],
         );
 
-        BotRun::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'symbol' => 'BTCUSDT',
-                'market_price' => '95000.00000000',
-                'signal' => TradeSignal::Buy->value,
-                'status' => BotRunStatus::Success->value,
-            ],
-            [
-                'indicators' => [
-                    'ema_fast' => 94850.12,
-                    'ema_slow' => 94120.83,
-                    'rsi' => 54.32,
-                    'adx' => 21.8,
-                    'atr' => 840.15,
-                ],
-                'reason' => 'Trend remains strong and RSI is not overbought.',
-            ],
-        );
-
-        Order::query()->updateOrCreate(
+        $order = Order::query()->updateOrCreate(
             [
                 'bot_id' => $bot->id,
                 'exchange_account_id' => $exchangeAccount->id,
@@ -118,24 +139,59 @@ class TradingDemoSeeder extends Seeder
             ],
         );
 
-        // Position::query()->updateOrCreate(
-        //     [
-        //         'bot_id' => $bot->id,
-        //         'symbol' => 'BTCUSDT',
-        //         'status' => PositionStatus::Open->value,
-        //     ],
-        //     [
-        //         'entry_price' => '95000.00000000',
-        //         'quantity' => '0.01000000',
-        //         'sl' => '93000.00000000',
-        //         'tp' => '98000.00000000',
-        //         'be_activated' => true,
-        //         'trailing_active' => false,
-        //         'half_sold' => false,
-        //         'opened_at' => $now->subHours(4),
-        //         'closed_at' => null,
-        //     ],
-        // );
+        $runPayload = [
+            'market_price' => '95000.00000000',
+            'quantity' => '0.01000000',
+            'mode' => 'Sniper',
+            'stop_loss' => '93000.00000000',
+            'take_profit' => '98000.00000000',
+            'order_id' => $order->id,
+            'signal' => TradeSignal::Buy->value,
+            'status' => BotRunStatus::Success->value,
+            'indicators' => [
+                'ema_fast' => 94850.12,
+                'ema_slow' => 94120.83,
+                'rsi' => 54.32,
+                'adx' => 21.8,
+                'atr' => 840.15,
+            ],
+            'reason' => 'Order placed successfully (Sniper mode)',
+        ];
+
+        $run = BotRun::query()
+            ->where('bot_id', $bot->id)
+            ->where('symbol', 'BTCUSDT')
+            ->first();
+
+        if ($run) {
+            $run->forceFill($runPayload)->save();
+        } else {
+            BotRun::query()->create([
+                'bot_id' => $bot->id,
+                'symbol' => 'BTCUSDT',
+                ...$runPayload,
+            ]);
+        }
+
+        Position::query()->updateOrCreate(
+            [
+                'bot_id' => $bot->id,
+                'symbol' => 'BTCUSDT',
+                'status' => PositionStatus::Open->value,
+            ],
+            [
+                'mode' => 'Sniper',
+                'entry_price' => '95000.00000000',
+                'quantity' => '0.01000000',
+                'sl' => '93000.00000000',
+                'tp' => '98000.00000000',
+                'be_activated' => true,
+                'trailing_active' => false,
+                'half_sold' => false,
+                'opened_at' => $now->subHours(4),
+                'closed_at' => null,
+            ],
+        );
 
         Trade::query()->updateOrCreate(
             [
