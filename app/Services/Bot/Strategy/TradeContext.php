@@ -2,13 +2,14 @@
 
 namespace App\Services\Bot\Strategy;
 
+use App\Models\Bot;
 use App\Enums\TradeSignal;
 use App\Enums\TradeContextStatus;
 
 class TradeContext
 {
     public function __construct(
-        public int $botId,
+        public Bot $bot,
         public string $symbol,
         
         public array $candles = [],
@@ -42,5 +43,10 @@ class TradeContext
     {
         $count = count($this->candles);
         return $count >= 2 ? $this->candles[$count - 2] : null;
+    }
+
+    public function botId(): int
+    {
+        return $this->bot->id;
     }
 }

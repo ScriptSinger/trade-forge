@@ -19,6 +19,7 @@ class PositionFactory extends Factory
         return [
             'bot_id' => Bot::factory(),
             'symbol' => 'BTCUSDT',
+            'mode' => 'Sniper',
             'entry_price' => fake()->randomFloat(8, 10000, 100000),
             'quantity' => fake()->randomFloat(8, 0.001, 0.5),
             'sl' => fake()->optional()->randomFloat(8, 9000, 99000),

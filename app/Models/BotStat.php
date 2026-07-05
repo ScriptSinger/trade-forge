@@ -13,6 +13,8 @@ class BotStat extends Model
     protected $fillable = [
         'bot_id',
         'date',
+        'start_balance',
+        'start_balance_at',
         'total_trades',
         'wins',
         'losses',
@@ -25,6 +27,8 @@ class BotStat extends Model
     {
         return [
             'date' => 'date',
+            'start_balance' => 'decimal:8',
+            'start_balance_at' => 'datetime',
             'total_trades' => 'integer',
             'wins' => 'integer',
             'losses' => 'integer',

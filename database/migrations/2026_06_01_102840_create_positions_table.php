@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('bot_id')->constrained()->cascadeOnDelete();
 
             $table->string('symbol');
+            $table->string('mode', 16)->default('Sniper');
 
             $table->decimal('entry_price', 18, 8);
             $table->decimal('current_price', 18, 8)->nullable();

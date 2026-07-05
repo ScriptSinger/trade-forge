@@ -18,6 +18,9 @@ return new class extends Migration
 
             $table->date('date');
 
+            $table->decimal('start_balance', 18, 8)->nullable();
+            $table->timestamp('start_balance_at')->nullable();
+
             $table->integer('total_trades')->default(0);
             $table->integer('wins')->default(0);
             $table->integer('losses')->default(0);

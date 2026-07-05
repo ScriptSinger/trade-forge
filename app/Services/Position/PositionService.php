@@ -10,24 +10,28 @@ use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
 use App\Enums\TradeSignal;
-use App\Services\Exchange\BybitExchangeService;
 use App\Services\Bot\BotRunLogger;
-use App\Events\MarketDataUpdated;
+use App\Services\Bot\DailyPerformanceService;
+use App\Services\Exchange\BybitExchangeService;
 use Illuminate\Support\Facades\Log;
 
 class PositionService
 {
     public function __construct(
         private BybitExchangeService $exchange,
-        private BotRunLogger $logger
+        private BotRunLogger $logger,
+        private DailyPerformanceService $dailyPerformance,
     ) {}
 
     /**
      * ШАГ 0: Мониторинг всех открытых позиций бота.
      */
-    public function monitor(Bot $bot): void
+    public function monitor(Bot $bot, bool $sidewaysStop = false): void
     {
-        $positions = $bot->positions()->where('status', PositionStatus::Open)->get();
+        $positions = $bot->positions()
+            ->with(['bot.strategy.riskSettings', 'bot.exchangeAccount'])
+            ->where('status', PositionStatus::Open)
+            ->get();
 
         if ($positions->isEmpty()) {
             return;
@@ -36,6 +40,16 @@ class PositionService
         Log::info("PositionService: Checking " . $positions->count() . " positions for bot #{$bot->id}");
 
         foreach ($positions as $position) {
+            if ($sidewaysStop && $this->isSniperMode($position)) {
+                $currentPrice = $this->exchange->getTicker($position->bot->exchangeAccount, $position->symbol);
+
+                if ($currentPrice > 0) {
+                    $this->executeExit($position, $currentPrice, 'Daily target in sideways');
+                }
+
+                continue;
+            }
+
             $this->checkPosition($position);
         }
     }
@@ -43,14 +57,20 @@ class PositionService
     /**
      * Синхронизация после исполнения ордера на бирже.
      */
-    public function syncFromOrder(Bot $bot, Order $order, TradeSignal|string $signal): void
-    {
+    public function syncFromOrder(
+        Bot $bot,
+        Order $order,
+        TradeSignal|string $signal,
+        string $mode = 'Sniper',
+        ?float $sl = null,
+        ?float $tp = null,
+    ): void {
         if ($order->status !== OrderStatus::Filled) {
             return;
         }
 
         if ($order->side === OrderSide::Buy) {
-            $this->openPosition($bot, $order);
+            $this->openPosition($bot, $order, $mode, $sl, $tp);
         } elseif ($order->side === OrderSide::Sell) {
             $this->closePositionFromOrder($bot, $order);
         }
@@ -71,7 +91,7 @@ class PositionService
             'pnl_pct' => $pnlPct,
         ]);
 
-        $mode = $position->bot->strategy->settings['mode'] ?? 'Sniper';
+        $mode = $this->resolvePositionMode($position);
 
         // Логика выхода (SL/TP)
         if ($position->sl > 0 && $currentPrice <= $position->sl) {
@@ -98,7 +118,7 @@ class PositionService
 
         // Подтяжка стопа (Трейлинг)
         if ($position->trailing_active) {
-            $trailingPct = $position->bot->strategy->settings['trailing_pct'] ?? 1.5;
+            $trailingPct = (float) ($position->bot->strategy->riskSettings?->trailing_pct ?? 1.5);
             $multiplier = (100 - $trailingPct) / 100;
             
             $dynamicSl = $currentPrice * $multiplier; 
@@ -115,7 +135,7 @@ class PositionService
 
         $this->exchange->placeMarketOrder($position->bot->exchangeAccount, $position->symbol, 'sell', $position->quantity);
 
-        Trade::create([
+        $trade = Trade::create([
             'bot_id' => $position->bot_id,
             'symbol' => $position->symbol,
             'entry_price' => $position->entry_price,
@@ -127,17 +147,27 @@ class PositionService
             'closed_at' => now(),
         ]);
 
+        $this->dailyPerformance->recordClosedTrade($trade);
+
         $position->update(['status' => PositionStatus::Closed, 'exit_reason' => $reason, 'closed_at' => now()]);
         $this->logger->success($position->bot, TradeSignal::Sell, ['reason' => $reason, 'price' => $price], $position->symbol);
     }
 
-    private function openPosition(Bot $bot, Order $order): void
-    {
+    private function openPosition(
+        Bot $bot,
+        Order $order,
+        string $mode = 'Sniper',
+        ?float $sl = null,
+        ?float $tp = null,
+    ): void {
         Position::create([
             'bot_id' => $bot->id,
             'symbol' => $order->symbol,
+            'mode' => $mode,
             'entry_price' => (float) $order->price,
             'quantity' => (float) $order->quantity,
+            'sl' => $sl,
+            'tp' => $tp,
             'status' => PositionStatus::Open,
             'opened_at' => now(),
         ]);
@@ -149,5 +179,15 @@ class PositionService
         if ($position) {
             $this->executeExit($position, (float)$order->price, 'Manual/External Sell');
         }
+    }
+
+    private function isSniperMode(Position $position): bool
+    {
+        return $this->resolvePositionMode($position) === 'Sniper';
+    }
+
+    private function resolvePositionMode(Position $position): string
+    {
+        return $position->mode ?: 'Sniper';
     }
 }

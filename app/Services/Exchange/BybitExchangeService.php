@@ -98,6 +98,24 @@ class BybitExchangeService
         return $response->json();
     }
 
+    public function getUsdtWalletBalance(ExchangeAccount $account): ?float
+    {
+        $response = $this->getWalletBalance($account, 'USDT');
+        $coins = $response['result']['list'][0]['coin'] ?? [];
+
+        foreach ($coins as $coin) {
+            if (($coin['coin'] ?? '') !== 'USDT') {
+                continue;
+            }
+
+            $balance = $coin['walletBalance'] ?? $coin['equity'] ?? null;
+
+            return $balance !== null ? (float) $balance : null;
+        }
+
+        return null;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ORDER EXECUTION (SPOT)

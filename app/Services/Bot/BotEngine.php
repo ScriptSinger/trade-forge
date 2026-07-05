@@ -4,32 +4,24 @@ namespace App\Services\Bot;
 
 use App\Models\Bot;
 use Illuminate\Support\Facades\Log;
-use App\Services\Order\OrderService;
-use App\Services\Risk\RiskService;
 use App\Services\Position\PositionService;
 use App\Services\Bot\BotRunLogger;
-use App\Services\Exchange\BybitExchangeService;
-
 use App\Services\Bot\MarketScannerService;
 use App\Services\Bot\Strategy\TradeContextFactory;
 use App\Services\Bot\Strategy\TradeContext;
-use Illuminate\Support\Facades\Pipeline;
-
 use App\Services\Bot\Strategy\StrategyPipeline;
-use App\Services\Position\PositionMonitorService;
 use Illuminate\Support\Facades\Cache;
 
 class BotEngine
 {
     public function __construct(
-        private BybitExchangeService $exchange,
-        private RiskService $risk,
-        private OrderService $orders,
         private PositionService $positions,
         private BotRunLogger $logger,
         private MarketScannerService $scanner,
         private StrategyPipeline $pipeline,
         private TradeContextFactory $contextFactory,
+        private DailyPerformanceService $dailyPerformance,
+        private SidewaysMarketGuard $sidewaysGuard,
     ) {}
 
     public function run(Bot $bot): void
@@ -69,7 +61,32 @@ class BotEngine
             return;
         }
 
-        $this->positions->monitor($bot);
+        $bot->loadMissing([
+            'strategy.riskSettings',
+            'strategy.btcTrendFilter',
+            'exchangeAccount',
+        ]);
+
+        $this->dailyPerformance->ensureTodayStat($bot);
+
+        $sidewaysStop = $this->sidewaysGuard->blocksNewEntries($bot);
+
+        $this->positions->monitor($bot, $sidewaysStop);
+
+        if ($sidewaysStop) {
+            $this->logger->info($bot, 'DAILY_TARGET_REACHED_SIDEWAYS', [
+                'profit_pct' => round($this->dailyPerformance->profitPct($bot), 2),
+            ]);
+
+            $bot->forceFill(['last_run_at' => now()])->saveQuietly();
+
+            Log::channel('bot')->info('Bot cycle stopped by SidewaysMarketGuard', [
+                'bot_id' => $bot->id,
+            ]);
+
+            return;
+        }
+
         $targets = $this->scanner->getTopVolatileSymbols($account);
 
         if (empty($targets)) {
@@ -117,7 +134,7 @@ class BotEngine
         ]);
 
         // Load settings
-        $bot->strategy->loadMissing(['entrySettings', 'btcTrendFilter']);
+        $bot->strategy->loadMissing(['entrySettings', 'btcTrendFilter', 'riskSettings']);
 
         // Use the factory to create the context
         $context = $this->contextFactory->make($bot, $symbol);
@@ -137,11 +154,8 @@ class BotEngine
             // Если причина пустая, подставим дефолтную, чтобы не было пустых полей в MoonShine
             $reason = $context->reason ?: 'Rejected by strategy filters';
 
-            // Need to fetch bot for logging - this is acceptable in BotEngine which is the orchestrator
-            $bot = \App\Models\Bot::find($context->botId);
-
             $this->logger->success(
-                $bot,
+                $context->bot,
                 \App\Enums\TradeSignal::Hold,
                 $context->indicators,
                 $context->symbol,
@@ -153,10 +167,8 @@ class BotEngine
         } elseif ($context->status === \App\Enums\TradeContextStatus::Executed) {
             Log::info("BotEngine: Symbol {$context->symbol} processed successfully. Order placed.");
         } else {
-            $bot = \App\Models\Bot::find($context->botId);
-            // Случай, когда пайплайн завершился без блокировки, но и без ордера (редкий случай)
             $this->logger->success(
-                $bot,
+                $context->bot,
                 \App\Enums\TradeSignal::Hold,
                 $context->indicators,
                 $context->symbol,

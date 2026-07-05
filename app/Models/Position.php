@@ -14,6 +14,7 @@ class Position extends Model
     protected $fillable = [
         'bot_id',
         'symbol',
+        'mode',
         'entry_price',
         'current_price',
         'pnl_pct',

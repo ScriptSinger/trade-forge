@@ -10,6 +10,7 @@ use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
+use MoonShine\UI\Fields\Switcher;
 
 class StrategyRiskSettingsResource extends ModelResource
 {
@@ -25,6 +26,8 @@ class StrategyRiskSettingsResource extends ModelResource
             Number::make('SL Multiplier', 'sl_multiplier', step: '0.01'),
             Number::make('TP Multiplier', 'tp_multiplier', step: '0.01'),
             Number::make('Trailing Pct', 'trailing_pct', step: '0.01'),
+            Switcher::make('Daily Target Enabled', 'daily_target_enabled'),
+            Number::make('Daily Profit Target %', 'daily_profit_target_pct', step: '0.01'),
         ];
     }
 
@@ -60,6 +63,14 @@ class StrategyRiskSettingsResource extends ModelResource
                 ->default(1.0)
                 ->step(0.01)
                 ->required(),
+
+            Switcher::make('Daily Target Enabled', 'daily_target_enabled')
+                ->default(true),
+
+            Number::make('Daily Profit Target %', 'daily_profit_target_pct')
+                ->default(2.30)
+                ->step(0.01)
+                ->required(),
         ];
     }
 
@@ -73,6 +84,8 @@ class StrategyRiskSettingsResource extends ModelResource
             Number::make('Trailing Pct', 'trailing_pct'),
             Number::make('Max Positions', 'max_positions'),
             Number::make('Max Risk %', 'max_risk_per_trade'),
+            Switcher::make('Daily Target Enabled', 'daily_target_enabled'),
+            Number::make('Daily Profit Target %', 'daily_profit_target_pct'),
         ];
     }
 }

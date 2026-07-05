@@ -32,7 +32,7 @@ class TradeContextFactory
         );
 
         return new TradeContext(
-            botId: $bot->id,
+            bot: $bot,
             symbol: $symbol,
             candles: $market['candles'] ?? [],
             btcCandles: $btcMarket['candles'] ?? [],

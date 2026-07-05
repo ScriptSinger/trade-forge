@@ -54,7 +54,14 @@ class ExecuteTrade implements PipeContract
         );
 
         // 4. Sync Position
-        $this->positions->syncFromOrder($bot, $order, $signal);
+        $this->positions->syncFromOrder(
+            bot: $bot,
+            order: $order,
+            signal: $signal,
+            mode: $context->mode,
+            sl: $context->stopLoss,
+            tp: $context->takeProfit,
+        );
 
         // 5. Final Log Success
         $context->status = \App\Enums\TradeContextStatus::Executed;

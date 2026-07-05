@@ -55,9 +55,9 @@ class TradingDemoSeeder extends Seeder
                 'name' => 'Bybit Main',
             ],
             [
-                'api_key' => 'demo-bybit-api-key',
-                'api_secret' => 'demo-bybit-api-secret',
-                'api_url' => 'https://api-testnet.bybit.com',
+                'api_key' => env('BYBIT_API_KEY', 'demo-bybit-api-key'),
+                'api_secret' => env('BYBIT_API_SECRET', 'demo-bybit-api-secret'),
+                'api_url' => env('BYBIT_BASE_URL', 'https://api-testnet.bybit.com'),
                 'status' => ExchangeAccountStatus::Active->value,
                 'last_checked_at' => $now,
             ],

@@ -11,7 +11,6 @@ class StrategyPipeline
      * All pipes must implement PipeContract.
      */
     protected array $pipes = [
-        Pipes\CheckKillSwitch::class,
         Pipes\CalculateIndicators::class,
         Pipes\CheckExistingPosition::class,
         Pipes\CheckGlobalLimits::class,

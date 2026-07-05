@@ -25,6 +25,9 @@ return new class extends Migration
             $table->unsignedInteger('max_positions')->default(3);
             $table->decimal('max_risk_per_trade', 5, 2)->default(1.0);
 
+            $table->boolean('daily_target_enabled')->default(true);
+            $table->decimal('daily_profit_target_pct', 5, 2)->default(2.30);
+
             $table->timestamps();
         });
     }

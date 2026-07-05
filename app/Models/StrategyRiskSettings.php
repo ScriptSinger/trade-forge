@@ -17,6 +17,8 @@ class StrategyRiskSettings extends Model
         'trailing_pct',
         'max_positions',
         'max_risk_per_trade',
+        'daily_target_enabled',
+        'daily_profit_target_pct',
     ];
 
     protected function casts(): array
@@ -27,6 +29,8 @@ class StrategyRiskSettings extends Model
             'trailing_pct' => 'float',
             'max_positions' => 'integer',
             'max_risk_per_trade' => 'float',
+            'daily_target_enabled' => 'bool',
+            'daily_profit_target_pct' => 'float',
         ];
     }
 
