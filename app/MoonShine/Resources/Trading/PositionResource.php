@@ -37,7 +37,7 @@ final class PositionResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Позиции';
+        return __('trading.resources.positions');
     }
 
     protected function indexFields(): iterable

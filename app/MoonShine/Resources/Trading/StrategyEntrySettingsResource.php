@@ -21,6 +21,11 @@ class StrategyEntrySettingsResource extends ModelResource
 
     protected string $title = 'Entry Settings';
 
+    public function getTitle(): string
+    {
+        return __('trading.resources.entry_settings');
+    }
+
     protected function indexFields(): iterable
     {
         return [

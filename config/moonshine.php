@@ -16,9 +16,7 @@ use MoonShine\Crud\Forms\LoginForm;
 use MoonShine\Laravel\Exceptions\MoonShineNotFoundException;
 use MoonShine\Laravel\Http\Middleware\Authenticate;
 use MoonShine\Laravel\Http\Middleware\ChangeLocale;
-use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\Laravel\Models\MoonshineUser;
-use MoonShine\Laravel\Pages\Dashboard;
 use MoonShine\Laravel\Pages\ErrorPage;
 use MoonShine\Laravel\Pages\LoginPage;
 use MoonShine\Laravel\Pages\ProfilePage;
@@ -106,9 +104,10 @@ return [
     ],
 
     // Localizations
-    'locale' => 'en',
+    'locale' => env('MOONSHINE_LOCALE', env('APP_LOCALE', 'en')),
     'locale_key' => ChangeLocale::KEY,
     'locales' => [
-        // en
+        'en',
+        'ru',
     ],
 ];

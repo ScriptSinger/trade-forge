@@ -40,7 +40,7 @@ final class OrderResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Ордера';
+        return __('trading.resources.orders');
     }
 
     protected function indexFields(): iterable

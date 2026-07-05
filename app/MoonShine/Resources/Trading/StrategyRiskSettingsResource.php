@@ -20,6 +20,11 @@ class StrategyRiskSettingsResource extends ModelResource
 
     protected string $title = 'Risk Settings';
 
+    public function getTitle(): string
+    {
+        return __('trading.resources.risk_settings');
+    }
+
     protected function indexFields(): iterable
     {
         return [

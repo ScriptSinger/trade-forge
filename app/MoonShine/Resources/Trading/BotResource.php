@@ -39,7 +39,7 @@ final class BotResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Боты';
+        return __('trading.resources.bots');
     }
 
     protected function indexFields(): iterable

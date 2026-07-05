@@ -29,7 +29,7 @@ final class BotStatResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Bot Stats';
+        return __('trading.resources.bot_stats');
     }
 
     protected function indexFields(): iterable

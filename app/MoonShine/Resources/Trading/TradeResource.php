@@ -34,7 +34,7 @@ final class TradeResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Сделки';
+        return __('trading.resources.trades');
     }
 
     protected function indexFields(): iterable

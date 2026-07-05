@@ -23,7 +23,7 @@ class Dashboard extends Page
 {
     public function getTitle(): string
     {
-        return $this->title ?: 'Торговый Дашборд';
+        return $this->title ?: __('trading.dashboard.title');
     }
 
     protected function components(): iterable
@@ -45,15 +45,15 @@ class Dashboard extends Page
         return [
             Grid::make([
                 Column::make([
-                    ValueMetric::make('Активные боты')->value($activeBots),
+                    ValueMetric::make(__('trading.dashboard.active_bots'))->value($activeBots),
                 ])->columnSpan(3),
 
                 Column::make([
-                    ValueMetric::make('Открытые позиции')->value($openPositionsCount),
+                    ValueMetric::make(__('trading.dashboard.open_positions'))->value($openPositionsCount),
                 ])->columnSpan(3),
 
                 Column::make([
-                    ValueMetric::make('Профит дня')->value(
+                    ValueMetric::make(__('trading.dashboard.daily_profit'))->value(
                         number_format((float)$dailyProfit, 2) . ' $'
                     ),
                 ])->columnSpan(3),
@@ -61,14 +61,14 @@ class Dashboard extends Page
 
             Grid::make([
                 Column::make([
-                    Heading::make('Открытые позиции')->tag('h3'),
+                    Heading::make(__('trading.dashboard.open_positions_heading'))->tag('h3'),
 
                     TableBuilder::make()
                         ->items($openPositions)
                         ->fields([
-                            Preview::make('Символ', 'symbol', fn($item) => "<b>{$item->symbol}</b>"),
-                            Preview::make('Бот', 'bot.name'),
-                            Preview::make('Вход', 'entry_price', fn($item) => number_format((float)$item->entry_price, 4)),
+                            Preview::make(__('trading.dashboard.symbol'), 'symbol', fn($item) => "<b>{$item->symbol}</b>"),
+                            Preview::make(__('trading.dashboard.bot'), 'bot.name'),
+                            Preview::make(__('trading.dashboard.entry'), 'entry_price', fn($item) => number_format((float)$item->entry_price, 4)),
 
                             Preview::make('PnL %', 'pnl_pct', function ($item) {
                                 $color = $item->pnl_pct >= 0 ? '#28a745' : '#dc3545';
@@ -77,7 +77,7 @@ class Dashboard extends Page
                                     . number_format((float)$item->pnl_pct, 2) . "%</span>";
                             }),
 
-                            Preview::make('Объем', 'quantity'),
+                            Preview::make(__('trading.dashboard.volume'), 'quantity'),
 
                             Preview::make(
                                 'SL',
@@ -94,7 +94,7 @@ class Dashboard extends Page
                             ),
 
                             Preview::make(
-                                'Открыта',
+                                __('trading.dashboard.opened_at'),
                                 'opened_at',
                                 fn($item) =>
                                 $item->opened_at?->diffForHumans() ?? '---'

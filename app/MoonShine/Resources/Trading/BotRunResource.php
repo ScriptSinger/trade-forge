@@ -42,7 +42,7 @@ final class BotRunResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Логи ботов';
+        return __('trading.resources.bot_runs');
     }
 
     protected function indexFields(): iterable

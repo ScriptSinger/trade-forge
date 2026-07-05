@@ -66,7 +66,7 @@ final class ExchangeAccountResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Аккаунты бирж';
+        return __('trading.resources.exchange_accounts');
     }
 
     protected function indexFields(): iterable

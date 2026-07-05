@@ -28,7 +28,7 @@ final class UserResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Users';
+        return __('trading.resources.users');
     }
 
     protected function indexFields(): iterable

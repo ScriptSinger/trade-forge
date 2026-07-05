@@ -31,7 +31,7 @@ final class StrategyResource extends TradingResource
 
     public function getTitle(): string
     {
-        return 'Strategies';
+        return __('trading.resources.strategies');
     }
 
     protected function indexFields(): iterable

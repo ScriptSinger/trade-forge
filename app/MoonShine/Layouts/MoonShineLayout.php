@@ -61,7 +61,7 @@ final class MoonShineLayout extends AppLayout
                 MenuItem::make(MoonShineUserRoleResource::class),
             ]),
 
-            MenuGroup::make('Trading', [
+            MenuGroup::make(static fn () => __('trading.menu.trading'), [
                 MenuItem::make(UserResource::class),
                 MenuItem::make(ExchangeAccountResource::class),
                 MenuItem::make(StrategyResource::class),

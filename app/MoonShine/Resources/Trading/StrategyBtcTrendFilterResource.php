@@ -22,6 +22,11 @@ class StrategyBtcTrendFilterResource extends ModelResource
 
     protected string $title = 'BTC Filter (Daily Target)';
 
+    public function getTitle(): string
+    {
+        return __('trading.resources.btc_filter');
+    }
+
     protected function indexFields(): iterable
     {
         return [
