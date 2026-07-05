@@ -46,7 +46,8 @@ class StrategyBtcTrendFilterResource extends ModelResource
 
             Text::make('Symbol', 'benchmark_symbol')
                 ->default('BTCUSDT')
-                ->required(),
+                ->readonly()
+                ->hint('Бенчмарк для дневного guard, по умолчанию BTCUSDT, не параметр стратегии'),
 
             Select::make('Interval', 'benchmark_interval')
                 ->options([
@@ -56,15 +57,19 @@ class StrategyBtcTrendFilterResource extends ModelResource
                     '15' => '15m',
                     '60' => '1h',
                 ])
-                ->default('1'),
+                ->default('60')
+                ->readonly()
+                ->hint('Таймфрейм BTC-фильтра, по умолчанию 1h (GLOBAL_TF в sample), не параметр стратегии'),
 
             Number::make('EMA Fast', 'ema_fast')
                 ->default(50)
-                ->min(1),
+                ->min(1)
+                ->hint('Быстрая EMA BTC — аптренд, если EMA fast > EMA slow (как btc_ok() в sample)'),
 
             Number::make('EMA Slow', 'ema_slow')
                 ->default(200)
-                ->min(1),
+                ->min(1)
+                ->hint('Медленная EMA BTC для сравнения тренда (span 200 в sample)'),
         ];
     }
 

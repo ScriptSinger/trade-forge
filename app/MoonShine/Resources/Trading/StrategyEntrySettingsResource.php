@@ -74,31 +74,31 @@ class StrategyEntrySettingsResource extends ModelResource
             Number::make('EMA Fast', 'ema_fast')
                 ->default(50)
                 ->min(1)
-                ->hint('Быстрая EMA на prev bar — должна быть выше EMA Slow для входа'),
+                ->hint('Быстрая EMA на prev bar — должна быть выше EMA Slow для входа (ema50 в sample)'),
 
             Number::make('EMA Slow', 'ema_slow')
                 ->default(200)
                 ->min(1)
-                ->hint('Медленная EMA. Kline limit должен быть заметно больше этого значения'),
+                ->hint('Медленная EMA. Kline limit должен быть заметно больше этого значения (ema200 в sample)'),
 
             Number::make('Min ADX', 'adx_min')
                 ->default(25)
-                ->hint('Минимальный ADX для входа (ADX_THRESHOLD в sample)'),
+                ->hint('Минимальный ADX для входа (ADX_THRESHOLD = 25 в sample)'),
 
             Number::make('Trend ADX Threshold', 'trend_adx_threshold')
                 ->default(30)
                 ->min(1)
-                ->hint('Порог сильного тренда: выше — режим Hybrid, ниже — Sniper (TREND_ADX в sample)'),
+                ->hint('Порог сильного тренда: выше — режим Hybrid, ниже — Sniper (TREND_ADX = 30 в sample)'),
 
             Number::make('RSI Limit Sniper', 'rsi_limit_sniper')
                 ->default(55)
                 ->step(0.01)
-                ->hint('Макс. RSI для входа в режиме Sniper (боковик, ADX ≤ порога)'),
+                ->hint('Макс. RSI для входа в режиме Sniper (боковик, ADX ≤ порога; лимит 55 в sample)'),
 
             Number::make('RSI Limit Hybrid', 'rsi_limit_hybrid')
                 ->default(75)
                 ->step(0.01)
-                ->hint('Макс. RSI для входа в режиме Hybrid (тренд, ADX > порога)'),
+                ->hint('Макс. RSI для входа в режиме Hybrid (тренд, ADX > порога; лимит 75 в sample)'),
         ];
     }
 
