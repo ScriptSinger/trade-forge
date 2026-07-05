@@ -23,7 +23,7 @@ return new class extends Migration
             $table->decimal('trailing_pct', 5, 2)->default(1.5);
 
             $table->unsignedInteger('max_positions')->default(3);
-            $table->decimal('max_risk_per_trade', 5, 2)->default(1.0);
+            $table->decimal('max_risk_per_trade', 5, 4)->default(0.02);
 
             $table->boolean('daily_target_enabled')->default(true);
             $table->decimal('daily_profit_target_pct', 5, 2)->default(2.30);

@@ -19,6 +19,7 @@ use App\Services\Bot\TradingLogger;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Position\PositionService;
+use App\Services\Strategy\TechnicalIndicatorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -80,7 +81,7 @@ class PositionServiceTest extends TestCase
             'tp_multiplier' => 3.0,
             'trailing_pct' => 2.0,
             'max_positions' => 3,
-            'max_risk_per_trade' => 1.0,
+                'max_risk_per_trade' => 0.02,
         ]);
 
         $exchangeAccount = ExchangeAccount::factory()->for($user)->create();
@@ -99,6 +100,7 @@ class PositionServiceTest extends TestCase
             Mockery::mock(BybitExchangeService::class),
             Mockery::mock(TradingLogger::class),
             Mockery::mock(DailyPerformanceService::class),
+            Mockery::mock(TechnicalIndicatorService::class),
         );
     }
 }

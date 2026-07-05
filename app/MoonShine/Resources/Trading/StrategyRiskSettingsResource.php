@@ -59,9 +59,10 @@ class StrategyRiskSettingsResource extends ModelResource
                 ->min(1)
                 ->required(),
 
-            Number::make('Max Risk %', 'max_risk_per_trade')
-                ->default(1.0)
-                ->step(0.01)
+            Number::make('Risk fraction', 'max_risk_per_trade')
+                ->default(0.02)
+                ->step(0.001)
+                ->hint('Доля баланса на сделку (0.02 = 2%, как RISK в Python)')
                 ->required(),
 
             Switcher::make('Daily Target Enabled', 'daily_target_enabled')
@@ -83,7 +84,7 @@ class StrategyRiskSettingsResource extends ModelResource
             Number::make('TP Multiplier', 'tp_multiplier'),
             Number::make('Trailing Pct', 'trailing_pct'),
             Number::make('Max Positions', 'max_positions'),
-            Number::make('Max Risk %', 'max_risk_per_trade'),
+            Number::make('Risk fraction', 'max_risk_per_trade'),
             Switcher::make('Daily Target Enabled', 'daily_target_enabled'),
             Number::make('Daily Profit Target %', 'daily_profit_target_pct'),
         ];

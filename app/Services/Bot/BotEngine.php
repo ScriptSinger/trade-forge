@@ -118,6 +118,10 @@ class BotEngine
         foreach ($targets as $target) {
             try {
                 $this->processSymbol($bot, $target, $stats);
+
+                if ($stats['executed'] > 0) {
+                    break;
+                }
             } catch (\Throwable $e) {
                 $stats['failed']++;
 

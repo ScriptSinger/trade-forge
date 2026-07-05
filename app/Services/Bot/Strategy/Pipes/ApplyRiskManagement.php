@@ -3,6 +3,7 @@
 namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Services\Bot\Concerns\ResolvesTradingLogger;
+use App\Services\Bot\PositionSizingService;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use Closure;
@@ -11,6 +12,10 @@ class ApplyRiskManagement implements PipeContract
 {
     use BlocksTradeContext;
     use ResolvesTradingLogger;
+
+    public function __construct(
+        private PositionSizingService $sizing,
+    ) {}
 
     public function handle(TradeContext $context, Closure $next): mixed
     {
@@ -35,15 +40,17 @@ class ApplyRiskManagement implements PipeContract
         $context->stopLoss = $entryPrice - ($atr * $slMult);
         $context->takeProfit = $entryPrice + ($atr * $tpMult);
 
-        $riskAmountUsdt = (float) ($riskSettings->max_risk_per_trade ?? $context->bot->risk_per_trade);
-        $priceRisk = abs($entryPrice - $context->stopLoss);
-
-        if ($priceRisk <= 0 || $context->stopLoss >= $entryPrice) {
+        if ($context->stopLoss >= $entryPrice) {
             return $this->block($context, 'Invalid price risk calculation');
         }
 
-        // Base-asset quantity (coins), aligned with Python: risk_usdt / (entry - sl)
-        $context->quantity = $riskAmountUsdt / $priceRisk;
+        $quantity = $this->sizing->calculateQuantity($context->bot, $entryPrice, $context->stopLoss);
+
+        if ($quantity === null || $quantity <= 0) {
+            return $this->block($context, 'Order size below minimum or insufficient balance');
+        }
+
+        $context->quantity = $quantity;
 
         $this->tradingLog()->riskDebug('Risk applied', [
             'symbol' => $context->symbol,

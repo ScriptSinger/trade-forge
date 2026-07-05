@@ -13,17 +13,25 @@ use App\Models\Strategy;
 use App\Models\StrategyEntrySettings;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
+use App\Services\Bot\PositionSizingService;
 use App\Services\Bot\Strategy\Pipes\ApplyRiskManagement;
 use App\Services\Bot\Strategy\Pipes\CheckBreakoutLevel;
 use App\Services\Bot\Strategy\Pipes\DetermineStrategyMode;
 use App\Services\Bot\Strategy\Pipes\ValidateStrategySettings;
 use App\Services\Bot\Strategy\TradeContext;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
 use Tests\TestCase;
 
 class StrategyPipelineTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
 
     public function test_validate_strategy_settings_blocks_without_entry_settings(): void
     {
@@ -66,7 +74,10 @@ class StrategyPipelineTest extends TestCase
         $context->candles = [['ts' => 1, 'open' => 100, 'high' => 102, 'low' => 98, 'close' => 100, 'vol' => 10]];
         $context->indicators['atr'] = [0, 2];
 
-        $result = (new ApplyRiskManagement())->handle($context, fn ($ctx) => $ctx);
+        $sizing = Mockery::mock(PositionSizingService::class);
+        $sizing->shouldReceive('calculateQuantity')->once()->andReturn(0.25);
+
+        $result = (new ApplyRiskManagement($sizing))->handle($context, fn ($ctx) => $ctx);
 
         $this->assertFalse($result->isBlocked);
         $this->assertEqualsWithDelta(96.0, $result->stopLoss, 0.001);
@@ -104,7 +115,7 @@ class StrategyPipelineTest extends TestCase
                 'tp_multiplier' => 3.0,
                 'trailing_pct' => 1.5,
                 'max_positions' => 3,
-                'max_risk_per_trade' => 1.0,
+                'max_risk_per_trade' => 0.02,
             ]);
         }
 
@@ -112,7 +123,7 @@ class StrategyPipelineTest extends TestCase
         $bot = Bot::factory()->for($user)->create([
             'exchange_account_id' => $exchangeAccount->id,
             'strategy_id' => $strategy->id,
-            'risk_per_trade' => 1.0,
+            'risk_per_trade' => 0.02,
         ]);
 
         $bot->loadMissing(['strategy.entrySettings', 'strategy.riskSettings']);

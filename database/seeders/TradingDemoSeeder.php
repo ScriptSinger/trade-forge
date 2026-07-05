@@ -5,22 +5,13 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use Carbon\CarbonImmutable;
-use App\Enums\BotRunStatus;
 use App\Enums\BotStatus;
 use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
-use App\Enums\OrderSide;
-use App\Enums\OrderStatus;
-use App\Enums\OrderType;
-use App\Enums\PositionStatus;
 use App\Enums\StrategyType;
-use App\Enums\TradeSignal;
 use App\Models\Bot;
-use App\Models\BotRun;
 use App\Models\BotStat;
 use App\Models\ExchangeAccount;
-use App\Models\Order;
-use App\Models\Position;
 use App\Models\Strategy;
 use App\Models\StrategyBtcTrendFilter;
 use App\Models\StrategyEntrySettings;
@@ -54,7 +45,7 @@ class TradingDemoSeeder extends Seeder
         StrategyEntrySettings::query()->updateOrCreate(
             ['strategy_id' => $strategy->id],
             [
-                'interval' => 1,
+                'interval' => 15,
                 'period' => 20,
                 'ema_fast' => 50,
                 'ema_slow' => 200,
@@ -72,7 +63,7 @@ class TradingDemoSeeder extends Seeder
                 'tp_multiplier' => 3.0,
                 'trailing_pct' => 1.5,
                 'max_positions' => 3,
-                'max_risk_per_trade' => 1.0,
+                'max_risk_per_trade' => 0.02,
                 'daily_target_enabled' => true,
                 'daily_profit_target_pct' => 2.30,
             ],
@@ -112,84 +103,10 @@ class TradingDemoSeeder extends Seeder
                 'name' => 'BTC Trend Bot',
             ],
             [
-                'risk_per_trade' => 1.00,
+                'risk_per_trade' => 0.02,
                 'max_open_positions' => 1,
                 'status' => BotStatus::Active->value,
-                'last_run_at' => $now,
-            ],
-        );
-
-        $order = Order::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'exchange_account_id' => $exchangeAccount->id,
-                'symbol' => 'BTCUSDT',
-                'side' => OrderSide::Buy->value,
-                'type' => OrderType::Market->value,
-                'status' => OrderStatus::Filled->value,
-            ],
-            [
-                'price' => '95000.00000000',
-                'quantity' => '0.01000000',
-                'exchange_order_id' => 'demo-btc-buy-001',
-                'raw_response' => [
-                    'success' => true,
-                    'exchange' => 'bybit',
-                ],
-            ],
-        );
-
-        $runPayload = [
-            'market_price' => '95000.00000000',
-            'quantity' => '0.01000000',
-            'mode' => 'Sniper',
-            'stop_loss' => '93000.00000000',
-            'take_profit' => '98000.00000000',
-            'order_id' => $order->id,
-            'signal' => TradeSignal::Buy->value,
-            'status' => BotRunStatus::Success->value,
-            'indicators' => [
-                'ema_fast' => 94850.12,
-                'ema_slow' => 94120.83,
-                'rsi' => 54.32,
-                'adx' => 21.8,
-                'atr' => 840.15,
-            ],
-            'reason' => 'Order placed successfully (Sniper mode)',
-        ];
-
-        $run = BotRun::query()
-            ->where('bot_id', $bot->id)
-            ->where('symbol', 'BTCUSDT')
-            ->first();
-
-        if ($run) {
-            $run->forceFill($runPayload)->save();
-        } else {
-            BotRun::query()->create([
-                'bot_id' => $bot->id,
-                'symbol' => 'BTCUSDT',
-                ...$runPayload,
-            ]);
-        }
-
-        Position::query()->updateOrCreate(
-            [
-                'bot_id' => $bot->id,
-                'symbol' => 'BTCUSDT',
-                'status' => PositionStatus::Open->value,
-            ],
-            [
-                'mode' => 'Sniper',
-                'entry_price' => '95000.00000000',
-                'quantity' => '0.01000000',
-                'sl' => '93000.00000000',
-                'tp' => '98000.00000000',
-                'be_activated' => true,
-                'trailing_active' => false,
-                'half_sold' => false,
-                'opened_at' => $now->subHours(4),
-                'closed_at' => null,
+                'last_run_at' => null,
             ],
         );
 
