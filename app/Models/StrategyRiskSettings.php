@@ -19,6 +19,11 @@ class StrategyRiskSettings extends Model
         'max_risk_per_trade',
         'daily_target_enabled',
         'daily_profit_target_pct',
+        'spot_fee_rate',
+        'min_order_usdt',
+        'max_balance_pct',
+        'free_balance_buffer',
+        'scanner_cache_ttl',
     ];
 
     protected function casts(): array
@@ -31,6 +36,11 @@ class StrategyRiskSettings extends Model
             'max_risk_per_trade' => 'float',
             'daily_target_enabled' => 'bool',
             'daily_profit_target_pct' => 'float',
+            'spot_fee_rate' => 'float',
+            'min_order_usdt' => 'float',
+            'max_balance_pct' => 'float',
+            'free_balance_buffer' => 'float',
+            'scanner_cache_ttl' => 'integer',
         ];
     }
 

@@ -44,7 +44,12 @@ class ApplyRiskManagement implements PipeContract
             return $this->block($context, 'Invalid price risk calculation');
         }
 
-        $quantity = $this->sizing->calculateQuantity($context->bot, $entryPrice, $context->stopLoss);
+        $quantity = $this->sizing->calculateQuantity(
+            $context->bot,
+            $context->symbol,
+            $entryPrice,
+            $context->stopLoss,
+        );
 
         if ($quantity === null || $quantity <= 0) {
             return $this->block($context, 'Order size below minimum or insufficient balance');

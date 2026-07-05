@@ -4,6 +4,7 @@ namespace App\Services\Exchange;
 
 use App\Models\ExchangeAccount;
 use App\Services\Bot\Concerns\ResolvesTradingLogger;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class BybitExchangeService
@@ -112,17 +113,84 @@ class BybitExchangeService
 
     public function getUsdtWalletBalance(ExchangeAccount $account): ?float
     {
+        $coin = $this->findUsdtCoin($account);
+
+        if ($coin === null) {
+            return null;
+        }
+
+        $balance = $coin['walletBalance'] ?? $coin['equity'] ?? null;
+
+        return $balance !== null ? (float) $balance : null;
+    }
+
+    public function getUsdtFreeBalance(ExchangeAccount $account): ?float
+    {
+        $coin = $this->findUsdtCoin($account);
+
+        if ($coin === null) {
+            return null;
+        }
+
+        $free = $coin['availableToWithdraw']
+            ?? $coin['availableBalance']
+            ?? $coin['free']
+            ?? $coin['walletBalance']
+            ?? null;
+
+        return $free !== null ? (float) $free : null;
+    }
+
+    public function normalizeQuantity(ExchangeAccount $account, string $symbol, float $quantity): float
+    {
+        if ($quantity <= 0) {
+            return 0.0;
+        }
+
+        $filter = $this->getLotSizeFilter($account, $symbol);
+        $step = (float) ($filter['qtyStep'] ?? 0);
+
+        if ($step <= 0) {
+            return $quantity;
+        }
+
+        $normalized = floor($quantity / $step) * $step;
+
+        return $normalized > 0 ? $normalized : 0.0;
+    }
+
+    private function getLotSizeFilter(ExchangeAccount $account, string $symbol): array
+    {
+        $cacheKey = "bybit_lot_size_{$account->id}_{$symbol}";
+
+        return Cache::remember($cacheKey, 3600, function () use ($account, $symbol) {
+            $url = $this->baseUrl($account) . '/v5/market/instruments-info';
+
+            $this->tradingLog()->exchangeDebug('Bybit request', [
+                'method' => 'GET',
+                'url' => $url,
+                'category' => 'spot',
+                'symbol' => $symbol,
+            ]);
+
+            $response = Http::get($url, [
+                'category' => 'spot',
+                'symbol' => $symbol,
+            ]);
+
+            return $response->json('result.list.0.lotSizeFilter') ?? [];
+        });
+    }
+
+    private function findUsdtCoin(ExchangeAccount $account): ?array
+    {
         $response = $this->getWalletBalance($account, 'USDT');
         $coins = $response['result']['list'][0]['coin'] ?? [];
 
         foreach ($coins as $coin) {
-            if (($coin['coin'] ?? '') !== 'USDT') {
-                continue;
+            if (($coin['coin'] ?? '') === 'USDT') {
+                return $coin;
             }
-
-            $balance = $coin['walletBalance'] ?? $coin['equity'] ?? null;
-
-            return $balance !== null ? (float) $balance : null;
         }
 
         return null;
@@ -141,13 +209,14 @@ class BybitExchangeService
         float $qty
     ): array {
         $url = $this->baseUrl($account) . '/v5/order/create';
+        $normalizedQty = $this->normalizeQuantity($account, $symbol, $qty);
 
         $payload = [
             'category' => 'spot',
             'symbol' => $symbol,
             'side' => ucfirst(strtolower($side)),
             'orderType' => 'Market',
-            'qty' => (string) $qty,
+            'qty' => $this->formatQuantity($normalizedQty),
         ];
 
         $this->tradingLog()->exchangeDebug('Bybit request', [
@@ -181,6 +250,11 @@ class BybitExchangeService
     | BASE URL
     |--------------------------------------------------------------------------
     */
+
+    private function formatQuantity(float $qty): string
+    {
+        return rtrim(rtrim(sprintf('%.8F', $qty), '0'), '.');
+    }
 
     private function baseUrl(ExchangeAccount $account): string
     {

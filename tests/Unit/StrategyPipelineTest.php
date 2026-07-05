@@ -123,7 +123,6 @@ class StrategyPipelineTest extends TestCase
         $bot = Bot::factory()->for($user)->create([
             'exchange_account_id' => $exchangeAccount->id,
             'strategy_id' => $strategy->id,
-            'risk_per_trade' => 0.02,
         ]);
 
         $bot->loadMissing(['strategy.entrySettings', 'strategy.riskSettings']);

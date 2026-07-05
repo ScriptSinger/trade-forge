@@ -3,40 +3,31 @@
 namespace App\Services\Bot;
 
 use App\Models\Bot;
+use App\Models\StrategyRiskSettings;
 use App\Services\Exchange\BybitExchangeService;
 
 class PositionSizingService
 {
-    private const MIN_ORDER_USDT = 5.0;
-    private const MAX_BALANCE_PCT = 0.30;
-    private const FREE_BALANCE_BUFFER = 0.98;
-
     public function __construct(
         private BybitExchangeService $exchange,
     ) {}
 
-    /**
-     * Base-asset quantity aligned with Python buy(): balance × RISK / (entry - sl), capped.
-     */
-    public function calculateQuantity(Bot $bot, float $entryPrice, float $stopLoss): ?float
+    public function calculateQuantity(Bot $bot, string $symbol, float $entryPrice, float $stopLoss): ?float
     {
         if ($entryPrice <= 0 || $stopLoss >= $entryPrice) {
             return null;
         }
 
-        $balance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
+        $risk = $bot->strategy->riskSettings;
+        $totalBalance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
 
-        if ($balance === null || $balance <= 0) {
+        if ($totalBalance === null || $totalBalance <= 0) {
             return null;
         }
 
-        $riskFraction = (float) (
-            $bot->strategy->riskSettings?->max_risk_per_trade
-            ?? $bot->risk_per_trade
-            ?? 0.02
-        );
+        $riskFraction = (float) ($risk?->max_risk_per_trade ?? 0.02);
 
-        $riskAmountUsdt = $balance * $riskFraction;
+        $riskAmountUsdt = $totalBalance * $riskFraction;
         $priceRisk = $entryPrice - $stopLoss;
 
         if ($priceRisk <= 0) {
@@ -46,20 +37,44 @@ class PositionSizingService
         $size = $riskAmountUsdt / $priceRisk;
         $costUsdt = $size * $entryPrice;
 
-        $maxCost = $balance * self::MAX_BALANCE_PCT;
+        $maxCost = $totalBalance * $this->maxBalancePct($risk);
         if ($costUsdt > $maxCost) {
             $costUsdt = $maxCost;
         }
 
-        $availableUsdt = $balance * self::FREE_BALANCE_BUFFER;
-        if ($costUsdt > $availableUsdt) {
-            $costUsdt = $availableUsdt;
+        $freeUsdt = $this->exchange->getUsdtFreeBalance($bot->exchangeAccount) ?? $totalBalance;
+        $freeCap = $freeUsdt * $this->freeBalanceBuffer($risk);
+        if ($costUsdt > $freeCap) {
+            $costUsdt = $freeCap;
         }
 
-        if ($costUsdt < self::MIN_ORDER_USDT) {
+        $minOrderUsdt = $this->minOrderUsdt($risk);
+        if ($costUsdt < $minOrderUsdt) {
             return null;
         }
 
-        return $costUsdt / $entryPrice;
+        $quantity = $costUsdt / $entryPrice;
+        $normalized = $this->exchange->normalizeQuantity($bot->exchangeAccount, $symbol, $quantity);
+
+        if ($normalized <= 0 || ($normalized * $entryPrice) < $minOrderUsdt) {
+            return null;
+        }
+
+        return $normalized;
+    }
+
+    private function minOrderUsdt(?StrategyRiskSettings $risk): float
+    {
+        return (float) ($risk?->min_order_usdt ?? 5.0);
+    }
+
+    private function maxBalancePct(?StrategyRiskSettings $risk): float
+    {
+        return (float) ($risk?->max_balance_pct ?? 0.30);
+    }
+
+    private function freeBalanceBuffer(?StrategyRiskSettings $risk): float
+    {
+        return (float) ($risk?->free_balance_buffer ?? 0.98);
     }
 }

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('strategies', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('type');
+            $table->string('type')->default('hybrid');
 
             $table->boolean('is_active')->default(true);
             $table->timestamps();

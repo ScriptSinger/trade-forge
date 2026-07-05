@@ -2,8 +2,9 @@
 
 namespace App\Services\Bot;
 
+use App\Models\Bot;
 use App\Services\Exchange\BybitExchangeService;
-use App\Models\ExchangeAccount;
+use Illuminate\Support\Facades\Cache;
 
 class MarketScannerService
 {
@@ -12,10 +13,18 @@ class MarketScannerService
         private TradingLogger $log,
     ) {}
 
-    /**
-     * Get the top 30 most volatile spot USDT pairs with volume > 5,000,000 USDT.
-     */
-    public function getTopVolatileSymbols(ExchangeAccount $account): array
+    public function getTopVolatileSymbols(Bot $bot): array
+    {
+        $account = $bot->exchangeAccount;
+        $ttl = (int) ($bot->strategy->riskSettings?->scanner_cache_ttl ?? 7200);
+        $cacheKey = "market_scanner_top30_{$account->id}_{$bot->strategy_id}";
+
+        return Cache::remember($cacheKey, $ttl, function () use ($account) {
+            return $this->scanTopVolatileSymbols($account);
+        });
+    }
+
+    private function scanTopVolatileSymbols($account): array
     {
         $allTickers = $this->exchange->getAllTickers($account);
 
@@ -23,10 +32,11 @@ class MarketScannerService
             $this->log->botWarning('MarketScanner failed: empty response', [
                 'account_id' => $account->id,
             ]);
+
             return [];
         }
 
-        $symbols = collect($allTickers)
+        return collect($allTickers)
             ->filter(function ($ticker) {
                 $symbol = $ticker['symbol'] ?? '';
                 $volume = (float) ($ticker['turnover24h'] ?? 0);
@@ -59,7 +69,5 @@ class MarketScannerService
             ->take(30)
             ->values()
             ->toArray();
-
-        return $symbols;
     }
 }

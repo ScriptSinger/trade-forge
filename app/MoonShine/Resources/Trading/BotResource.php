@@ -9,7 +9,6 @@ use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\User;
-use App\Services\Bot\BotEngine;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -23,10 +22,8 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
-use MoonShine\Notifications\MoonShineNotification;
 
 #[Icon('cpu-chip')]
 #[Group('Trading', 'cpu-chip')]
@@ -72,12 +69,10 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Стратегия',
                 'strategy',
-                formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
+                formatted: static fn(Strategy $model): string => $model->name,
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name')->sortable(),
-            Number::make('Риск на сделку', 'risk_per_trade')->sortable(),
-            Number::make('Макс. позиций', 'max_open_positions'),
             Enum::make('Статус', 'status')
                 ->attach(BotStatus::class)
                 ->badge(fn($value) => match($value?->value ?? $value) {
@@ -100,7 +95,7 @@ final class BotResource extends TradingResource
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'information-circle',
                     type: 'info',
-                )->content('<b>Боты</b> — это основные рабочие единицы системы. Здесь вы связываете торговый аккаунт биржи со стратегией и задаете лимиты рисков. Бот регулярно запускает алгоритм, анализирует рынок и принимает решение о сделках.')
+                )->content('<b>Боты</b> связывают аккаунт биржи со стратегией. Риск, размер позиции и лимиты настраиваются в <b>Risk settings</b> выбранной стратегии — не на уровне бота.')
             )->withoutWrapper(),
 
             ID::make(),
@@ -121,8 +116,6 @@ final class BotResource extends TradingResource
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name'),
-            Number::make('Риск на сделку', 'risk_per_trade'),
-            Number::make('Макс. позиций', 'max_open_positions'),
             Enum::make('Текущий статус', 'status')->attach(BotStatus::class),
             Date::make('Последний запуск', 'last_run_at')
                 ->withTime()
@@ -138,7 +131,7 @@ final class BotResource extends TradingResource
                 \MoonShine\UI\Components\Alert::make(
                     icon: 'information-circle',
                     type: 'info',
-                )->content('<b>Боты</b> — это основные рабочие единицы системы. Здесь вы связываете торговый аккаунт биржи со стратегией и задаете лимиты рисков. Бот регулярно запускает алгоритм, анализирует рынок и принимает решение о сделках.')
+                )->content('<b>Боты</b> связывают аккаунт биржи со стратегией. Риск, размер позиции и лимиты настраиваются в <b>Risk settings</b> выбранной стратегии — не на уровне бота.')
             )->withoutWrapper(),
 
             Box::make([
@@ -168,26 +161,14 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Стратегия',
                     'strategy',
-                    formatted: static fn(Strategy $model): string => sprintf('%s (%s)', $model->name, $model->type->value),
+                    formatted: static fn(Strategy $model): string => $model->name,
                     resource: StrategyResource::class,
                 )
                     ->creatable()
-                    ->hint('Алгоритм, по которому бот будет принимать решения')
+                    ->hint('Стратегия с Entry/Risk settings — от неё зависят все торговые параметры')
                     ->required(),
                 Text::make('Название', 'name')
                     ->hint('Произвольное имя для этого экземпляра бота')
-                    ->required(),
-                Number::make('Риск на сделку', 'risk_per_trade')
-                    ->hint('Размер одного ордера (в валюте котировки или %)')
-                    ->min(0.01)
-                    ->step(0.01)
-                    ->default(1.00)
-                    ->required(),
-                Number::make('Макс. позиций', 'max_open_positions')
-                    ->hint('Лимит одновременно открытых сделок для этого бота')
-                    ->min(1)
-                    ->step(1)
-                    ->default(1)
                     ->required(),
                 Enum::make('Статус', 'status')
                     ->attach(BotStatus::class)
@@ -242,8 +223,6 @@ final class BotResource extends TradingResource
             'exchange_account_id' => ['required', 'integer', 'exists:exchange_accounts,id'],
             'strategy_id' => ['required', 'integer', 'exists:strategies,id'],
             'name' => ['required', 'string', 'max:255'],
-            'risk_per_trade' => ['required', 'numeric', 'min:0.01'],
-            'max_open_positions' => ['required', 'integer', 'min:1'],
             'status' => ['required', new EnumRule(BotStatus::class)],
             'last_checked_at' => ['nullable', 'date'],
         ];

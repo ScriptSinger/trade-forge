@@ -17,14 +17,7 @@ class StrategyFactory extends Factory
     {
         return [
             'name' => fake()->words(2, true),
-            'type' => StrategyType::Breakout->value,
-            'settings' => [
-                'ema_fast' => 12,
-                'ema_slow' => 26,
-                'rsi_period' => 14,
-                'adx_period' => 14,
-                'atr_period' => 14,
-            ],
+            'type' => StrategyType::Hybrid->value,
             'is_active' => true,
         ];
     }

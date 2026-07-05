@@ -23,8 +23,6 @@ class BotFactory extends Factory
             'exchange_account_id' => ExchangeAccount::factory(),
             'strategy_id' => Strategy::factory(),
             'name' => fake()->words(2, true),
-            'risk_per_trade' => 1.00,
-            'max_open_positions' => 1,
             'status' => BotStatus::Active->value,
             'last_run_at' => now(),
         ];

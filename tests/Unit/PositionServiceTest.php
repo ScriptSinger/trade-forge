@@ -15,6 +15,7 @@ use App\Models\Position;
 use App\Models\Strategy;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
+use App\Services\Bot\TradePnlCalculator;
 use App\Services\Bot\TradingLogger;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Exchange\BybitExchangeService;
@@ -101,6 +102,7 @@ class PositionServiceTest extends TestCase
             Mockery::mock(TradingLogger::class),
             Mockery::mock(DailyPerformanceService::class),
             Mockery::mock(TechnicalIndicatorService::class),
+            new TradePnlCalculator(),
         );
     }
 }

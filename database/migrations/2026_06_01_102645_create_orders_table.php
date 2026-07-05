@@ -35,6 +35,13 @@ return new class extends Migration
             $table->index(['bot_id', 'symbol']);
             $table->timestamps();
         });
+
+        Schema::table('bot_runs', function (Blueprint $table) {
+            $table->foreign('order_id')
+                ->references('id')
+                ->on('orders')
+                ->nullOnDelete();
+        });
     }
 
     /**
@@ -42,6 +49,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('bot_runs', function (Blueprint $table) {
+            $table->dropForeign(['order_id']);
+        });
+
         Schema::dropIfExists('orders');
     }
 };

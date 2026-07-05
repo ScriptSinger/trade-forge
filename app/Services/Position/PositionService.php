@@ -11,6 +11,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
 use App\Enums\TradeSignal;
 use App\Services\Bot\DailyPerformanceService;
+use App\Services\Bot\TradePnlCalculator;
 use App\Services\Bot\TradingLogger;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Strategy\TechnicalIndicatorService;
@@ -24,6 +25,7 @@ class PositionService
         private TradingLogger $log,
         private DailyPerformanceService $dailyPerformance,
         private TechnicalIndicatorService $indicators,
+        private TradePnlCalculator $pnlCalculator,
     ) {}
 
     public function monitor(Bot $bot, bool $sidewaysStop = false): void
@@ -173,21 +175,40 @@ class PositionService
             'qty' => $sellQty,
         ]);
 
+        $normalizedQty = $this->exchange->normalizeQuantity(
+            $position->bot->exchangeAccount,
+            $position->symbol,
+            $sellQty,
+        );
+
         $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
             $position->symbol,
             'sell',
-            $sellQty,
+            $normalizedQty,
+        );
+
+        $pnl = $this->pnlCalculator->calculate(
+            (float) $position->entry_price,
+            $price,
+            $normalizedQty,
+            $this->spotFeeRate($position),
+        );
+
+        $this->dailyPerformance->recordPartialPnl(
+            $position->bot,
+            $pnl['profit_loss'],
+            $pnl['fees'],
         );
 
         $position->update([
-            'quantity' => max(0, (float) $position->quantity - $sellQty),
+            'quantity' => max(0, (float) $position->quantity - $normalizedQty),
         ]);
 
         $this->log->auditTradeEvent(
             $position->bot,
             'HYBRID_HALF_SELL',
-            ['price' => $price, 'qty' => $sellQty, 'portion' => $portion],
+            ['price' => $price, 'qty' => $normalizedQty, 'portion' => $portion],
             $position->symbol,
         );
 
@@ -217,11 +238,24 @@ class PositionService
             'qty' => $quantity,
         ]);
 
+        $normalizedQty = $this->exchange->normalizeQuantity(
+            $position->bot->exchangeAccount,
+            $position->symbol,
+            $quantity,
+        );
+
         $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
             $position->symbol,
             'sell',
-            $quantity,
+            $normalizedQty,
+        );
+
+        $pnl = $this->pnlCalculator->calculate(
+            (float) $position->entry_price,
+            $price,
+            $normalizedQty,
+            $this->spotFeeRate($position),
         );
 
         $trade = Trade::create([
@@ -229,9 +263,10 @@ class PositionService
             'symbol' => $position->symbol,
             'entry_price' => $position->entry_price,
             'exit_price' => $price,
-            'quantity' => $quantity,
-            'profit_loss' => ($price - $position->entry_price) * $quantity,
-            'profit_percent' => (($price - $position->entry_price) / $position->entry_price) * 100,
+            'quantity' => $normalizedQty,
+            'profit_loss' => $pnl['profit_loss'],
+            'profit_percent' => $pnl['profit_percent'],
+            'fees' => $pnl['fees'],
             'opened_at' => $position->opened_at,
             'closed_at' => now(),
         ]);
@@ -249,7 +284,7 @@ class PositionService
             signal: TradeSignal::Sell,
             symbol: $position->symbol,
             price: $price,
-            quantity: $quantity,
+            quantity: $normalizedQty,
             reason: $reason,
             mode: $mode,
         );
@@ -321,5 +356,10 @@ class PositionService
         $adx = end($adxArr) ?: 0;
 
         return $adx > $threshold ? 'Hybrid' : 'Sniper';
+    }
+
+    private function spotFeeRate(Position $position): float
+    {
+        return (float) ($position->bot->strategy->riskSettings?->spot_fee_rate ?? 0.001);
     }
 }

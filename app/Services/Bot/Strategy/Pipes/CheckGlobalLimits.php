@@ -14,7 +14,7 @@ class CheckGlobalLimits implements PipeContract
     public function handle(TradeContext $context, Closure $next): mixed
     {
         $risk = $context->bot->strategy->riskSettings;
-        $maxPositions = (int) ($risk->max_positions ?? $context->bot->max_open_positions ?? 3);
+        $maxPositions = (int) ($risk?->max_positions ?? 3);
 
         $openPositionsCount = $context->bot->positions()
             ->where('status', PositionStatus::Open)

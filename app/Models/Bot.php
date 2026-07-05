@@ -17,8 +17,6 @@ class Bot extends Model
         'exchange_account_id',
         'strategy_id',
         'name',
-        'risk_per_trade',
-        'max_open_positions',
         'status',
         'last_run_at',
     ];
@@ -26,8 +24,6 @@ class Bot extends Model
     protected function casts(): array
     {
         return [
-            'risk_per_trade' => 'decimal:2',
-            'max_open_positions' => 'integer',
             'status' => BotStatus::class,
             'last_run_at' => 'datetime',
         ];

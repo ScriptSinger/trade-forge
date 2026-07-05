@@ -29,28 +29,52 @@ class PositionSizingServiceTest extends TestCase
     public function test_calculates_quantity_from_balance_risk_and_price_risk(): void
     {
         $bot = $this->makeBot(riskFraction: 0.02);
-
-        $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getUsdtWalletBalance')->once()->andReturn(1000.0);
+        $exchange = $this->makeExchangeMock(total: 1000.0, free: 1000.0, normalizedQty: 3.0);
 
         $service = new PositionSizingService($exchange);
 
-        // risk = 20 USDT, price risk = 4 → size = 5 coins, cost = 500 (capped to 30% = 300)
-        $qty = $service->calculateQuantity($bot, entryPrice: 100.0, stopLoss: 96.0);
+        $qty = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
 
         $this->assertEqualsWithDelta(3.0, $qty, 0.001);
+    }
+
+    public function test_caps_cost_by_free_usdt_balance(): void
+    {
+        $bot = $this->makeBot(riskFraction: 0.02);
+        $exchange = $this->makeExchangeMock(total: 1000.0, free: 100.0, normalizedQty: 0.98);
+
+        $service = new PositionSizingService($exchange);
+
+        $qty = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
+
+        $this->assertEqualsWithDelta(0.98, $qty, 0.001);
     }
 
     public function test_returns_null_when_order_below_minimum_usdt(): void
     {
         $bot = $this->makeBot(riskFraction: 0.02);
-
-        $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getUsdtWalletBalance')->once()->andReturn(10.0);
+        $exchange = $this->makeExchangeMock(total: 10.0, free: 10.0);
 
         $service = new PositionSizingService($exchange);
 
-        $this->assertNull($service->calculateQuantity($bot, entryPrice: 100.0, stopLoss: 99.0));
+        $this->assertNull($service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 99.0));
+    }
+
+    private function makeExchangeMock(float $total, float $free, ?float $normalizedQty = null): BybitExchangeService
+    {
+        $exchange = Mockery::mock(BybitExchangeService::class);
+        $exchange->shouldReceive('getUsdtWalletBalance')->once()->andReturn($total);
+        $exchange->shouldReceive('getUsdtFreeBalance')->once()->andReturn($free);
+
+        if ($normalizedQty !== null) {
+            $exchange->shouldReceive('normalizeQuantity')
+                ->once()
+                ->andReturn($normalizedQty);
+        } else {
+            $exchange->shouldReceive('normalizeQuantity')->never();
+        }
+
+        return $exchange;
     }
 
     private function makeBot(float $riskFraction): Bot
@@ -76,7 +100,6 @@ class PositionSizingServiceTest extends TestCase
         return Bot::factory()->for($user)->create([
             'exchange_account_id' => $exchangeAccount->id,
             'strategy_id' => $strategy->id,
-            'risk_per_trade' => $riskFraction,
         ])->fresh(['strategy.riskSettings', 'exchangeAccount']);
     }
 }

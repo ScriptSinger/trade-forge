@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\Trading;
 
-use App\Enums\StrategyType;
 use App\Models\Strategy;
 use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
 use App\MoonShine\Resources\Trading\StrategyRiskSettingsResource;
 use App\MoonShine\Resources\Trading\StrategyBtcTrendFilterResource;
-use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\HasOne;
 use MoonShine\MenuManager\Attributes\Group;
@@ -20,11 +18,7 @@ use MoonShine\UI\Components\FlexibleRender;
 use MoonShine\UI\Components\Heading;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
-use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Json;
-use MoonShine\UI\Fields\Number;
-use MoonShine\UI\Fields\Select;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
@@ -49,7 +43,6 @@ final class StrategyResource extends TradingResource
         return [
             ID::make()->sortable(),
             Text::make('Название', 'name')->sortable(),
-            Enum::make('Тип', 'type')->attach(StrategyType::class),
             Switcher::make('Активна', 'is_active'),
             Date::make('Создана', 'created_at')
                 ->format('d.m.Y H:i')
@@ -60,21 +53,27 @@ final class StrategyResource extends TradingResource
     protected function formFields(): iterable
     {
         return [
-            Collapse::make('📖 Справочник алгоритмов', [
+            Collapse::make('📖 Как работает алгоритм (mode 4)', [
                 Box::make([
-                    Heading::make('📈 Trend (Трендовая)'),
-                    FlexibleRender::make('Самая простая логика: сравнивает текущую цену со средней (SMA) за указанный <b>Период</b>. <br>
-                        • <b>BUY:</b> Цена выше средней.<br>
-                        • <b>SELL:</b> Цена ниже средней.'),
+                    Heading::make('🔍 Сканер'),
+                    FlexibleRender::make('Бот берёт TOP-30 пар Bybit spot по объёму (кэш задаётся в Risk settings). За цикл анализируется один символ — после входа цикл завершается.'),
 
-                    Heading::make('📉 Breakout (Пробойная)')->class('mt-4'),
-                    FlexibleRender::make('Ищет выход цены за пределы диапазона (High/Low) последних свечей.<br>
-                        • <b>BUY:</b> Цена пробила максимум за <b>Период</b>.<br>
-                        • <b>SELL:</b> Цена пробила минимум за <b>Период</b>.'),
+                    Heading::make('✅ Условия входа')->class('mt-4'),
+                    FlexibleRender::make('Все фильтры должны пройти:<br>
+                        • <b>BTC trend</b> — цена BTC выше EMA (если фильтр включён).<br>
+                        • <b>Breakout</b> — цена выше максимума за <b>Period</b> свечей.<br>
+                        • <b>ADX</b> ≥ <b>Min ADX</b>, <b>EMA fast</b> &gt; <b>EMA slow</b>.<br>
+                        • <b>RSI</b> ниже лимита (Sniper или Hybrid — см. ниже).<br>
+                        • <b>Volume</b> — объём выше среднего.'),
 
-                    Heading::make('⚖️ Hybrid (Гибридная)')->class('mt-4'),
-                    FlexibleRender::make('Комбинирует оба метода. Подает сигнал только в том случае, если <b>и Trend, и Breakout</b> показывают одинаковое направление.'),
-                ])
+                    Heading::make('🎯 Режимы Sniper / Hybrid')->class('mt-4'),
+                    FlexibleRender::make('Режим выбирается <b>в рантайме</b> по ADX открытой позиции:<br>
+                        • <b>Sniper</b> (ADX ≥ Trend ADX Threshold) — трейлинг-стоп, без частичной фиксации.<br>
+                        • <b>Hybrid</b> (ADX ниже порога) — при достижении TP продаётся 50% на бирже, остаток с трейлингом.'),
+
+                    Heading::make('💰 Риск и исполнение')->class('mt-4'),
+                    FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель, комиссия и мин. ордер — всё в <b>Risk settings</b>. Параметры Entry settings задают таймфрейм и пороги индикаторов.'),
+                ]),
             ])->open(false),
 
             Box::make([
@@ -82,17 +81,7 @@ final class StrategyResource extends TradingResource
                 Text::make('Название', 'name')
                     ->hint('Уникальное имя для идентификации стратегии')
                     ->required(),
-                Enum::make('Тип алгоритма', 'type')
-                    ->attach(StrategyType::class)
-                    ->hint('Выберите базовую логику (Trend, Breakout и т.д.)')
-                    ->required(),
 
-
-                /*
-        |--------------------------------------------------------------------------
-        | ENTRY SETTINGS
-        |--------------------------------------------------------------------------
-        */
                 Box::make([
                     Heading::make('Entry settings'),
 
@@ -103,11 +92,6 @@ final class StrategyResource extends TradingResource
                     )->disableOutside(),
                 ]),
 
-                /*
-        |--------------------------------------------------------------------------
-        | RISK SETTINGS
-        |--------------------------------------------------------------------------
-        */
                 Box::make([
                     Heading::make('Risk settings'),
 
@@ -118,11 +102,6 @@ final class StrategyResource extends TradingResource
                     )->disableOutside(),
                 ]),
 
-                /*
-        |--------------------------------------------------------------------------
-        | MARKET FILTER (BTC)
-        |--------------------------------------------------------------------------
-        */
                 Box::make([
                     Heading::make('Market filter (BTC trend)'),
 
@@ -132,9 +111,6 @@ final class StrategyResource extends TradingResource
                         resource: StrategyBtcTrendFilterResource::class
                     )->disableOutside(),
                 ]),
-
-
-
 
                 Switcher::make('Активна', 'is_active')
                     ->hint('Разрешить использование этой стратегии ботами'),
@@ -146,7 +122,6 @@ final class StrategyResource extends TradingResource
     {
         return [
             Text::make('Название', 'name'),
-            Enum::make('Тип', 'type')->attach(StrategyType::class),
             Switcher::make('Активна', 'is_active'),
         ];
     }
@@ -155,17 +130,6 @@ final class StrategyResource extends TradingResource
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', new EnumRule(StrategyType::class)],
-            'settings' => ['required', 'array'],
-            'settings.interval' => ['required', 'string', 'max:10'],
-            'settings.period' => ['required', 'integer', 'min:1'],
-            'settings.min_adx' => ['nullable', 'numeric', 'min:0'],
-            'settings.ema_fast' => ['nullable', 'numeric', 'min:0'],
-            'settings.ema_slow' => ['nullable', 'numeric', 'min:0'],
-            'settings.sl_multiplier' => ['nullable', 'numeric', 'min:0'],
-            'settings.tp_multiplier' => ['nullable', 'numeric', 'min:0'],
-            'settings.trailing_pct' => ['nullable', 'numeric', 'min:0'],
-            'settings.check_market_regime' => ['boolean'],
             'is_active' => ['boolean'],
         ];
     }

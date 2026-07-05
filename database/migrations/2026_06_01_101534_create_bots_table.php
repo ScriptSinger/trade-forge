@@ -20,8 +20,6 @@ return new class extends Migration
             $table->foreignId('strategy_id')->constrained()->cascadeOnDelete();
 
             $table->string('name');
-            $table->decimal('risk_per_trade', 5, 2)->default(1.00);
-            $table->integer('max_open_positions')->default(1);
 
             $table->string('status')->default('active');
 

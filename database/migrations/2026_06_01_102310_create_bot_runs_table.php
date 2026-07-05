@@ -32,8 +32,6 @@ return new class extends Migration
 
             $table->string('status')->default('success');
 
-
-
             $table->index(['bot_id', 'symbol']);
 
             $table->timestamps();

@@ -28,6 +28,12 @@ return new class extends Migration
             $table->boolean('daily_target_enabled')->default(true);
             $table->decimal('daily_profit_target_pct', 5, 2)->default(2.30);
 
+            $table->decimal('spot_fee_rate', 8, 6)->default(0.001);
+            $table->decimal('min_order_usdt', 8, 2)->default(5);
+            $table->decimal('max_balance_pct', 5, 4)->default(0.30);
+            $table->decimal('free_balance_buffer', 5, 4)->default(0.98);
+            $table->unsignedInteger('scanner_cache_ttl')->default(7200);
+
             $table->timestamps();
         });
     }

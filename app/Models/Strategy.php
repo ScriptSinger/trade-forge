@@ -22,9 +22,17 @@ class Strategy extends Model
     {
         return [
             'type' => StrategyType::class,
-            'settings' => 'array',
             'is_active' => 'bool',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (Strategy $strategy): void {
+            if ($strategy->type === null) {
+                $strategy->type = StrategyType::Hybrid;
+            }
+        });
     }
 
     /*

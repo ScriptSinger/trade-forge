@@ -2,6 +2,7 @@
 
 namespace App\Services\Bot;
 
+use App\Enums\PositionStatus;
 use App\Enums\TradeContextStatus;
 use App\Models\Bot;
 use App\Services\Position\PositionService;
@@ -101,7 +102,17 @@ class BotEngine
             return;
         }
 
-        $targets = $this->scanner->getTopVolatileSymbols($account);
+        if ($this->hasReachedMaxPositions($bot)) {
+            $bot->forceFill(['last_run_at' => now()])->saveQuietly();
+
+            $this->log->botInfo('Bot cycle skipped scanning: max positions reached', [
+                'bot_id' => $bot->id,
+            ]);
+
+            return;
+        }
+
+        $targets = $this->scanner->getTopVolatileSymbols($bot);
 
         if (empty($targets)) {
             $this->log->botWarning('Scanner returned no symbols', [
@@ -162,6 +173,17 @@ class BotEngine
         $result = $this->pipeline->run($context);
 
         $this->logFinalStatus($result, $stats);
+    }
+
+    private function hasReachedMaxPositions(Bot $bot): bool
+    {
+        $maxPositions = (int) ($bot->strategy->riskSettings?->max_positions ?? 3);
+
+        $openCount = $bot->positions()
+            ->where('status', PositionStatus::Open)
+            ->count();
+
+        return $openCount >= $maxPositions;
     }
 
     private function logFinalStatus(TradeContext $context, array &$stats): void

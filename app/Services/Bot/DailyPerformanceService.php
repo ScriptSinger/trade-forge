@@ -85,6 +85,16 @@ class DailyPerformanceService
         return ((float) $stat->profit / $startBalance) * 100;
     }
 
+    public function recordPartialPnl(Bot $bot, float $profitLoss, float $fees): void
+    {
+        $stat = $this->ensureTodayStat($bot);
+
+        $stat->forceFill([
+            'profit' => (float) $stat->profit + $profitLoss,
+            'fees' => (float) $stat->fees + $fees,
+        ])->save();
+    }
+
     public function recordClosedTrade(Trade $trade): void
     {
         $dateKey = $this->dateKey($trade->closed_at);

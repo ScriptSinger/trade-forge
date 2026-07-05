@@ -41,8 +41,8 @@ class TradingDemoSeederTest extends TestCase
         $stat = BotStat::query()->firstOrFail();
 
         $this->assertSame('test@example.com', $user->email);
-        $this->assertSame('BTC Trend Momentum', $strategy->name);
-        $this->assertSame('BTC Trend Bot', $bot->name);
+        $this->assertSame('Spot Breakout Mode 4', $strategy->name);
+        $this->assertSame('Bybit Spot Bot', $bot->name);
         $this->assertSame('BTCUSDT', $trade->symbol);
         $this->assertSame($bot->id, $stat->bot_id);
         $this->assertSame($bot->id, $trade->bot_id);

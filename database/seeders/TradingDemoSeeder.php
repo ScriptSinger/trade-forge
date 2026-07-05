@@ -8,7 +8,6 @@ use Carbon\CarbonImmutable;
 use App\Enums\BotStatus;
 use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
-use App\Enums\StrategyType;
 use App\Models\Bot;
 use App\Models\BotStat;
 use App\Models\ExchangeAccount;
@@ -35,9 +34,8 @@ class TradingDemoSeeder extends Seeder
         );
 
         $strategy = Strategy::query()->updateOrCreate(
-            ['name' => 'BTC Trend Momentum'],
+            ['name' => 'Spot Breakout Mode 4'],
             [
-                'type' => StrategyType::Trend->value,
                 'is_active' => true,
             ],
         );
@@ -66,6 +64,11 @@ class TradingDemoSeeder extends Seeder
                 'max_risk_per_trade' => 0.02,
                 'daily_target_enabled' => true,
                 'daily_profit_target_pct' => 2.30,
+                'spot_fee_rate' => 0.001,
+                'min_order_usdt' => 5,
+                'max_balance_pct' => 0.30,
+                'free_balance_buffer' => 0.98,
+                'scanner_cache_ttl' => 7200,
             ],
         );
 
@@ -100,11 +103,9 @@ class TradingDemoSeeder extends Seeder
                 'user_id' => $user->id,
                 'exchange_account_id' => $exchangeAccount->id,
                 'strategy_id' => $strategy->id,
-                'name' => 'BTC Trend Bot',
+                'name' => 'Bybit Spot Bot',
             ],
             [
-                'risk_per_trade' => 0.02,
-                'max_open_positions' => 1,
                 'status' => BotStatus::Active->value,
                 'last_run_at' => null,
             ],
