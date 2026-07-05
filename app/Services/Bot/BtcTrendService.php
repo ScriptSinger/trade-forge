@@ -22,10 +22,16 @@ class BtcTrendService
             return true;
         }
 
+        $klineLimit = (int) (
+            $bot->strategy->entrySettings?->kline_limit
+            ?? BybitExchangeService::DEFAULT_KLINE_LIMIT
+        );
+
         $candles = $this->exchange->getKlines(
             $bot->exchangeAccount,
             $filter->benchmark_symbol ?? 'BTCUSDT',
             (string) ($filter->benchmark_interval ?? 60),
+            $klineLimit,
         );
 
         return $this->isBullishFromCandles(

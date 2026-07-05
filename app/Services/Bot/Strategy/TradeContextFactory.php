@@ -13,12 +13,15 @@ class TradeContextFactory
 
     public function make(Bot $bot, string $symbol): TradeContext
     {
-        $interval = $bot->strategy->entrySettings?->interval ?? '15';
+        $entrySettings = $bot->strategy->entrySettings;
+        $interval = (string) ($entrySettings?->interval ?? 15);
+        $klineLimit = (int) ($entrySettings?->kline_limit ?? BybitExchangeService::DEFAULT_KLINE_LIMIT);
 
         $market = $this->exchange->getMarketData(
             $bot->exchangeAccount,
             $symbol,
-            $interval
+            $interval,
+            $klineLimit,
         );
 
         return new TradeContext(

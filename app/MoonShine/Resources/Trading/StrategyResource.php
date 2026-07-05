@@ -70,7 +70,8 @@ final class StrategyResource extends TradingResource
                     FlexibleRender::make('<b>BTC Trend Filter</b> не блокирует вход в сделки. Он используется только когда дневная цель прибыли достигнута: если BTC не в аптренде (EMA fast &gt; slow), бот перестаёт открывать новые позиции и ужесточает выходы (SidewaysMarketGuard).'),
 
                     Heading::make('💰 Риск и исполнение')->class('mt-4'),
-                    FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель, комиссия и мин. ордер — всё в <b>Risk settings</b>. Параметры Entry settings задают таймфрейм и пороги индикаторов.'),
+                    FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель, комиссия и мин. ордер — всё в <b>Risk settings</b>.<br>
+                        <b>Entry settings:</b> Interval — таймфрейм; Period — окно breakout/volume; <b>Kline limit</b> — глубина истории с биржи для EMA/ADX (в sample = 1000).'),
                 ]),
             ])->open(false),
 

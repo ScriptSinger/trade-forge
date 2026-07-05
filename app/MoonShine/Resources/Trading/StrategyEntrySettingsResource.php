@@ -6,6 +6,7 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Models\StrategyEntrySettings;
 use App\MoonShine\Resources\Trading\StrategyResource;
+use App\Services\Exchange\BybitExchangeService;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\SkipMenu;
@@ -28,6 +29,7 @@ class StrategyEntrySettingsResource extends ModelResource
             Select::make('Interval', 'interval'),
 
             Number::make('Period', 'period'),
+            Number::make('Kline limit', 'kline_limit'),
             Number::make('EMA Fast', 'ema_fast'),
             Number::make('EMA Slow', 'ema_slow'),
             Number::make('Min ADX', 'adx_min'),
@@ -53,35 +55,50 @@ class StrategyEntrySettingsResource extends ModelResource
                     '15' => '15m',
                     '60' => '1h',
                 ])
-                ->default('1'),
+                ->default('15')
+                ->hint('Таймфрейм свечей для входа и мониторинга ADX (как TIMEFRAME в sample — 15m)'),
 
             Number::make('Period', 'period')
                 ->default(20)
                 ->min(1)
+                ->hint('Окно для breakout и volume: max high и средний объём за последние N свечей (не глубина загрузки с биржи)')
+                ->required(),
+
+            Number::make('Kline limit', 'kline_limit')
+                ->default(BybitExchangeService::DEFAULT_KLINE_LIMIT)
+                ->min(200)
+                ->max(1000)
+                ->hint('Сколько свечей запрашивать с Bybit для EMA/ADX/RSI. Минимум ≥ EMA Slow. Для стабильной EMA200 как в sample — 1000')
                 ->required(),
 
             Number::make('EMA Fast', 'ema_fast')
                 ->default(50)
-                ->min(1),
+                ->min(1)
+                ->hint('Быстрая EMA на prev bar — должна быть выше EMA Slow для входа'),
 
             Number::make('EMA Slow', 'ema_slow')
                 ->default(200)
-                ->min(1),
+                ->min(1)
+                ->hint('Медленная EMA. Kline limit должен быть заметно больше этого значения'),
 
             Number::make('Min ADX', 'adx_min')
-                ->default(25),
+                ->default(25)
+                ->hint('Минимальный ADX для входа (ADX_THRESHOLD в sample)'),
 
             Number::make('Trend ADX Threshold', 'trend_adx_threshold')
                 ->default(30)
-                ->min(1),
+                ->min(1)
+                ->hint('Порог сильного тренда: выше — режим Hybrid, ниже — Sniper (TREND_ADX в sample)'),
 
             Number::make('RSI Limit Sniper', 'rsi_limit_sniper')
                 ->default(55)
-                ->step(0.01),
+                ->step(0.01)
+                ->hint('Макс. RSI для входа в режиме Sniper (боковик, ADX ≤ порога)'),
 
             Number::make('RSI Limit Hybrid', 'rsi_limit_hybrid')
                 ->default(75)
-                ->step(0.01),
+                ->step(0.01)
+                ->hint('Макс. RSI для входа в режиме Hybrid (тренд, ADX > порога)'),
         ];
     }
 
@@ -93,6 +110,7 @@ class StrategyEntrySettingsResource extends ModelResource
             Select::make('Interval', 'interval'),
 
             Number::make('Period', 'period'),
+            Number::make('Kline limit', 'kline_limit'),
             Number::make('EMA Fast', 'ema_fast'),
             Number::make('EMA Slow', 'ema_slow'),
             Number::make('Min ADX', 'adx_min'),

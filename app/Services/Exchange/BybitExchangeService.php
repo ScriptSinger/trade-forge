@@ -11,17 +11,23 @@ class BybitExchangeService
 {
     use ResolvesTradingLogger;
 
+    public const DEFAULT_KLINE_LIMIT = 1000;
+
     /*
     |--------------------------------------------------------------------------
     | MARKET DATA (SPOT)
     |--------------------------------------------------------------------------
     */
 
-    public function getMarketData(ExchangeAccount $account, string $symbol, string $interval = '1'): array
-    {
+    public function getMarketData(
+        ExchangeAccount $account,
+        string $symbol,
+        string $interval = '1',
+        int $limit = self::DEFAULT_KLINE_LIMIT,
+    ): array {
         return [
             'price' => $this->getTicker($account, $symbol),
-            'candles' => $this->getKlines($account, $symbol, $interval),
+            'candles' => $this->getKlines($account, $symbol, $interval, $limit),
         ];
     }
 
@@ -61,7 +67,12 @@ class BybitExchangeService
         return $response->json('result.list') ?? [];
     }
 
-    public function getKlines(ExchangeAccount $account, string $symbol, string $interval = '15', int $limit = 250): array
+    public function getKlines(
+        ExchangeAccount $account,
+        string $symbol,
+        string $interval = '15',
+        int $limit = self::DEFAULT_KLINE_LIMIT,
+    ): array
     {
         $url = $this->baseUrl($account) . '/v5/market/kline';
 

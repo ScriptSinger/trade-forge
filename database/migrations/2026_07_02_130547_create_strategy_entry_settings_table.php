@@ -18,8 +18,9 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
-            $table->unsignedInteger('interval')->default(1);
+            $table->unsignedInteger('interval')->default(15);
             $table->unsignedInteger('period')->default(20);
+            $table->unsignedInteger('kline_limit')->default(1000);
 
             $table->unsignedInteger('ema_fast')->default(50);
             $table->unsignedInteger('ema_slow')->default(200);

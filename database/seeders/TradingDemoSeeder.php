@@ -43,6 +43,7 @@ class TradingDemoSeeder extends Seeder
             [
                 'interval' => 15,
                 'period' => 20,
+                'kline_limit' => 1000,
                 'ema_fast' => 50,
                 'ema_slow' => 200,
                 'adx_min' => 25,

@@ -337,7 +337,17 @@ class PositionService
         $threshold = (int) ($entrySettings->trend_adx_threshold ?? 30);
         $interval = (string) ($entrySettings->interval ?? 15);
 
-        $rawCandles = $this->exchange->getKlines($bot->exchangeAccount, $position->symbol, $interval);
+        $klineLimit = (int) (
+            $entrySettings->kline_limit
+            ?? BybitExchangeService::DEFAULT_KLINE_LIMIT
+        );
+
+        $rawCandles = $this->exchange->getKlines(
+            $bot->exchangeAccount,
+            $position->symbol,
+            $interval,
+            $klineLimit,
+        );
 
         if (empty($rawCandles)) {
             return $position->mode ?: 'Sniper';

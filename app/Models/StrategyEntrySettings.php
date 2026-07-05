@@ -14,6 +14,7 @@ class StrategyEntrySettings extends Model
         'strategy_id',
         'interval',
         'period',
+        'kline_limit',
         'ema_fast',
         'ema_slow',
         'adx_min',
@@ -27,6 +28,7 @@ class StrategyEntrySettings extends Model
         return [
             'interval' => 'integer',
             'period' => 'integer',
+            'kline_limit' => 'integer',
             'ema_fast' => 'integer',
             'ema_slow' => 'integer',
             'adx_min' => 'float',
