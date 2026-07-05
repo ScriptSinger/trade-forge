@@ -10,8 +10,6 @@ use App\MoonShine\Resources\Trading\StrategyRiskSettingsResource;
 use App\MoonShine\Resources\Trading\StrategyBtcTrendFilterResource;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\HasOne;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\Collapse;
 use MoonShine\UI\Components\FlexibleRender;
@@ -23,8 +21,6 @@ use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('adjustments-horizontal')]
-#[Group('Trading', 'adjustments-horizontal')]
-#[Order(2)]
 final class StrategyResource extends TradingResource
 {
     protected string $model = Strategy::class;

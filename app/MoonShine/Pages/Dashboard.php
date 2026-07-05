@@ -10,6 +10,7 @@ use App\Models\Trade;
 use App\Enums\PositionStatus;
 use App\Enums\BotStatus;
 use MoonShine\Laravel\Pages\Page;
+use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\Layout\Grid;
 use MoonShine\UI\Components\Layout\Column;
 use MoonShine\UI\Components\Metrics\Wrapped\ValueMetric;
@@ -17,6 +18,7 @@ use MoonShine\UI\Components\Table\TableBuilder;
 use MoonShine\UI\Components\Heading;
 use MoonShine\UI\Fields\Preview;
 
+#[Icon('home')]
 class Dashboard extends Page
 {
     public function getTitle(): string

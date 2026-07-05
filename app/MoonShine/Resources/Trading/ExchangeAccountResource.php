@@ -13,8 +13,6 @@ use App\MoonShine\Resources\Trading\Handlers\CheckConnectionHandler;
 use App\MoonShine\Resources\Trading\Pages\ExchangeAccountFormPage;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Crud\Handlers\Handler;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
@@ -32,8 +30,6 @@ use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('wallet')]
-#[Group('Trading', 'wallet')]
-#[Order(1)]
 final class ExchangeAccountResource extends TradingResource
 {
     protected string $model = ExchangeAccount::class;

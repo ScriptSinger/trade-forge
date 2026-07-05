@@ -8,12 +8,14 @@ use App\Models\StrategyBtcTrendFilter;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
+use MoonShine\MenuManager\Attributes\SkipMenu;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Select;
 use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
+#[SkipMenu]
 class StrategyBtcTrendFilterResource extends ModelResource
 {
     protected string $model = StrategyBtcTrendFilter::class;

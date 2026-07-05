@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Layouts;
 
+use App\MoonShine\Pages\Dashboard;
+use App\MoonShine\Resources\MoonShineUser\MoonShineUserResource;
+use App\MoonShine\Resources\MoonShineUserRole\MoonShineUserRoleResource;
 use App\MoonShine\Resources\Trading\BotResource;
 use App\MoonShine\Resources\Trading\BotRunResource;
 use App\MoonShine\Resources\Trading\BotStatResource;
 use App\MoonShine\Resources\Trading\ExchangeAccountResource;
 use App\MoonShine\Resources\Trading\OrderResource;
 use App\MoonShine\Resources\Trading\PositionResource;
-use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use App\MoonShine\Resources\Trading\TradeResource;
 use App\MoonShine\Resources\Trading\UserResource;
@@ -52,7 +54,12 @@ final class MoonShineLayout extends AppLayout
     protected function menu(): array
     {
         return [
-            ...parent::menu(),
+            MenuItem::make(Dashboard::class),
+
+            MenuGroup::make(static fn () => __('moonshine::ui.resource.system'), [
+                MenuItem::make(MoonShineUserResource::class),
+                MenuItem::make(MoonShineUserRoleResource::class),
+            ]),
 
             MenuGroup::make('Trading', [
                 MenuItem::make(UserResource::class),

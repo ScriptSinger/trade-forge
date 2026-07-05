@@ -7,8 +7,6 @@ namespace App\MoonShine\Resources\Trading;
 use App\Models\Bot;
 use App\Models\Trade;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -19,8 +17,6 @@ use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('banknotes')]
-#[Group('Trading', 'banknotes')]
-#[Order(7)]
 final class TradeResource extends TradingResource
 {
     protected string $model = Trade::class;

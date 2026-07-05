@@ -9,8 +9,6 @@ use App\Enums\TradeSignal;
 use App\Models\Bot;
 use App\Models\BotRun;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -24,8 +22,6 @@ use MoonShine\UI\Fields\Text;
 use MoonShine\UI\Fields\Textarea;
 
 #[Icon('arrow-path')]
-#[Group('Trading', 'arrow-path')]
-#[Order(4)]
 final class BotRunResource extends TradingResource
 {
     protected string $model = BotRun::class;

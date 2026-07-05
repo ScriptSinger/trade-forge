@@ -8,8 +8,6 @@ use App\Enums\PositionStatus;
 use App\Models\Bot;
 use App\Models\Position;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -22,8 +20,6 @@ use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('rectangle-stack')]
-#[Group('Trading', 'rectangle-stack')]
-#[Order(6)]
 final class PositionResource extends TradingResource
 {
     protected string $model = Position::class;

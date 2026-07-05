@@ -8,10 +8,12 @@ use App\Models\StrategyEntrySettings;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
+use MoonShine\MenuManager\Attributes\SkipMenu;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Select;
 
+#[SkipMenu]
 class StrategyEntrySettingsResource extends ModelResource
 {
     protected string $model = StrategyEntrySettings::class;

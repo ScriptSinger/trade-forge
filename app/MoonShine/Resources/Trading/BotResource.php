@@ -12,8 +12,6 @@ use App\Models\User;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -26,8 +24,6 @@ use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('cpu-chip')]
-#[Group('Trading', 'cpu-chip')]
-#[Order(3)]
 final class BotResource extends TradingResource
 {
     protected string $model = Bot::class;

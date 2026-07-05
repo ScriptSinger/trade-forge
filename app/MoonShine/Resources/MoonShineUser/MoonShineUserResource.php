@@ -8,8 +8,6 @@ use MoonShine\Laravel\Models\MoonshineUser;
 use MoonShine\Laravel\Resources\ModelResource;
 use App\MoonShine\Resources\MoonShineUser\Pages\MoonShineUserFormPage;
 use App\MoonShine\Resources\MoonShineUser\Pages\MoonShineUserIndexPage;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -18,8 +16,6 @@ use MoonShine\Support\ListOf;
  * @extends ModelResource<MoonshineUser, MoonShineUserIndexPage, MoonShineUserFormPage, null>
  */
 #[Icon('users')]
-#[Group('moonshine::ui.resource.system', 'users', translatable: true)]
-#[Order(0)]
 class MoonShineUserResource extends ModelResource
 {
     protected string $model = MoonshineUser::class;

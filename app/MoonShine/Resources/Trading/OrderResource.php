@@ -11,8 +11,6 @@ use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Order;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order as MenuOrder;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
@@ -25,8 +23,6 @@ use MoonShine\UI\Fields\Preview;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('clipboard-document-list')]
-#[Group('Trading', 'clipboard-document-list')]
-#[MenuOrder(5)]
 final class OrderResource extends TradingResource
 {
     protected string $model = Order::class;

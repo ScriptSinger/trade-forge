@@ -11,8 +11,6 @@ use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
 use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
@@ -21,8 +19,6 @@ use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('presentation-chart-line')]
-#[Group('Trading', 'presentation-chart-line')]
-#[Order(8)]
 final class BotStatResource extends TradingResource
 {
     protected string $model = BotStat::class;

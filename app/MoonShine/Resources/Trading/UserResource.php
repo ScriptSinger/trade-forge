@@ -10,8 +10,6 @@ use Illuminate\Validation\Rules\Enum as EnumRule;
 use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
 use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
-use MoonShine\MenuManager\Attributes\Group;
-use MoonShine\MenuManager\Attributes\Order;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
@@ -22,8 +20,6 @@ use MoonShine\UI\Fields\PasswordRepeat;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('users')]
-#[Group('Trading', 'users')]
-#[Order(0)]
 final class UserResource extends TradingResource
 {
     protected string $model = User::class;
