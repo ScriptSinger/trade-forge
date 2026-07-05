@@ -56,7 +56,6 @@ final class StrategyResource extends TradingResource
 
                     Heading::make('✅ Условия входа')->class('mt-4'),
                     FlexibleRender::make('Все фильтры должны пройти:<br>
-                        • <b>BTC trend</b> — цена BTC выше EMA (если фильтр включён).<br>
                         • <b>Breakout</b> — цена выше максимума за <b>Period</b> свечей.<br>
                         • <b>ADX</b> ≥ <b>Min ADX</b>, <b>EMA fast</b> &gt; <b>EMA slow</b>.<br>
                         • <b>RSI</b> ниже лимита (Sniper или Hybrid — см. ниже).<br>
@@ -66,6 +65,9 @@ final class StrategyResource extends TradingResource
                     FlexibleRender::make('Режим выбирается <b>в рантайме</b> по ADX открытой позиции:<br>
                         • <b>Sniper</b> (ADX ≥ Trend ADX Threshold) — трейлинг-стоп, без частичной фиксации.<br>
                         • <b>Hybrid</b> (ADX ниже порога) — при достижении TP продаётся 50% на бирже, остаток с трейлингом.'),
+
+                    Heading::make('🛡️ BTC filter (дневная цель)')->class('mt-4'),
+                    FlexibleRender::make('<b>BTC Trend Filter</b> не блокирует вход в сделки. Он используется только когда дневная цель прибыли достигнута: если BTC не в аптренде (EMA fast &gt; slow), бот перестаёт открывать новые позиции и ужесточает выходы (SidewaysMarketGuard).'),
 
                     Heading::make('💰 Риск и исполнение')->class('mt-4'),
                     FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель, комиссия и мин. ордер — всё в <b>Risk settings</b>. Параметры Entry settings задают таймфрейм и пороги индикаторов.'),
@@ -99,7 +101,7 @@ final class StrategyResource extends TradingResource
                 ]),
 
                 Box::make([
-                    Heading::make('Market filter (BTC trend)'),
+                    Heading::make('BTC filter (daily target guard)'),
 
                     HasOne::make(
                         'BTC Trend Filter',

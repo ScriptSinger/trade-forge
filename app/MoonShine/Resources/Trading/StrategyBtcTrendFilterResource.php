@@ -20,7 +20,7 @@ class StrategyBtcTrendFilterResource extends ModelResource
 {
     protected string $model = StrategyBtcTrendFilter::class;
 
-    protected string $title = 'BTC Trend Filter';
+    protected string $title = 'BTC Filter (Daily Target)';
 
     protected function indexFields(): iterable
     {
@@ -41,7 +41,8 @@ class StrategyBtcTrendFilterResource extends ModelResource
                 ->required(),
 
             Switcher::make('Enabled', 'enabled')
-                ->default(true),
+                ->default(true)
+                ->hint('Используется только после достижения дневной цели прибыли'),
 
             Text::make('Symbol', 'benchmark_symbol')
                 ->default('BTCUSDT')

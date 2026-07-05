@@ -167,7 +167,7 @@ class BotEngine
             'volatility' => $target['volatility'],
         ]);
 
-        $bot->strategy->loadMissing(['entrySettings', 'btcTrendFilter', 'riskSettings']);
+        $bot->strategy->loadMissing(['entrySettings', 'riskSettings']);
 
         $context = $this->contextFactory->make($bot, $symbol);
         $result = $this->pipeline->run($context);
