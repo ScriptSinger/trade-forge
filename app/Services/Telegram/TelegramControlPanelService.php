@@ -23,6 +23,10 @@ class TelegramControlPanelService
 
     public function isEnabled(): bool
     {
+        if (config('trading.telegram.control_mode', 'webhook') === 'off') {
+            return false;
+        }
+
         return (bool) config('trading.telegram.control_enabled', true)
             && $this->telegram->isConfigured();
     }

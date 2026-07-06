@@ -64,25 +64,6 @@ class TelegramNotifier
     }
 
     /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function getUpdates(int $offset = 0, int $timeout = 25): array
-    {
-        $params = [
-            'timeout' => $timeout,
-            'allowed_updates' => json_encode(['message'], JSON_THROW_ON_ERROR),
-        ];
-
-        if ($offset > 0) {
-            $params['offset'] = $offset;
-        }
-
-        $response = $this->request('getUpdates', $params, $timeout + 5);
-
-        return is_array($response) ? $response : [];
-    }
-
-    /**
      * @param  list<list<string>>  $rows
      * @return array<string, mixed>
      */

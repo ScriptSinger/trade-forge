@@ -11,6 +11,20 @@ services:
     networks:
       - laravel
 
+  ngrok:
+    image: ngrok/ngrok:3
+    container_name: ngrok
+    ports:
+      - "4040:4040"
+    depends_on:
+      - nginx
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
+    command: http nginx:80
+    restart: unless-stopped
+    networks:
+      - laravel
+
   php:
     build:
       context: .
@@ -52,25 +66,6 @@ services:
       dockerfile: docker/php/php.dockerfile
     user: "${UID}:${GID}"
     command: php artisan schedule:work --verbose
-    restart: unless-stopped
-    depends_on:
-      redis:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    volumes:
-      - ./:/var/www/html
-      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
-    working_dir: /var/www/html
-    networks:
-      - laravel
-
-  telegram-control:
-    build:
-      context: .
-      dockerfile: docker/php/php.dockerfile
-    user: "${UID}:${GID}"
-    command: php artisan telegram:control
     restart: unless-stopped
     depends_on:
       redis:

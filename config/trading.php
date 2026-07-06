@@ -11,7 +11,7 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),
         'control_enabled' => env('TELEGRAM_CONTROL_ENABLED', true),
-        'control_poll_timeout' => (int) env('TELEGRAM_CONTROL_POLL_TIMEOUT', 25),
+        'control_mode' => env('TELEGRAM_CONTROL_MODE', 'webhook'),
     ],
 
     'z_report' => [
