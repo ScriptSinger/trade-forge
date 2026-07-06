@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('bot:run')->everyMinute();
+
+Schedule::command('bot:z-report')
+    ->dailyAt(config('trading.z_report.time', '05:05'))
+    ->timezone(config('trading.z_report.timezone', config('app.timezone')));

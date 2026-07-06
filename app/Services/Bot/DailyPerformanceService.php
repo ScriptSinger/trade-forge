@@ -95,6 +95,27 @@ class DailyPerformanceService
         ])->save();
     }
 
+    public function refreshStartBalance(Bot $bot): void
+    {
+        $bot->loadMissing('exchangeAccount');
+
+        $stat = $this->ensureTodayStat($bot);
+        $balance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
+
+        if ($balance === null || $balance <= 0) {
+            $this->log->botWarning('DailyPerformance: could not refresh start_balance', [
+                'bot_id' => $bot->id,
+            ]);
+
+            return;
+        }
+
+        $stat->forceFill([
+            'start_balance' => $balance,
+            'start_balance_at' => now(),
+        ])->save();
+    }
+
     public function recordClosedTrade(Trade $trade): void
     {
         $dateKey = $this->dateKey($trade->closed_at);

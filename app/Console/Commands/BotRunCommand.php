@@ -5,9 +5,8 @@ namespace App\Console\Commands;
 use App\Enums\BotStatus;
 use App\Models\Bot;
 use App\Services\Bot\BotEngine;
+use App\Services\Bot\ZReportService;
 use Illuminate\Console\Command;
-use MoonShine\Laravel\Notifications\MoonShineNotification;
-use MoonShine\Support\Enums\Color;
 
 class BotRunCommand extends Command
 {
@@ -28,7 +27,7 @@ class BotRunCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(BotEngine $engine): void
+    public function handle(BotEngine $engine, ZReportService $zReport): void
     {
         $bots = Bot::where('status', BotStatus::Active)->get();
 
@@ -44,10 +43,9 @@ class BotRunCommand extends Command
                 $engine->run($bot);
                 $this->info("Bot {$bot->name} finished successfully.");
 
-                MoonShineNotification::send(
-                    message: "Бот {$bot->name} завершил анализ рынка",
-                    color: Color::SUCCESS
-                );
+                if ($zReport->sendForBot($bot)) {
+                    $this->info("Z-report sent for bot {$bot->name}.");
+                }
             } catch (\Exception $e) {
                 $this->error("Error running bot {$bot->name}: {$e->getMessage()}");
             }

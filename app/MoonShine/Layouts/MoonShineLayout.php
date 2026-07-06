@@ -48,6 +48,9 @@ final class MoonShineLayout extends AppLayout
             Raw::make(
                 Vite::withEntryPoints(['resources/js/app.js', 'resources/css/app.css'])->toHtml()
             ),
+            Raw::make(
+                '<style>.notifications-text{white-space:pre-line}</style>'
+            ),
         ];
     }
 
