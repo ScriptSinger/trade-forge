@@ -11,9 +11,11 @@ use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
 use App\Enums\TradeSignal;
 use App\Services\Bot\DailyPerformanceService;
+use App\Services\Bot\StrategyModeResolver;
 use App\Services\Bot\TradePnlCalculator;
 use App\Services\Bot\TradingLogger;
 use App\Services\Exchange\BybitExchangeService;
+use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Strategy\TechnicalIndicatorService;
 
 class PositionService
@@ -26,6 +28,8 @@ class PositionService
         private DailyPerformanceService $dailyPerformance,
         private TechnicalIndicatorService $indicators,
         private TradePnlCalculator $pnlCalculator,
+        private TradeTelegramNotifier $tradeTelegram,
+        private StrategyModeResolver $strategyModeResolver,
     ) {}
 
     public function monitor(Bot $bot, bool $sidewaysStop = false): void
@@ -96,25 +100,56 @@ class PositionService
             'pnl_pct' => $pnlPct,
         ]);
 
+        if ($runtimeMode === 'Surfer') {
+            $this->handleSurferLogic($position, $currentPrice);
+            $position->refresh();
+        } elseif ($runtimeMode === 'Hybrid') {
+            $this->handleHybridLogic($position, $currentPrice, $runtimeMode);
+            $position->refresh();
+        }
+
         if ($position->sl > 0 && $currentPrice <= $position->sl) {
-            $reason = $runtimeMode === 'Hybrid' && $position->half_sold
-                ? 'SL/Trailing (remainder)'
-                : ($runtimeMode === 'Hybrid' ? 'SL/Trailing' : 'Stop Loss');
+            $reason = match ($runtimeMode) {
+                'Hybrid' => $position->half_sold ? 'SL/Trailing (remainder)' : 'SL/Trailing',
+                'Surfer' => 'SL/Trailing',
+                default => 'Stop Loss',
+            };
 
             $this->executeExit($position, $currentPrice, $reason, $runtimeMode);
 
             return;
         }
 
-        if ($runtimeMode === 'Sniper') {
-            if ($position->tp > 0 && $currentPrice >= $position->tp) {
-                $this->executeExit($position, $currentPrice, 'Take Profit', $runtimeMode);
-            }
+        if ($runtimeMode === 'Sniper' && $position->tp > 0 && $currentPrice >= $position->tp) {
+            $this->executeExit($position, $currentPrice, 'Take Profit', $runtimeMode);
+        }
+    }
 
+    private function handleSurferLogic(Position $position, float $currentPrice): void
+    {
+        $entry = (float) $position->entry_price;
+        $tp = (float) $position->tp;
+
+        if ($tp <= $entry) {
             return;
         }
 
-        $this->handleHybridLogic($position, $currentPrice, $runtimeMode);
+        $activation = $entry + ($tp - $entry) * 0.8;
+
+        if ($currentPrice >= $activation && !$position->trailing_active) {
+            $position->update(['trailing_active' => true]);
+
+            $this->tradeTelegram->notifySurferActivation($position->symbol);
+
+            $this->log->orderInfo('Surfer trailing activated', [
+                'bot_id' => $position->bot_id,
+                'symbol' => $position->symbol,
+                'price' => $currentPrice,
+                'activation' => $activation,
+            ]);
+        }
+
+        $this->updateTrailingStop($position, $currentPrice);
     }
 
     private function handleHybridLogic(Position $position, float $currentPrice, string $runtimeMode): void
@@ -136,14 +171,21 @@ class PositionService
             ]);
         }
 
-        if ($position->trailing_active) {
-            $trailingPct = (float) ($position->bot->strategy->riskSettings?->trailing_pct ?? 1.5);
-            $multiplier = (100 - $trailingPct) / 100;
-            $dynamicSl = $currentPrice * $multiplier;
+        $this->updateTrailingStop($position, $currentPrice);
+    }
 
-            if ($dynamicSl > (float) $position->sl) {
-                $position->update(['sl' => $dynamicSl]);
-            }
+    private function updateTrailingStop(Position $position, float $currentPrice): void
+    {
+        if (!$position->trailing_active) {
+            return;
+        }
+
+        $trailingPct = (float) ($position->bot->strategy->riskSettings?->trailing_pct ?? 1.5);
+        $multiplier = (100 - $trailingPct) / 100;
+        $dynamicSl = $currentPrice * $multiplier;
+
+        if ($dynamicSl > (float) $position->sl) {
+            $position->update(['sl' => $dynamicSl]);
         }
     }
 
@@ -154,17 +196,19 @@ class PositionService
         string $reason,
         string $runtimeMode,
     ): bool {
-        $sellQty = (float) $position->quantity * $portion;
+        $resolved = $this->resolveSellQuantity($position, $portion, $price);
 
-        if ($sellQty * $price < self::DUST_USDT) {
+        if ($resolved['is_dust']) {
             $this->log->orderInfo('Dust position cleanup', [
                 'bot_id' => $position->bot_id,
                 'symbol' => $position->symbol,
             ]);
-            $this->executeExit($position, $price, 'Dust cleanup', $runtimeMode);
+            $this->closeDustPosition($position);
 
             return false;
         }
+
+        $normalizedQty = $resolved['qty'];
 
         $this->log->orderInfo('Partial position close', [
             'bot_id' => $position->bot_id,
@@ -172,14 +216,8 @@ class PositionService
             'reason' => $reason,
             'price' => $price,
             'portion' => $portion,
-            'qty' => $sellQty,
+            'qty' => $normalizedQty,
         ]);
-
-        $normalizedQty = $this->exchange->normalizeQuantity(
-            $position->bot->exchangeAccount,
-            $position->symbol,
-            $sellQty,
-        );
 
         $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
@@ -205,6 +243,14 @@ class PositionService
             'quantity' => max(0, (float) $position->quantity - $normalizedQty),
         ]);
 
+        $this->tradeTelegram->notifyExit(
+            symbol: $position->symbol,
+            reason: $reason,
+            portion: $portion,
+            pnlPct: $pnl['profit_percent'],
+            profitUsdt: $pnl['profit_loss'],
+        );
+
         $this->log->auditTradeEvent(
             $position->bot,
             'HYBRID_HALF_SELL',
@@ -218,31 +264,23 @@ class PositionService
     private function executeExit(Position $position, float $price, string $reason, ?string $runtimeMode = null): void
     {
         $mode = $runtimeMode ?? $this->resolveRuntimeMode($position);
-        $quantity = (float) $position->quantity;
+        $resolved = $this->resolveSellQuantity($position, 1.0, $price);
 
-        if ($quantity * $price < self::DUST_USDT) {
-            $position->update([
-                'status' => PositionStatus::Closed,
-                'exit_reason' => 'Dust cleanup',
-                'closed_at' => now(),
-            ]);
+        if ($resolved['is_dust']) {
+            $this->closeDustPosition($position);
 
             return;
         }
+
+        $normalizedQty = $resolved['qty'];
 
         $this->log->orderInfo('Closing position', [
             'bot_id' => $position->bot_id,
             'symbol' => $position->symbol,
             'reason' => $reason,
             'price' => $price,
-            'qty' => $quantity,
+            'qty' => $normalizedQty,
         ]);
-
-        $normalizedQty = $this->exchange->normalizeQuantity(
-            $position->bot->exchangeAccount,
-            $position->symbol,
-            $quantity,
-        );
 
         $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
@@ -278,6 +316,14 @@ class PositionService
             'exit_reason' => $reason,
             'closed_at' => now(),
         ]);
+
+        $this->tradeTelegram->notifyExit(
+            symbol: $position->symbol,
+            reason: $reason,
+            portion: 1.0,
+            pnlPct: $pnl['profit_percent'],
+            profitUsdt: $pnl['profit_loss'],
+        );
 
         $this->log->auditPositionExit(
             bot: $position->bot,
@@ -323,7 +369,7 @@ class PositionService
     }
 
     /**
-     * Python STRATEGY_MODE 4: HYBRID if current ADX > threshold, else SNIPER.
+     * Python STRATEGY_MODE 1–4: runtime SURFER / HYBRID / SNIPER by ADX.
      */
     private function resolveRuntimeMode(Position $position): string
     {
@@ -334,6 +380,7 @@ class PositionService
             return $position->mode ?: 'Sniper';
         }
 
+        $strategyMode = $this->strategyModeResolver->fromSettings($entrySettings);
         $threshold = (int) ($entrySettings->trend_adx_threshold ?? 30);
         $interval = (string) ($entrySettings->interval ?? 15);
 
@@ -365,11 +412,59 @@ class PositionService
         $adxArr = $this->indicators->adx($mappedCandles, 14);
         $adx = end($adxArr) ?: 0;
 
-        return $adx > $threshold ? 'Hybrid' : 'Sniper';
+        return $this->strategyModeResolver->resolveRuntime($strategyMode, $adx, $threshold);
     }
 
     private function spotFeeRate(Position $position): float
     {
         return (float) ($position->bot->strategy->riskSettings?->spot_fee_rate ?? 0.001);
+    }
+
+    /**
+     * Python sample sell(): partial uses stored qty × portion, full uses exchange free balance.
+     *
+     * @return array{qty: float, is_dust: bool}
+     */
+    private function resolveSellQuantity(Position $position, float $portion, float $price): array
+    {
+        $account = $position->bot->exchangeAccount;
+        $actualQty = (float) $this->exchange->getCoinFreeBalance(
+            $account,
+            $this->baseCoinFromSymbol($position->symbol),
+        );
+
+        $storedQty = (float) $position->quantity;
+        $targetQty = $portion >= 1.0
+            ? $actualQty
+            : $storedQty * $portion;
+
+        if ($targetQty * $price < self::DUST_USDT) {
+            return ['qty' => 0.0, 'is_dust' => true];
+        }
+
+        $sellQty = min($targetQty, $actualQty);
+        $normalizedQty = $this->exchange->normalizeQuantity($account, $position->symbol, $sellQty);
+
+        if ($normalizedQty <= 0) {
+            return ['qty' => 0.0, 'is_dust' => true];
+        }
+
+        return ['qty' => $normalizedQty, 'is_dust' => false];
+    }
+
+    private function closeDustPosition(Position $position): void
+    {
+        $position->update([
+            'status' => PositionStatus::Closed,
+            'exit_reason' => 'Dust cleanup',
+            'closed_at' => now(),
+        ]);
+    }
+
+    private function baseCoinFromSymbol(string $symbol): string
+    {
+        return str_ends_with($symbol, 'USDT')
+            ? substr($symbol, 0, -4)
+            : $symbol;
     }
 }

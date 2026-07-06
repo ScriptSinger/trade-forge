@@ -64,4 +64,37 @@ class BybitExchangeServiceTest extends TestCase
             return (int) ($request->data()['limit'] ?? 0) === 500;
         });
     }
+
+    public function test_get_coin_free_balance_reads_available_balance_from_wallet(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/account/wallet-balance*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'coin' => [
+                                [
+                                    'coin' => 'ETH',
+                                    'availableBalance' => '1.2345',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'ETH');
+
+        $this->assertEqualsWithDelta(1.2345, $balance, 0.0001);
+    }
 }

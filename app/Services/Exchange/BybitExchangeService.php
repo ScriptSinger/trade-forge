@@ -137,19 +137,24 @@ class BybitExchangeService
 
     public function getUsdtFreeBalance(ExchangeAccount $account): ?float
     {
-        $coin = $this->findUsdtCoin($account);
+        return $this->getCoinFreeBalance($account, 'USDT');
+    }
 
-        if ($coin === null) {
-            return null;
+    public function getCoinFreeBalance(ExchangeAccount $account, string $coin): ?float
+    {
+        $coinData = $this->findCoin($account, $coin);
+
+        if ($coinData === null) {
+            return 0.0;
         }
 
-        $free = $coin['availableToWithdraw']
-            ?? $coin['availableBalance']
-            ?? $coin['free']
-            ?? $coin['walletBalance']
+        $free = $coinData['availableToWithdraw']
+            ?? $coinData['availableBalance']
+            ?? $coinData['free']
+            ?? $coinData['walletBalance']
             ?? null;
 
-        return $free !== null ? (float) $free : null;
+        return $free !== null ? (float) $free : 0.0;
     }
 
     public function normalizeQuantity(ExchangeAccount $account, string $symbol, float $quantity): float
@@ -195,12 +200,17 @@ class BybitExchangeService
 
     private function findUsdtCoin(ExchangeAccount $account): ?array
     {
-        $response = $this->getWalletBalance($account, 'USDT');
+        return $this->findCoin($account, 'USDT');
+    }
+
+    private function findCoin(ExchangeAccount $account, string $coin): ?array
+    {
+        $response = $this->getWalletBalance($account, $coin);
         $coins = $response['result']['list'][0]['coin'] ?? [];
 
-        foreach ($coins as $coin) {
-            if (($coin['coin'] ?? '') === 'USDT') {
-                return $coin;
+        foreach ($coins as $coinData) {
+            if (($coinData['coin'] ?? '') === $coin) {
+                return $coinData;
             }
         }
 

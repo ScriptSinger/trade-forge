@@ -41,6 +41,7 @@ class TradingDemoSeeder extends Seeder
         StrategyEntrySettings::query()->updateOrCreate(
             ['strategy_id' => $strategy->id],
             [
+                'strategy_mode' => 4,
                 'interval' => 15,
                 'period' => 20,
                 'kline_limit' => 1000,

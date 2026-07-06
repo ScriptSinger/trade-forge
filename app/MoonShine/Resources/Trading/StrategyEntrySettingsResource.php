@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\MoonShine\Resources\Trading;
 
+use App\Enums\StrategyMode;
 use App\Models\StrategyEntrySettings;
 use App\MoonShine\Resources\Trading\StrategyResource;
 use App\Services\Exchange\BybitExchangeService;
@@ -31,6 +32,8 @@ class StrategyEntrySettingsResource extends ModelResource
         return [
             ID::make()->sortable(),
 
+            Select::make('Strategy mode', 'strategy_mode'),
+
             Select::make('Interval', 'interval'),
 
             Number::make('Period', 'period'),
@@ -50,6 +53,12 @@ class StrategyEntrySettingsResource extends ModelResource
             ID::make()->sortable(),
 
             BelongsTo::make('Strategy', 'strategy', resource: StrategyResource::class)
+                ->required(),
+
+            Select::make('Strategy mode', 'strategy_mode')
+                ->options(StrategyMode::options())
+                ->default((string) StrategyMode::SmartHybrid->value)
+                ->hint('STRATEGY_MODE в sample: 1 Серфер, 2 Гибрид, 3 Умный Серфер, 4 Умный Гибрид (рекомендуется)')
                 ->required(),
 
             Select::make('Interval', 'interval')
@@ -111,6 +120,8 @@ class StrategyEntrySettingsResource extends ModelResource
     {
         return [
             ID::make(),
+
+            Select::make('Strategy mode', 'strategy_mode'),
 
             Select::make('Interval', 'interval'),
 

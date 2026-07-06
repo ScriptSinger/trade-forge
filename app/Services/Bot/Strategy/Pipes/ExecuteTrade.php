@@ -8,6 +8,7 @@ use App\Services\Bot\TradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use App\Services\Exchange\BybitExchangeService;
+use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Order\OrderService;
 use App\Services\Position\PositionService;
 use Closure;
@@ -21,6 +22,7 @@ class ExecuteTrade implements PipeContract
         private OrderService $orders,
         private PositionService $positions,
         private TradingLogger $log,
+        private TradeTelegramNotifier $tradeTelegram,
     ) {}
 
     public function handle(TradeContext $context, Closure $next): mixed
@@ -100,6 +102,14 @@ class ExecuteTrade implements PipeContract
             takeProfit: $context->takeProfit,
             orderId: $order->id ?? null,
             reason: "Order placed successfully ({$context->mode} mode)",
+        );
+
+        $this->tradeTelegram->notifyEntry(
+            symbol: $context->symbol,
+            price: $price,
+            sl: (float) $context->stopLoss,
+            tp: (float) $context->takeProfit,
+            costUsdt: $price * $qty,
         );
 
         return $context;

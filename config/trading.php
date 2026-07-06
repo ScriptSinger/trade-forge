@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 return [
+    'bot' => [
+        'cycle_interval_seconds' => (int) env('BOT_CYCLE_INTERVAL_SECONDS', 15),
+    ],
+
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),

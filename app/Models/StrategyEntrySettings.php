@@ -12,6 +12,7 @@ class StrategyEntrySettings extends Model
 
     protected $fillable = [
         'strategy_id',
+        'strategy_mode',
         'interval',
         'period',
         'kline_limit',
@@ -26,6 +27,7 @@ class StrategyEntrySettings extends Model
     protected function casts(): array
     {
         return [
+            'strategy_mode' => 'integer',
             'interval' => 'integer',
             'period' => 'integer',
             'kline_limit' => 'integer',

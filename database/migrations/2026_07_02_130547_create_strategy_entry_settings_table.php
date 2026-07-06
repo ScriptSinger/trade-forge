@@ -18,6 +18,7 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->unsignedTinyInteger('strategy_mode')->default(4);
             $table->unsignedInteger('interval')->default(15);
             $table->unsignedInteger('period')->default(20);
             $table->unsignedInteger('kline_limit')->default(1000);
