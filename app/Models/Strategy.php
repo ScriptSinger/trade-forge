@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\StrategyType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,32 +13,15 @@ class Strategy extends Model
 
     protected $fillable = [
         'name',
-        'type',
         'is_active',
     ];
 
     protected function casts(): array
     {
         return [
-            'type' => StrategyType::class,
             'is_active' => 'bool',
         ];
     }
-
-    protected static function booted(): void
-    {
-        static::creating(function (Strategy $strategy): void {
-            if ($strategy->type === null) {
-                $strategy->type = StrategyType::Hybrid;
-            }
-        });
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Relations
-    |--------------------------------------------------------------------------
-    */
 
     public function bots(): HasMany
     {

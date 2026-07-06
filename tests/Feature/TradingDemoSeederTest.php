@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Enums\BotStatus;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
@@ -39,6 +40,7 @@ class TradingDemoSeederTest extends TestCase
         $this->assertSame('test@example.com', $user->email);
         $this->assertSame('Spot Breakout Mode 4', $strategy->name);
         $this->assertSame('Bybit Spot Bot', $bot->name);
+        $this->assertSame(BotStatus::Paused, $bot->status);
         $this->assertSame($bot->id, $exchangeAccount->bots()->firstOrFail()->id);
         $this->assertNull($bot->last_run_at);
     }

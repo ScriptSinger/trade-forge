@@ -106,7 +106,7 @@ class TradingDemoSeeder extends Seeder
                 'name' => 'Bybit Spot Bot',
             ],
             [
-                'status' => BotStatus::Active->value,
+                'status' => BotStatus::Paused->value,
                 'last_run_at' => null,
             ],
         );

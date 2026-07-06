@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Enums\StrategyType;
 use App\Enums\TradeContextStatus;
 use App\Enums\TradeSignal;
 use App\Models\Bot;
@@ -90,7 +89,6 @@ class StrategyPipelineTest extends TestCase
         $user = User::factory()->create();
         $strategy = Strategy::query()->create([
             'name' => 'Pipeline Strategy',
-            'type' => StrategyType::Hybrid->value,
             'is_active' => true,
         ]);
 

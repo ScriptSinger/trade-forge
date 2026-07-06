@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use App\Models\Bot;
 use App\Models\BotStat;
 use App\Models\ExchangeAccount;
-use App\Enums\StrategyType;
 use App\Models\Strategy;
 use App\Models\Trade;
 use App\Models\User;
@@ -87,7 +86,6 @@ class DailyPerformanceServiceTest extends TestCase
         $user = User::factory()->create();
         $strategy = Strategy::query()->create([
             'name' => 'Test Strategy',
-            'type' => StrategyType::Trend->value,
             'is_active' => true,
         ]);
         $exchangeAccount = ExchangeAccount::factory()->for($user)->create();

@@ -12,7 +12,6 @@ use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
 use App\Enums\PositionStatus;
-use App\Enums\StrategyType;
 use App\Enums\TradeSignal;
 use App\Models\Bot;
 use App\Models\BotRun;
@@ -34,9 +33,7 @@ class TradingDomainTest extends TestCase
     public function test_trading_graph_is_related_and_casted_correctly(): void
     {
         $user = User::factory()->create();
-        $strategy = Strategy::factory()->create([
-            'type' => StrategyType::Trend->value,
-        ]);
+        $strategy = Strategy::factory()->create();
         $exchangeAccount = ExchangeAccount::factory()->for($user)->create([
             'exchange' => ExchangeProvider::Bybit->value,
             'status' => ExchangeAccountStatus::Active->value,
@@ -83,8 +80,6 @@ class TradingDomainTest extends TestCase
 
         $this->assertInstanceOf(BotStatus::class, $bot->status);
         $this->assertSame(BotStatus::Paused, $bot->status);
-        $this->assertInstanceOf(StrategyType::class, $strategy->type);
-        $this->assertSame(StrategyType::Trend, $strategy->type);
         $this->assertInstanceOf(ExchangeProvider::class, $exchangeAccount->exchange);
         $this->assertSame(ExchangeProvider::Bybit, $exchangeAccount->exchange);
         $this->assertInstanceOf(BotRunStatus::class, $run->status);

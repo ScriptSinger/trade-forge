@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Enums\StrategyType;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
@@ -82,7 +81,6 @@ class PositionSizingServiceTest extends TestCase
         $user = User::factory()->create();
         $strategy = Strategy::query()->create([
             'name' => 'Sizing Strategy',
-            'type' => StrategyType::Hybrid->value,
             'is_active' => true,
         ]);
 

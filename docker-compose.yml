@@ -70,15 +70,23 @@ services:
       context: .
       dockerfile: docker/php/php.dockerfile
     user: "${UID}:${GID}"
-    command: php artisan reverb:start --host="0.0.0.0" --port="8080"
+    command: ["bash", "docker/php/reverb-start.sh"]
     restart: unless-stopped
     ports:
       - "8080:8080"
+    env_file:
+      - .env
     depends_on:
       redis:
         condition: service_healthy
       mysql:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8080) ? 0 : 1);"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     volumes:
       - ./:/var/www/html
       - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini

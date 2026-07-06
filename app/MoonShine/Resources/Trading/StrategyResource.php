@@ -49,29 +49,32 @@ final class StrategyResource extends TradingResource
     protected function formFields(): iterable
     {
         return [
-            Collapse::make('📖 Как работает алгоритм (mode 4)', [
+            Collapse::make('📖 Как работает алгоритм', [
                 Box::make([
                     Heading::make('🔍 Сканер'),
-                    FlexibleRender::make('Бот берёт TOP-30 пар Bybit spot по объёму (кэш задаётся в Risk settings). За цикл анализируется один символ — после входа цикл завершается.'),
+                    FlexibleRender::make('Бот берёт TOP-30 пар Bybit spot по объёму (кэш в Risk settings). За цикл анализируется до одного входа — после сделки цикл завершается.'),
 
                     Heading::make('✅ Условия входа')->class('mt-4'),
                     FlexibleRender::make('Все фильтры должны пройти:<br>
                         • <b>Breakout</b> — цена выше максимума за <b>Period</b> свечей.<br>
                         • <b>ADX</b> ≥ <b>Min ADX</b>, <b>EMA fast</b> &gt; <b>EMA slow</b>.<br>
-                        • <b>RSI</b> ниже лимита (Sniper или Hybrid — см. ниже).<br>
+                        • <b>RSI</b> ниже лимита (Sniper или Hybrid — по ADX на входе).<br>
                         • <b>Volume</b> — объём выше среднего.'),
 
-                    Heading::make('🎯 Режимы Sniper / Hybrid')->class('mt-4'),
-                    FlexibleRender::make('Режим выбирается <b>в рантайме</b> по ADX открытой позиции:<br>
-                        • <b>Sniper</b> (ADX ≥ Trend ADX Threshold) — трейлинг-стоп, без частичной фиксации.<br>
-                        • <b>Hybrid</b> (ADX ниже порога) — при достижении TP продаётся 50% на бирже, остаток с трейлингом.'),
+                    Heading::make('🎯 Strategy mode (1–4)')->class('mt-4'),
+                    FlexibleRender::make('<b>Entry settings → Strategy mode</b> (как STRATEGY_MODE в sample):<br>
+                        • <b>1 Серфер</b> — trailing без TP, TG «Ракета!» при активации.<br>
+                        • <b>2 Гибрид</b> — всегда 50% на TP + trailing остатка.<br>
+                        • <b>3 Умный Серфер</b> — ADX &gt; порог → Серфер, иначе Sniper.<br>
+                        • <b>4 Умный Гибрид</b> — ADX &gt; порог → Hybrid, иначе Sniper (рекомендуется).<br>
+                        <b>Sniper:</b> полный SL/TP. <b>Hybrid:</b> 50% на TP, SL→entry×1.0025, trailing 1.5%.'),
 
                     Heading::make('🛡️ BTC filter (дневная цель)')->class('mt-4'),
-                    FlexibleRender::make('<b>BTC Trend Filter</b> не блокирует вход в сделки. Он используется только когда дневная цель прибыли достигнута: если BTC не в аптренде (EMA fast &gt; slow), бот перестаёт открывать новые позиции и ужесточает выходы (SidewaysMarketGuard).'),
+                    FlexibleRender::make('<b>BTC Trend Filter</b> не блокирует вход. При достижении дневной цели, если BTC не в аптренде (EMA fast &gt; slow), бот перестаёт открывать позиции и закрывает Sniper-позиции (SidewaysMarketGuard).'),
 
                     Heading::make('💰 Риск и исполнение')->class('mt-4'),
-                    FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель, комиссия и мин. ордер — всё в <b>Risk settings</b>.<br>
-                        <b>Entry settings:</b> Interval — таймфрейм; Period — окно breakout/volume; <b>Kline limit</b> — глубина истории с биржи для EMA/ADX (в sample = 1000).'),
+                    FlexibleRender::make('Размер позиции, SL/TP, лимит позиций, дневная цель — в <b>Risk settings</b>.<br>
+                        <b>Entry settings:</b> Interval, Period, Kline limit (в sample = 1000).'),
                 ]),
             ])->open(false),
 

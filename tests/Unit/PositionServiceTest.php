@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
-use App\Enums\StrategyType;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Order;
@@ -153,7 +152,6 @@ class PositionServiceTest extends TestCase
         $user = User::factory()->create();
         $strategy = Strategy::query()->create([
             'name' => 'Test Strategy',
-            'type' => StrategyType::Trend->value,
             'is_active' => true,
         ]);
 
