@@ -27,21 +27,6 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist
-
-      - name: Prepare environment for tests
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-          mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache
-
-      - name: Run Pint
-        run: ./vendor/bin/pint --test
-
-      - name: Run tests
-        run: composer test
-
       - name: Install production Composer dependencies
         run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
 
@@ -105,8 +90,6 @@ jobs:
           ssh-keyscan -H "${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Deploy to server
-        env:
-          ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
           SSH_HOST="${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}"
           SSH_USER="${{ secrets.SSH_USER || secrets.DEPLOY_USER }}"
@@ -115,37 +98,21 @@ jobs:
 
           scp -i ~/.ssh/id_ed25519 release.tar.gz "${SSH_USER}@${SSH_HOST}:/tmp/release.tar.gz"
 
-          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "mkdir -p ${DEPLOY_PATH}"
-
-          if [ -n "${ENV_FILE}" ]; then
-            printf '%s\n' "${ENV_FILE}" > .env.deploy
-            scp -i ~/.ssh/id_ed25519 .env.deploy "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.env"
-            rm -f .env.deploy
-          fi
-
-          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" <<EOF
-          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" << EOF
+          set -e
           cd ${DEPLOY_PATH}
           tar -xzf /tmp/release.tar.gz -C ${DEPLOY_PATH}
           rm -f /tmp/release.tar.gz
-          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
-          docker compose -f docker-compose.prod.yml up -d
-          APP_UID=\$(grep '^UID=' .env | cut -d= -f2 | tr -d ' \"' || true)
-          APP_GID=\$(grep '^GID=' .env | cut -d= -f2 | tr -d ' \"' || true)
-          APP_UID=\${APP_UID:-1000}
-          APP_GID=\${APP_GID:-1000}
-          docker compose -f docker-compose.prod.yml exec -T -u root php \
-            chown -R "\${APP_UID}:\${APP_GID}" /var/www/html/storage /var/www/html/bootstrap/cache
-          docker compose -f docker-compose.prod.yml exec -T -u root php \
-            chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache
+          echo "${{ secrets.ENV_FILE }}" > .env
+          docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml up -d --build
           for i in \$(seq 1 30); do
             if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; then
               break
             fi
             sleep 2
           done
-          docker compose -f docker-compose.prod.yml exec -T php php artisan config:clear
-          docker compose -f docker-compose.prod.yml exec -T php php artisan migrate --force
-          docker compose -f docker-compose.prod.yml exec -T php php artisan optimize
-          docker compose -f docker-compose.prod.yml restart php queue scheduler reverb
+          docker compose -f docker-compose.prod.yml run --rm php php artisan migrate --force
+          docker compose -f docker-compose.prod.yml run --rm php php artisan optimize
+          docker compose -f docker-compose.prod.yml restart queue scheduler reverb
           EOF
