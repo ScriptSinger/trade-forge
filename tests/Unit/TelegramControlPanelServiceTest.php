@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\Notifications\TelegramNotifier;
 use App\Services\Telegram\TelegramControlPanelService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -24,6 +25,8 @@ class TelegramControlPanelServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        File::ensureDirectoryExists(storage_path('logs'));
 
         config([
             'trading.telegram.bot_token' => 'test-token',
