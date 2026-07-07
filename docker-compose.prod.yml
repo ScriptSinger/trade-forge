@@ -82,11 +82,11 @@ services:
       - laravel
 
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.7.0
     volumes:
       - certbot_certs:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet --certificate-profile shortlived; sleep 12h & wait $!; done"
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $$!; done"
     restart: unless-stopped
     networks:
       - laravel

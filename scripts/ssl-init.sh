@@ -13,12 +13,11 @@ docker compose -f "$COMPOSE_FILE" up -d nginx
 docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
   --webroot \
   -w /var/www/certbot \
-  -d "$SERVER_IP" \
+  --preferred-profile shortlived \
+  --ip-address "$SERVER_IP" \
   --email "$CERT_EMAIL" \
   --agree-tos \
-  --no-eff-email \
-  --certificate-profile shortlived \
-  --ip-address "$SERVER_IP"
+  --no-eff-email
 
 if ! grep -q '^NGINX_CONF=prod.conf' .env 2>/dev/null; then
   echo 'NGINX_CONF=prod.conf' >> .env
