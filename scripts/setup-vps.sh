@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${DEPLOY_PATH:-/var/www/trade-forge}"
+APP_DIR="${DEPLOY_PATH:-/home/deploy/trade-forge}"
 REPO_URL="${REPO_URL:-git@github.com:ScriptSinger/trade-forge.git}"
 
 if ! command -v docker >/dev/null; then

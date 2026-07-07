@@ -1,10 +1,9 @@
-name: Deploy
+name: Deploy to Production
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -12,23 +11,158 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  build-artifact:
+    name: Build Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, redis, pcntl, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Prepare environment for tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          mkdir -p storage/logs storage/framework/{cache,sessions,views} bootstrap/cache
+
+      - name: Run Pint
+        run: ./vendor/bin/pint --test
+
+      - name: Run tests
+        run: composer test
+
+      - name: Install production Composer dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install Node dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Create artifact
+        run: |
+          tar -czf release.tar.gz \
+            app \
+            bootstrap \
+            config \
+            database \
+            docker \
+            lang \
+            public \
+            resources \
+            routes \
+            scripts \
+            artisan \
+            composer.json \
+            composer.lock \
+            docker-compose.prod.yml \
+            .dockerignore \
+            package.json \
+            package-lock.json \
+            vite.config.js
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release.tar.gz
+          retention-days: 7
+
   deploy:
     name: Deploy to EQVPS
     runs-on: ubuntu-latest
-    if: >
-      github.repository == 'ScriptSinger/trade-forge' &&
-      (github.event_name == 'workflow_dispatch' ||
-       github.event.workflow_run.conclusion == 'success')
+    needs: build-artifact
+    if: github.repository == 'ScriptSinger/trade-forge'
 
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Download artifact
+        uses: actions/download-artifact@v4
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
-          script: |
-            export DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
-            cd "$DEPLOY_PATH"
-            bash scripts/deploy.sh
+          name: release
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY || secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER || secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        run: |
+          DEPLOY_PATH="${DEPLOY_PATH:-/home/deploy/trade-forge}"
+
+          scp -i ~/.ssh/id_ed25519 release.tar.gz "${SSH_USER}@${SSH_HOST}:/tmp/release.tar.gz"
+
+          if [ -n "${ENV_FILE}" ]; then
+            printf '%s\n' "${ENV_FILE}" > .env.deploy
+            scp -i ~/.ssh/id_ed25519 .env.deploy "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/.env"
+            rm -f .env.deploy
+          fi
+
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "bash -s" <<EOF
+          set -euo pipefail
+
+          DEPLOY_PATH="${DEPLOY_PATH}"
+          mkdir -p "\${DEPLOY_PATH}"
+          cd "\${DEPLOY_PATH}"
+
+          tar -xzf /tmp/release.tar.gz -C "\${DEPLOY_PATH}"
+          rm -f /tmp/release.tar.gz
+
+          if [ ! -f .env ]; then
+            echo "Error: .env is missing. Set ENV_FILE secret or create .env on the server." >&2
+            exit 1
+          fi
+
+          docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml up -d --build
+
+          for i in \$(seq 1 30); do
+            if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; then
+              break
+            fi
+            sleep 2
+          done
+
+          docker compose -f docker-compose.prod.yml exec -T php php artisan migrate --force
+          docker compose -f docker-compose.prod.yml exec -T php php artisan config:cache
+          docker compose -f docker-compose.prod.yml exec -T php php artisan route:cache
+          docker compose -f docker-compose.prod.yml exec -T php php artisan view:cache
+          docker compose -f docker-compose.prod.yml restart queue scheduler reverb
+
+          echo "Deploy finished successfully."
+          EOF

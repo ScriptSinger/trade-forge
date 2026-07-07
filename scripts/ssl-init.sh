@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_DIR="${DEPLOY_PATH:-/var/www/trade-forge}"
+APP_DIR="${DEPLOY_PATH:-/home/deploy/trade-forge}"
 COMPOSE_FILE="docker-compose.prod.yml"
 SERVER_IP="136.243.214.62"
 CERT_EMAIL="${CERTBOT_EMAIL:?Set CERTBOT_EMAIL}"
