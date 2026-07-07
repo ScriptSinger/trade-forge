@@ -13,9 +13,10 @@ if [ -f "$ARCHIVE_PATH" ]; then
 fi
 
 mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
-chmod -R a+rwX storage bootstrap/cache
 
 docker compose -f "$COMPOSE_FILE" up -d
+
+bash scripts/fix-permissions.sh "$COMPOSE_FILE"
 
 for i in $(seq 1 30); do
   if docker compose -f "$COMPOSE_FILE" exec -T mysql mysqladmin ping -h localhost --silent; then
