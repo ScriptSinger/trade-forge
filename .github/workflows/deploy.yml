@@ -27,17 +27,6 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> "$GITHUB_OUTPUT"
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-${{ runner.os }}-
-
       - name: Install Composer dependencies
         run: composer install --no-interaction --prefer-dist
 
@@ -80,12 +69,11 @@ jobs:
             public \
             resources \
             routes \
-            scripts \
+            vendor \
             artisan \
             composer.json \
             composer.lock \
             docker-compose.prod.yml \
-            .dockerignore \
             package.json \
             package-lock.json \
             vite.config.js
@@ -118,14 +106,16 @@ jobs:
 
       - name: Deploy to server
         env:
-          SSH_HOST: ${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER || secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           ENV_FILE: ${{ secrets.ENV_FILE }}
         run: |
+          SSH_HOST="${{ secrets.SSH_HOST || secrets.DEPLOY_HOST }}"
+          SSH_USER="${{ secrets.SSH_USER || secrets.DEPLOY_USER }}"
+          DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
           DEPLOY_PATH="${DEPLOY_PATH:-/home/deploy/trade-forge}"
 
           scp -i ~/.ssh/id_ed25519 release.tar.gz "${SSH_USER}@${SSH_HOST}:/tmp/release.tar.gz"
+
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "mkdir -p ${DEPLOY_PATH}"
 
           if [ -n "${ENV_FILE}" ]; then
             printf '%s\n' "${ENV_FILE}" > .env.deploy
@@ -133,36 +123,22 @@ jobs:
             rm -f .env.deploy
           fi
 
-          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" "bash -s" <<EOF
+          ssh -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" <<EOF
           set -euo pipefail
-
-          DEPLOY_PATH="${DEPLOY_PATH}"
-          mkdir -p "\${DEPLOY_PATH}"
-          cd "\${DEPLOY_PATH}"
-
-          tar -xzf /tmp/release.tar.gz -C "\${DEPLOY_PATH}"
+          cd ${DEPLOY_PATH}
+          tar -xzf /tmp/release.tar.gz -C ${DEPLOY_PATH}
           rm -f /tmp/release.tar.gz
-
-          if [ ! -f .env ]; then
-            echo "Error: .env is missing. Set ENV_FILE secret or create .env on the server." >&2
-            exit 1
-          fi
-
+          mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
+          chmod -R ug+rwX storage bootstrap/cache
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d --build
-
           for i in \$(seq 1 30); do
             if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; then
               break
             fi
             sleep 2
           done
-
           docker compose -f docker-compose.prod.yml exec -T php php artisan migrate --force
-          docker compose -f docker-compose.prod.yml exec -T php php artisan config:cache
-          docker compose -f docker-compose.prod.yml exec -T php php artisan route:cache
-          docker compose -f docker-compose.prod.yml exec -T php php artisan view:cache
+          docker compose -f docker-compose.prod.yml exec -T php php artisan optimize
           docker compose -f docker-compose.prod.yml restart queue scheduler reverb
-
-          echo "Deploy finished successfully."
           EOF
