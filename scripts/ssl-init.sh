@@ -24,6 +24,8 @@ if ! grep -q '^NGINX_CONF=prod.conf' .env 2>/dev/null; then
   echo 'NGINX_CONF=prod.conf' >> .env
 fi
 
-docker compose -f "$COMPOSE_FILE" up -d nginx
+docker compose -f "$COMPOSE_FILE" up -d nginx certbot
 
-echo "SSL certificate issued. HTTPS is enabled via NGINX_CONF=prod.conf"
+echo "SSL certificate issued."
+echo "NGINX_CONF=prod.conf is set in .env — update ENV_FILE in GitHub Secrets too."
+echo "Also set APP_URL=https://${SERVER_IP} and restart: docker compose -f ${COMPOSE_FILE} restart php nginx"

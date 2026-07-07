@@ -129,7 +129,7 @@ jobs:
           tar -xzf /tmp/release.tar.gz -C ${DEPLOY_PATH}
           rm -f /tmp/release.tar.gz
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
-          chmod -R ug+rwX storage bootstrap/cache
+          chmod -R a+rwX storage bootstrap/cache
           docker compose -f docker-compose.prod.yml up -d
           for i in \$(seq 1 30); do
             if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; then
@@ -137,6 +137,7 @@ jobs:
             fi
             sleep 2
           done
+          docker compose -f docker-compose.prod.yml exec -T php php artisan config:clear
           docker compose -f docker-compose.prod.yml exec -T php php artisan migrate --force
           docker compose -f docker-compose.prod.yml exec -T php php artisan optimize
           docker compose -f docker-compose.prod.yml restart php queue scheduler reverb

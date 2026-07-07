@@ -11,7 +11,6 @@ x-php-service: &php-service
     - .env
   volumes:
     - ./:/var/www/html
-    - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
   depends_on:
     redis:
       condition: service_healthy
@@ -87,7 +86,7 @@ services:
     volumes:
       - certbot_certs:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $!; done"
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --quiet --certificate-profile shortlived; sleep 12h & wait $!; done"
     restart: unless-stopped
     networks:
       - laravel
