@@ -130,7 +130,14 @@ jobs:
           rm -f /tmp/release.tar.gz
           mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache
           docker compose -f docker-compose.prod.yml up -d
-          bash scripts/fix-permissions.sh docker-compose.prod.yml
+          APP_UID=\$(grep '^UID=' .env | cut -d= -f2 | tr -d ' \"' || true)
+          APP_GID=\$(grep '^GID=' .env | cut -d= -f2 | tr -d ' \"' || true)
+          APP_UID=\${APP_UID:-1000}
+          APP_GID=\${APP_GID:-1000}
+          docker compose -f docker-compose.prod.yml exec -T -u root php \
+            chown -R "\${APP_UID}:\${APP_GID}" /var/www/html/storage /var/www/html/bootstrap/cache
+          docker compose -f docker-compose.prod.yml exec -T -u root php \
+            chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache
           for i in \$(seq 1 30); do
             if docker compose -f docker-compose.prod.yml exec -T mysql mysqladmin ping -h localhost --silent; then
               break
