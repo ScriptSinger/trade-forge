@@ -1,3 +1,27 @@
+x-php-service: &php-service
+  image: trade-forge-php:prod
+  build:
+    context: .
+    dockerfile: docker/php/php.dockerfile
+    args:
+      UID: ${UID:-1000}
+      GID: ${GID:-1000}
+  user: "${UID:-1000}:${GID:-1000}"
+  env_file:
+    - .env
+  volumes:
+    - ./:/var/www/html
+    - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
+  depends_on:
+    redis:
+      condition: service_healthy
+    mysql:
+      condition: service_started
+  restart: unless-stopped
+  working_dir: /var/www/html
+  networks:
+    - laravel
+
 services:
   nginx:
     image: nginx:1.25-alpine
@@ -16,102 +40,23 @@ services:
       - laravel
 
   php:
-    build:
-      context: .
-      dockerfile: docker/php/php.dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    user: "${UID:-1000}:${GID:-1000}"
-    env_file:
-      - .env
-    volumes:
-      - ./:/var/www/html
-      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
-    depends_on:
-      redis:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - laravel
+    <<: *php-service
 
   queue:
-    build:
-      context: .
-      dockerfile: docker/php/php.dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    user: "${UID:-1000}:${GID:-1000}"
+    <<: *php-service
     command: php artisan queue:work --verbose --tries=3 --timeout=90
-    env_file:
-      - .env
-    volumes:
-      - ./:/var/www/html
-      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
-    depends_on:
-      redis:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    restart: unless-stopped
-    working_dir: /var/www/html
-    networks:
-      - laravel
 
   scheduler:
-    build:
-      context: .
-      dockerfile: docker/php/php.dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    user: "${UID:-1000}:${GID:-1000}"
+    <<: *php-service
     command: php artisan schedule:work --verbose
-    env_file:
-      - .env
-    volumes:
-      - ./:/var/www/html
-      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
-    depends_on:
-      redis:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    restart: unless-stopped
-    working_dir: /var/www/html
-    networks:
-      - laravel
 
   reverb:
-    build:
-      context: .
-      dockerfile: docker/php/php.dockerfile
-      args:
-        UID: ${UID:-1000}
-        GID: ${GID:-1000}
-    user: "${UID:-1000}:${GID:-1000}"
+    <<: *php-service
     command: ["bash", "docker/php/reverb-start.sh"]
-    env_file:
-      - .env
-    volumes:
-      - ./:/var/www/html
-      - ./docker/php/php-overrides.ini:/usr/local/etc/php/conf.d/php-overrides.ini
-    depends_on:
-      redis:
-        condition: service_healthy
-      mysql:
-        condition: service_started
-    restart: unless-stopped
-    working_dir: /var/www/html
-    networks:
-      - laravel
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
     volumes:
       - redis_data:/data
     healthcheck:
@@ -125,6 +70,7 @@ services:
 
   mysql:
     image: mysql:8.0.38-debian
+    command: --performance-schema=OFF --innodb-buffer-pool-size=128M --key-buffer-size=16M
     environment:
       MYSQL_DATABASE: "${DB_DATABASE}"
       MYSQL_USER: "${DB_USERNAME}"
