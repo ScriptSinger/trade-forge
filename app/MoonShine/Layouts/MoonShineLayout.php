@@ -18,21 +18,20 @@ use App\MoonShine\Resources\Trading\TradeResource;
 use App\MoonShine\Resources\Trading\UserResource;
 use Illuminate\Support\Facades\Vite;
 use MoonShine\AssetManager\Raw;
-use MoonShine\Laravel\Layouts\AppLayout;
-use MoonShine\ColorManager\Palettes\RetroPalette;
 use MoonShine\ColorManager\ColorManager;
+use MoonShine\ColorManager\Palettes\RetroPalette;
 use MoonShine\Contracts\ColorManager\ColorManagerContract;
 use MoonShine\Contracts\ColorManager\PaletteContract;
+use MoonShine\Crud\Components\Layout\Notifications;
+use MoonShine\Laravel\Layouts\AppLayout;
 use MoonShine\MenuManager\MenuGroup;
 use MoonShine\MenuManager\MenuItem;
-use MoonShine\Crud\Components\Layout\Notifications;
 use MoonShine\UI\Components\Layout\Burger;
 use MoonShine\UI\Components\Layout\Div;
 use MoonShine\UI\Components\Layout\Menu;
 use MoonShine\UI\Components\Layout\Sidebar;
 use MoonShine\UI\Components\Layout\ThemeSwitcher;
 use MoonShine\UI\Components\When;
-
 
 final class MoonShineLayout extends AppLayout
 {
@@ -86,12 +85,12 @@ final class MoonShineLayout extends AppLayout
             ])->class('menu-logo'),
             Div::make([
                 When::make(
-                    fn(): bool => $this->isUseNotifications(),
-                    static fn(): array => [Notifications::make()],
+                    fn (): bool => $this->isUseNotifications(),
+                    static fn (): array => [Notifications::make()],
                 ),
                 When::make(
-                    fn(): bool => $this->hasThemes() && ! $this->isAlwaysDark(),
-                    static fn(): array => [ThemeSwitcher::make()],
+                    fn (): bool => $this->hasThemes() && ! $this->isAlwaysDark(),
+                    static fn (): array => [ThemeSwitcher::make()],
                 ),
             ])->class('menu-actions'),
             Div::make(array_filter([
@@ -103,7 +102,7 @@ final class MoonShineLayout extends AppLayout
     }
 
     /**
-     * @param ColorManager $colorManager
+     * @param  ColorManager  $colorManager
      */
     protected function colors(ColorManagerContract $colorManager): void
     {

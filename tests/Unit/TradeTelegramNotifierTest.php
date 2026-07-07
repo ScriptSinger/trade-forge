@@ -22,7 +22,7 @@ class TradeTelegramNotifierTest extends TestCase
             'https://api.telegram.org/*' => Http::response(['ok' => true], 200),
         ]);
 
-        $notifier = new TradeTelegramNotifier(new TelegramNotifier());
+        $notifier = new TradeTelegramNotifier(new TelegramNotifier);
         $notifier->notifyEntry('ETHUSDT', 2500.0, 2400.0, 2700.0, 125.0);
 
         Http::assertSent(function ($request): bool {
@@ -45,7 +45,7 @@ class TradeTelegramNotifierTest extends TestCase
             'https://api.telegram.org/*' => Http::response(['ok' => true], 200),
         ]);
 
-        $notifier = new TradeTelegramNotifier(new TelegramNotifier());
+        $notifier = new TradeTelegramNotifier(new TelegramNotifier);
         $notifier->notifySurferActivation('BTCUSDT');
 
         Http::assertSent(function ($request): bool {
@@ -67,7 +67,7 @@ class TradeTelegramNotifierTest extends TestCase
             'https://api.telegram.org/*' => Http::response(['ok' => true], 200),
         ]);
 
-        $notifier = new TradeTelegramNotifier(new TelegramNotifier());
+        $notifier = new TradeTelegramNotifier(new TelegramNotifier);
         $notifier->notifyExit('ETHUSDT', 'Take Profit (50%)', 0.5, -0.5, -1.25);
 
         Http::assertSent(function ($request): bool {

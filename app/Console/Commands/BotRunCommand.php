@@ -33,6 +33,7 @@ class BotRunCommand extends Command
 
         if ($bots->isEmpty()) {
             $this->info('No active bots found.');
+
             return;
         }
 

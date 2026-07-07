@@ -10,6 +10,7 @@ use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
+use MoonShine\UI\Components\Alert;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
@@ -59,11 +60,10 @@ final class TradeResource extends TradingResource
     protected function detailFields(): iterable
     {
         return [
-            Preview::make()->changePreview(fn() => 
-                \MoonShine\UI\Components\Alert::make(
-                    icon: 'currency-dollar',
-                    type: 'info',
-                )->content('<b>Сделки</b> — это итоговый финансовый результат. Запись объединяет в себе покупку (вход) и продажу (выход). Здесь рассчитывается чистая прибыль или убыток за вычетом комиссий биржи.')
+            Preview::make()->changePreview(fn () => Alert::make(
+                icon: 'currency-dollar',
+                type: 'info',
+            )->content('<b>Сделки</b> — это итоговый финансовый результат. Запись объединяет в себе покупку (вход) и продажу (выход). Здесь рассчитывается чистая прибыль или убыток за вычетом комиссий биржи.')
             )->withoutWrapper(),
 
             ID::make(),
@@ -74,22 +74,22 @@ final class TradeResource extends TradingResource
                 resource: BotResource::class,
             ),
             Text::make('Торговая пара', 'symbol'),
-            
+
             Number::make('Цена входа', 'entry_price')
                 ->hint('Цена, по которой актив был куплен'),
-            
+
             Number::make('Цена выхода', 'exit_price')
                 ->hint('Цена, по которой актив был полностью продан'),
-            
+
             Number::make('Количество', 'quantity')
                 ->hint('Объем торговой позиции'),
-            
+
             Number::make('Прибыль/Убыток', 'profit_loss')
                 ->hint('Чистый результат в валюте котировки (например, в USDT)'),
-            
+
             Number::make('Прибыль %', 'profit_percent')
                 ->hint('Процентное изменение капитала в этой сделке'),
-            
+
             Number::make('Комиссии', 'fees')
                 ->hint('Суммарные затраты на оплату услуг биржи за вход и выход'),
 

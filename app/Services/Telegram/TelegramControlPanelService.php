@@ -15,6 +15,7 @@ use App\Services\Notifications\TelegramNotifier;
 class TelegramControlPanelService
 {
     private const LOG_TAIL_LINES = 100;
+
     private const TELEGRAM_MESSAGE_LIMIT = 3800;
 
     public function __construct(
@@ -38,7 +39,7 @@ class TelegramControlPanelService
     {
         $message = $update['message'] ?? null;
 
-        if (!is_array($message)) {
+        if (! is_array($message)) {
             return;
         }
 
@@ -49,7 +50,7 @@ class TelegramControlPanelService
             return;
         }
 
-        if (!$this->telegram->isAuthorizedChat($chatId)) {
+        if (! $this->telegram->isAuthorizedChat($chatId)) {
             return;
         }
 
@@ -97,11 +98,11 @@ class TelegramControlPanelService
         $this->telegram->sendTo(
             $chatId,
             "🎛 <b>Trade Forge</b>\n\n"
-            . "▶️ ⏹ — включить / поставить ботов на паузу\n"
-            . "📊 — сводка по ботам и позициям\n"
-            . "🤖 🔌 📈 📦 🛡 — последние 100 строк лога канала\n\n"
-            . "Цикл торговли: каждые "
-            . config('trading.bot.cycle_interval_seconds', 15) . ' сек.',
+            ."▶️ ⏹ — включить / поставить ботов на паузу\n"
+            ."📊 — сводка по ботам и позициям\n"
+            ."🤖 🔌 📈 📦 🛡 — последние 100 строк лога канала\n\n"
+            .'Цикл торговли: каждые '
+            .config('trading.bot.cycle_interval_seconds', 15).' сек.',
             $this->menuKeyboard(),
         );
     }
@@ -127,8 +128,8 @@ class TelegramControlPanelService
             $names[] = $bot->name;
         }
 
-        return "▶️ <b>Запущено:</b> " . count($names) . "\n" . implode("\n", array_map(
-            static fn (string $name): string => '  • ' . e($name),
+        return '▶️ <b>Запущено:</b> '.count($names)."\n".implode("\n", array_map(
+            static fn (string $name): string => '  • '.e($name),
             $names,
         ));
     }
@@ -150,8 +151,8 @@ class TelegramControlPanelService
             $names[] = $bot->name;
         }
 
-        return "⏹ <b>На паузе:</b> " . count($names) . "\n" . implode("\n", array_map(
-            static fn (string $name): string => '  • ' . e($name),
+        return '⏹ <b>На паузе:</b> '.count($names)."\n".implode("\n", array_map(
+            static fn (string $name): string => '  • '.e($name),
             $names,
         ));
     }
@@ -165,10 +166,10 @@ class TelegramControlPanelService
         $lines = [
             '<b>📊 Статус</b>',
             '',
-            '🟢 Активных: ' . $activeBots->count(),
-            '⏸ На паузе: ' . $pausedBots,
-            '📂 Позиций: ' . $openPositions,
-            '⏱ Цикл: ' . config('trading.bot.cycle_interval_seconds', 15) . ' сек',
+            '🟢 Активных: '.$activeBots->count(),
+            '⏸ На паузе: '.$pausedBots,
+            '📂 Позиций: '.$openPositions,
+            '⏱ Цикл: '.config('trading.bot.cycle_interval_seconds', 15).' сек',
         ];
 
         if ($activeBots->isNotEmpty()) {
@@ -177,7 +178,7 @@ class TelegramControlPanelService
 
             foreach ($activeBots as $bot) {
                 $lastRun = $bot->last_run_at?->timezone(config('app.timezone'))->format('d.m H:i:s') ?? '—';
-                $lines[] = '  • ' . e($bot->name) . " <code>{$lastRun}</code>";
+                $lines[] = '  • '.e($bot->name)." <code>{$lastRun}</code>";
             }
         } else {
             $lines[] = '';
@@ -193,18 +194,18 @@ class TelegramControlPanelService
         $path = $this->resolveChannelLogPath($loggingChannel);
 
         if ($path === null) {
-            return '❌ Лог «' . e($channel->shortLabel()) . '» не найден.';
+            return '❌ Лог «'.e($channel->shortLabel()).'» не найден.';
         }
 
         $output = $this->tailFile($path, self::LOG_TAIL_LINES);
 
         if ($output === '') {
-            return '📭 «' . e($channel->shortLabel()) . '» — ' . e(basename($path)) . ' пуст.';
+            return '📭 «'.e($channel->shortLabel()).'» — '.e(basename($path)).' пуст.';
         }
 
         $output = $this->truncateForTelegram($output);
 
-        return '<b>' . e($channel->value) . '</b> · ' . e(basename($path)) . "\n<pre>" . e($output) . '</pre>';
+        return '<b>'.e($channel->value).'</b> · '.e(basename($path))."\n<pre>".e($output).'</pre>';
     }
 
     /**
@@ -219,13 +220,13 @@ class TelegramControlPanelService
     {
         $channelConfig = config("logging.channels.{$channel}");
 
-        if (!is_array($channelConfig)) {
+        if (! is_array($channelConfig)) {
             return null;
         }
 
         $path = $channelConfig['path'] ?? null;
 
-        if (!is_string($path) || $path === '') {
+        if (! is_string($path) || $path === '') {
             return null;
         }
 
@@ -243,9 +244,9 @@ class TelegramControlPanelService
 
     private function latestDailyLog(string $directory, string $pattern): ?string
     {
-        $files = glob($directory . '/' . $pattern);
+        $files = glob($directory.'/'.$pattern);
 
-        if (!is_array($files) || $files === []) {
+        if (! is_array($files) || $files === []) {
             return null;
         }
 
@@ -260,7 +261,7 @@ class TelegramControlPanelService
     {
         $content = @file($path, FILE_IGNORE_NEW_LINES);
 
-        if (!is_array($content) || $content === []) {
+        if (! is_array($content) || $content === []) {
             return '';
         }
 
@@ -273,6 +274,6 @@ class TelegramControlPanelService
             return $text;
         }
 
-        return '...[часть скрыта]...' . substr($text, -self::TELEGRAM_MESSAGE_LIMIT);
+        return '...[часть скрыта]...'.substr($text, -self::TELEGRAM_MESSAGE_LIMIT);
     }
 }

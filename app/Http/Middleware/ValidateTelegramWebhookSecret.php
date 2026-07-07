@@ -12,15 +12,15 @@ class ValidateTelegramWebhookSecret
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $secret = config('telegram.bots.' . config('telegram.default') . '.webhook_secret');
+        $secret = config('telegram.bots.'.config('telegram.default').'.webhook_secret');
 
-        if (!filled($secret)) {
+        if (! filled($secret)) {
             return $next($request);
         }
 
         $header = $request->header('X-Telegram-Bot-Api-Secret-Token');
 
-        if (!is_string($header) || !hash_equals($secret, $header)) {
+        if (! is_string($header) || ! hash_equals($secret, $header)) {
             return response('Forbidden', 403);
         }
 

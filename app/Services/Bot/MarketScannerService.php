@@ -48,11 +48,11 @@ class MarketScannerService
                     || str_contains($symbol, 'BUSD')
                     || str_contains($symbol, 'EUR');
 
-                return $isUsdt && !$isStable && $volume >= 5000000;
+                return $isUsdt && ! $isStable && $volume >= 5000000;
             })
             ->map(function ($ticker) {
                 $high = (float) ($ticker['highPrice24h'] ?? 0);
-                $low  = (float) ($ticker['lowPrice24h'] ?? 0);
+                $low = (float) ($ticker['lowPrice24h'] ?? 0);
 
                 $volatility = $low > 0
                     ? (($high - $low) / $low) * 100

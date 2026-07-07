@@ -14,7 +14,6 @@ return new class extends Migration
         Schema::create('exchange_accounts', function (Blueprint $table) {
             $table->id();
 
-
             $table->foreignId('user_id')->constrained()->restrictOnDelete();
 
             $table->string('exchange'); // bybit

@@ -9,22 +9,24 @@ class TechnicalIndicatorService
      */
     public function ema(array $prices, int $period): array
     {
-        if (count($prices) < $period) return [];
-        
+        if (count($prices) < $period) {
+            return [];
+        }
+
         $multiplier = 2 / ($period + 1);
         $ema = [];
-        
+
         // Initial SMA
         $sum = 0;
         for ($i = 0; $i < $period; $i++) {
             $sum += $prices[$i];
         }
         $ema[$period - 1] = $sum / $period;
-        
+
         for ($i = $period; $i < count($prices); $i++) {
             $ema[$i] = ($prices[$i] - $ema[$i - 1]) * $multiplier + $ema[$i - 1];
         }
-        
+
         return $ema;
     }
 
@@ -34,7 +36,9 @@ class TechnicalIndicatorService
      */
     public function rsi(array $prices, int $period = 14): array
     {
-        if (count($prices) <= $period) return [];
+        if (count($prices) <= $period) {
+            return [];
+        }
 
         $gains = [];
         $losses = [];
@@ -69,7 +73,9 @@ class TechnicalIndicatorService
      */
     public function adx(array $candles, int $period = 14): array
     {
-        if (count($candles) <= $period * 2) return [];
+        if (count($candles) <= $period * 2) {
+            return [];
+        }
 
         $plusDm = [];
         $minusDm = [];
@@ -97,7 +103,7 @@ class TechnicalIndicatorService
         foreach ($atr as $i => $atrVal) {
             $pDi = $atrVal > 0 ? 100 * ($plusDiRaw[$i] / $atrVal) : 0;
             $mDi = $atrVal > 0 ? 100 * ($minusDiRaw[$i] / $atrVal) : 0;
-            
+
             $sum = $pDi + $mDi;
             $dx[$i] = ($sum == 0) ? 0 : 100 * abs($pDi - $mDi) / $sum;
         }
@@ -110,7 +116,9 @@ class TechnicalIndicatorService
      */
     public function atr(array $candles, int $period = 14): array
     {
-        if (count($candles) < 2) return [];
+        if (count($candles) < 2) {
+            return [];
+        }
 
         $tr = [];
         for ($i = 1; $i < count($candles); $i++) {
@@ -126,7 +134,9 @@ class TechnicalIndicatorService
 
     private function wildersSmoothing(array $data, int $period): array
     {
-        if (count($data) < $period) return [];
+        if (count($data) < $period) {
+            return [];
+        }
 
         $smoothed = [];
         $currentSum = array_sum(array_slice($data, 0, $period));

@@ -18,7 +18,7 @@ class SendZReportCommand extends Command
 
     public function handle(ZReportService $zReport): int
     {
-        if (!$zReport->isEnabled()) {
+        if (! $zReport->isEnabled()) {
             $this->warn('Z-report is disabled (Z_REPORT_ENABLED=false).');
 
             return self::SUCCESS;

@@ -5,6 +5,7 @@ namespace App\Services\Order;
 use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\OrderType;
+use App\Enums\TradeSignal;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Order;
@@ -25,13 +26,13 @@ class OrderService
     ): Order {
         $retCode = $response['retCode'] ?? -1;
         $orderId = $response['result']['orderId'] ?? null;
-        
+
         // In Bybit V5 market orders, the exact price is known after execution.
         // If not in response, we use the market price at the moment of analysis.
         $execPrice = $response['result']['avgPrice'] ?? $response['result']['price'] ?? $marketPrice;
 
         // Map side to OrderSide enum
-        if ($side instanceof \App\Enums\TradeSignal) {
+        if ($side instanceof TradeSignal) {
             $side = $side->value;
         }
 
@@ -48,7 +49,7 @@ class OrderService
             'symbol' => $symbol,
             'side' => $side,
             'price' => (float) $execPrice,
-            'type' => OrderType::Market, 
+            'type' => OrderType::Market,
             'quantity' => $actualQty,
             'status' => $retCode === 0 ? OrderStatus::Filled : OrderStatus::Failed,
             'exchange_order_id' => $orderId,

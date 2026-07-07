@@ -11,7 +11,7 @@ class TradePnlCalculatorTest extends TestCase
 {
     public function test_calculates_net_profit_with_spot_fees(): void
     {
-        $calculator = new TradePnlCalculator();
+        $calculator = new TradePnlCalculator;
 
         $result = $calculator->calculate(
             entryPrice: 100.0,

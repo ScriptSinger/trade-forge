@@ -14,6 +14,7 @@ use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
+use MoonShine\UI\Components\Alert;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
@@ -66,14 +67,14 @@ final class OrderResource extends TradingResource
             Text::make('Пара', 'symbol')->sortable(),
             Enum::make('Сторона', 'side')
                 ->attach(OrderSide::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     OrderSide::Buy->value => 'green',
                     OrderSide::Sell->value => 'red',
                     default => 'gray',
                 }),
             Enum::make('Статус', 'status')
                 ->attach(OrderStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     OrderStatus::Filled->value => 'green',
                     OrderStatus::Failed->value, OrderStatus::Rejected->value => 'red',
                     OrderStatus::New->value, OrderStatus::Placed->value => 'blue',
@@ -91,11 +92,10 @@ final class OrderResource extends TradingResource
     protected function detailFields(): iterable
     {
         return [
-            Preview::make()->changePreview(fn() => 
-                \MoonShine\UI\Components\Alert::make(
-                    icon: 'receipt-percent',
-                    type: 'info',
-                )->content('<b>Ордера</b> — это финансовые транзакции на бирже. Данные загружаются напрямую из отчетов биржи и не подлежат ручному изменению для обеспечения точности баланса.')
+            Preview::make()->changePreview(fn () => Alert::make(
+                icon: 'receipt-percent',
+                type: 'info',
+            )->content('<b>Ордера</b> — это финансовые транзакции на бирже. Данные загружаются напрямую из отчетов биржи и не подлежат ручному изменению для обеспечения точности баланса.')
             )->withoutWrapper(),
 
             ID::make(),
@@ -118,7 +118,7 @@ final class OrderResource extends TradingResource
             Text::make('Торговая пара', 'symbol'),
             Enum::make('Направление (Buy/Sell)', 'side')
                 ->attach(OrderSide::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     OrderSide::Buy->value => 'green',
                     OrderSide::Sell->value => 'red',
                     default => 'gray',
@@ -128,7 +128,7 @@ final class OrderResource extends TradingResource
             Number::make('Исполненное количество', 'quantity'),
             Enum::make('Статус исполнения', 'status')
                 ->attach(OrderStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     OrderStatus::Filled->value => 'green',
                     OrderStatus::Failed->value, OrderStatus::Rejected->value => 'red',
                     OrderStatus::New->value, OrderStatus::Placed->value => 'blue',

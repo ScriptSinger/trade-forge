@@ -55,13 +55,13 @@ class ZReportService
 
     public function sendForBot(Bot $bot, ?CarbonInterface $at = null, bool $force = false): bool
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return false;
         }
 
         $moment = $this->moment($at);
 
-        if (!$force && !$this->isDue($moment)) {
+        if (! $force && ! $this->isDue($moment)) {
             $this->log->botDebug('Z-report skipped: before scheduled time', [
                 'bot_id' => $bot->id,
                 'now' => $moment->toDateTimeString(),
@@ -70,7 +70,7 @@ class ZReportService
             return false;
         }
 
-        if (!$force && $this->alreadySent($bot, $moment)) {
+        if (! $force && $this->alreadySent($bot, $moment)) {
             $this->log->botDebug('Z-report skipped: already sent', [
                 'bot_id' => $bot->id,
             ]);
@@ -93,7 +93,7 @@ class ZReportService
             $sentMoonshine = true;
         }
 
-        if (!$sentTelegram && !$sentMoonshine) {
+        if (! $sentTelegram && ! $sentMoonshine) {
             $this->log->botWarning('Z-report not delivered: Telegram is not configured and MoonShine notify disabled', [
                 'bot_id' => $bot->id,
             ]);
@@ -101,7 +101,7 @@ class ZReportService
             return false;
         }
 
-        if ($this->telegram->isConfigured() && !$sentTelegram) {
+        if ($this->telegram->isConfigured() && ! $sentTelegram) {
             $this->log->botWarning('Z-report Telegram delivery failed', [
                 'bot_id' => $bot->id,
             ]);
@@ -134,12 +134,12 @@ class ZReportService
 
         return [
             '📊 Z-ОТЧЕТ',
-            'Бот: ' . $bot->name,
-            'Дата: ' . $stat->date->format('d.m.Y'),
-            'Сделок: ' . $stat->total_trades,
-            'Winrate: ' . $winrate . '%',
-            'Комиссии биржи: -' . $this->formatUsdt((float) $stat->fees) . ' USDT',
-            'ЧИСТЫЙ ПРОФИТ: ' . $this->formatUsdt((float) $stat->profit) . ' USDT',
+            'Бот: '.$bot->name,
+            'Дата: '.$stat->date->format('d.m.Y'),
+            'Сделок: '.$stat->total_trades,
+            'Winrate: '.$winrate.'%',
+            'Комиссии биржи: -'.$this->formatUsdt((float) $stat->fees).' USDT',
+            'ЧИСТЫЙ ПРОФИТ: '.$this->formatUsdt((float) $stat->profit).' USDT',
         ];
     }
 
@@ -159,12 +159,12 @@ class ZReportService
 
         return implode("\n", [
             '📊 <b>Z-ОТЧЕТ</b>',
-            '<b>Бот:</b> ' . e($bot->name),
-            '<b>Дата:</b> ' . $stat->date->format('d.m.Y'),
-            'Сделок: ' . $stat->total_trades,
-            'Winrate: ' . $winrate . '%',
-            'Комиссии биржи: -' . $this->formatUsdt((float) $stat->fees) . ' USDT',
-            '<b>ЧИСТЫЙ ПРОФИТ: ' . $this->formatUsdt((float) $stat->profit) . ' USDT</b>',
+            '<b>Бот:</b> '.e($bot->name),
+            '<b>Дата:</b> '.$stat->date->format('d.m.Y'),
+            'Сделок: '.$stat->total_trades,
+            'Winrate: '.$winrate.'%',
+            'Комиссии биржи: -'.$this->formatUsdt((float) $stat->fees).' USDT',
+            '<b>ЧИСТЫЙ ПРОФИТ: '.$this->formatUsdt((float) $stat->profit).' USDT</b>',
         ]);
     }
 

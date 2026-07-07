@@ -8,9 +8,10 @@ use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use App\Models\ExchangeAccount;
 use App\Models\User;
-use App\Services\Exchange\BybitExchangeService;
 use App\MoonShine\Resources\Trading\Handlers\CheckConnectionHandler;
 use App\MoonShine\Resources\Trading\Pages\ExchangeAccountFormPage;
+use App\Services\Exchange\BybitExchangeService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Crud\Handlers\Handler;
@@ -24,9 +25,7 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
-use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Preview;
-use MoonShine\UI\Fields\Switcher;
 use MoonShine\UI\Fields\Text;
 
 #[Icon('wallet')]
@@ -38,7 +37,7 @@ final class ExchangeAccountResource extends TradingResource
 
     protected array $with = ['user'];
 
-    public function query(): \Illuminate\Database\Eloquent\Builder
+    public function query(): Builder
     {
         return parent::query()->withCount(['bots', 'orders']);
     }
@@ -76,18 +75,18 @@ final class ExchangeAccountResource extends TradingResource
             BelongsTo::make(
                 'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
 
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Text::make('Название', 'name'),
-            Text::make('Ботов', 'bots_count', static function($item) {
+            Text::make('Ботов', 'bots_count', static function ($item) {
                 return $item->bots_count ?? $item->bots()->count();
             })
                 ->badge('blue')
                 ->sortable(),
-            Text::make('Ордеров', 'orders_count', static function($item) {
+            Text::make('Ордеров', 'orders_count', static function ($item) {
                 return $item->orders_count ?? $item->orders()->count();
             })
                 ->badge('gray')
@@ -95,7 +94,7 @@ final class ExchangeAccountResource extends TradingResource
             Text::make('API URL', 'api_url'),
             Enum::make('Статус', 'status')
                 ->attach(ExchangeAccountStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     ExchangeAccountStatus::Active->value => 'green',
                     ExchangeAccountStatus::Disabled->value => 'yellow',
                     ExchangeAccountStatus::Error->value => 'red',
@@ -114,7 +113,7 @@ final class ExchangeAccountResource extends TradingResource
             BelongsTo::make(
                 'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
@@ -122,15 +121,15 @@ final class ExchangeAccountResource extends TradingResource
             Text::make('API URL', 'api_url'),
             Enum::make('Статус', 'status')
                 ->attach(ExchangeAccountStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     ExchangeAccountStatus::Active->value => 'green',
                     ExchangeAccountStatus::Disabled->value => 'yellow',
                     ExchangeAccountStatus::Error->value => 'red',
                     default => 'gray',
                 }),
-            
+
             Preview::make('Текущий баланс (USDT)', 'balance')
-                ->changePreview(function($value, $field) {
+                ->changePreview(function ($value, $field) {
                     $item = $field->getData()?->getOriginal();
 
                     if (! $item instanceof ExchangeAccount) {
@@ -140,7 +139,7 @@ final class ExchangeAccountResource extends TradingResource
                     try {
                         $service = app(BybitExchangeService::class);
                         $data = $service->getWalletBalance($item);
-                        
+
                         $retCode = $data['retCode'] ?? -1;
                         $retMsg = $data['retMsg'] ?? 'Unknown error';
 
@@ -160,15 +159,15 @@ final class ExchangeAccountResource extends TradingResource
                             }
 
                             if ($found) {
-                                return '<span class="text-green-500 font-bold">' . number_format($totalBalance, 2) . ' USDT</span>';
+                                return '<span class="text-green-500 font-bold">'.number_format($totalBalance, 2).' USDT</span>';
                             }
-                            
+
                             return '<span class="text-yellow-500">USDT не найден (баланс 0?)</span>';
                         }
-                        
-                        return '<span class="text-red-500">Ошибка Bybit [' . $retCode . ']: ' . $retMsg . '</span>';
+
+                        return '<span class="text-red-500">Ошибка Bybit ['.$retCode.']: '.$retMsg.'</span>';
                     } catch (\Exception $e) {
-                        return '<span class="text-red-500 italic">Ошибка: ' . $e->getMessage() . '</span>';
+                        return '<span class="text-red-500 italic">Ошибка: '.$e->getMessage().'</span>';
                     }
                 }),
 
@@ -186,7 +185,7 @@ final class ExchangeAccountResource extends TradingResource
                 BelongsTo::make(
                     'Пользователь',
                     'user',
-                    formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                    formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
@@ -218,13 +217,13 @@ final class ExchangeAccountResource extends TradingResource
             BelongsTo::make(
                 'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             Enum::make('Биржа', 'exchange')->attach(ExchangeProvider::class),
             Enum::make('Статус', 'status')
                 ->attach(ExchangeAccountStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     ExchangeAccountStatus::Active->value => 'green',
                     ExchangeAccountStatus::Disabled->value => 'yellow',
                     ExchangeAccountStatus::Error->value => 'red',

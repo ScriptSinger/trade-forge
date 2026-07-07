@@ -14,10 +14,10 @@ use App\Models\Position;
 use App\Models\Strategy;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
+use App\Services\Bot\DailyPerformanceService;
 use App\Services\Bot\StrategyModeResolver;
 use App\Services\Bot\TradePnlCalculator;
 use App\Services\Bot\TradingLogger;
-use App\Services\Bot\DailyPerformanceService;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Position\PositionService;
@@ -161,7 +161,7 @@ class PositionServiceTest extends TestCase
             'tp_multiplier' => 3.0,
             'trailing_pct' => 2.0,
             'max_positions' => 3,
-                'max_risk_per_trade' => 0.02,
+            'max_risk_per_trade' => 0.02,
         ]);
 
         $exchangeAccount = ExchangeAccount::factory()->for($user)->create();
@@ -181,9 +181,9 @@ class PositionServiceTest extends TestCase
             Mockery::mock(TradingLogger::class),
             Mockery::mock(DailyPerformanceService::class),
             Mockery::mock(TechnicalIndicatorService::class),
-            new TradePnlCalculator(),
+            new TradePnlCalculator,
             Mockery::mock(TradeTelegramNotifier::class),
-            new StrategyModeResolver(),
+            new StrategyModeResolver,
         );
     }
 }

@@ -4,9 +4,9 @@ namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Enums\TradeContextStatus;
 use App\Enums\TradeSignal;
-use App\Services\Bot\TradingLogger;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
+use App\Services\Bot\TradingLogger;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Order\OrderService;

@@ -5,11 +5,10 @@ namespace App\Services\Bot;
 use App\Enums\PositionStatus;
 use App\Enums\TradeContextStatus;
 use App\Models\Bot;
-use App\Services\Position\PositionService;
-use App\Services\Bot\MarketScannerService;
-use App\Services\Bot\Strategy\TradeContextFactory;
-use App\Services\Bot\Strategy\TradeContext;
 use App\Services\Bot\Strategy\StrategyPipeline;
+use App\Services\Bot\Strategy\TradeContext;
+use App\Services\Bot\Strategy\TradeContextFactory;
+use App\Services\Position\PositionService;
 use Illuminate\Support\Facades\Cache;
 
 class BotEngine
@@ -53,13 +52,14 @@ class BotEngine
 
         $account = $bot->exchangeAccount;
 
-        if (!$account || $account->status->value !== 'active') {
+        if (! $account || $account->status->value !== 'active') {
             $this->log->botError('Exchange account is invalid', [
                 'bot_id' => $bot->id,
                 'account_id' => $account?->id,
             ]);
 
             $this->log->auditFailed($bot, 'INVALID_EXCHANGE_ACCOUNT');
+
             return;
         }
 
@@ -70,7 +70,7 @@ class BotEngine
             'exchangeAccount',
         ]);
 
-        if (!$bot->strategy?->entrySettings || !$bot->strategy?->riskSettings) {
+        if (! $bot->strategy?->entrySettings || ! $bot->strategy?->riskSettings) {
             $this->log->botError('Strategy configuration incomplete', [
                 'bot_id' => $bot->id,
                 'strategy_id' => $bot->strategy_id,
@@ -118,6 +118,7 @@ class BotEngine
             $this->log->botWarning('Scanner returned no symbols', [
                 'bot_id' => $bot->id,
             ]);
+
             return;
         }
 

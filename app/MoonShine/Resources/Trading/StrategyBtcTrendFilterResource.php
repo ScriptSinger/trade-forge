@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\Trading;
 
 use App\Models\StrategyBtcTrendFilter;
-use App\MoonShine\Resources\Trading\StrategyResource;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\SkipMenu;

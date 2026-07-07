@@ -56,11 +56,11 @@ class CalculateIndicators implements PipeContract
         $withoutLast = array_slice($mappedCandles, 0, -1);
         $lookback = array_slice($withoutLast, -$period);
 
-        $context->indicators['prev_resistance'] = !empty($lookback)
+        $context->indicators['prev_resistance'] = ! empty($lookback)
             ? max(array_column($lookback, 'high'))
             : 0;
 
-        $context->indicators['prev_avg_volume'] = !empty($lookback)
+        $context->indicators['prev_avg_volume'] = ! empty($lookback)
             ? array_sum(array_column($lookback, 'vol')) / count($lookback)
             : 0;
 

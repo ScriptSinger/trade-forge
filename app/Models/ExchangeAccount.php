@@ -7,6 +7,7 @@ use App\Enums\ExchangeProvider;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ExchangeAccount extends Model
 {
@@ -39,12 +40,12 @@ class ExchangeAccount extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function bots(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function bots(): HasMany
     {
         return $this->hasMany(Bot::class);
     }
 
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }

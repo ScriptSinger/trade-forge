@@ -2,9 +2,9 @@
 
 namespace App\Services\Bot\Strategy;
 
-use App\Models\Bot;
-use App\Enums\TradeSignal;
 use App\Enums\TradeContextStatus;
+use App\Enums\TradeSignal;
+use App\Models\Bot;
 
 class TradeContext
 {
@@ -29,12 +29,13 @@ class TradeContext
 
     public function lastCandle(): ?array
     {
-        return !empty($this->candles) ? end($this->candles) : null;
+        return ! empty($this->candles) ? end($this->candles) : null;
     }
 
     public function prevCandle(): ?array
     {
         $count = count($this->candles);
+
         return $count >= 2 ? $this->candles[$count - 2] : null;
     }
 

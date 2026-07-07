@@ -21,4 +21,3 @@ final class TradingFormPage extends FormPage
             : [];
     }
 }
-

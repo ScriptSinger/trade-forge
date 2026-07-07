@@ -22,7 +22,7 @@ class SidewaysMarketGuard
 
         $risk = $bot->strategy?->riskSettings;
 
-        if (!$risk?->daily_target_enabled) {
+        if (! $risk?->daily_target_enabled) {
             return false;
         }
 

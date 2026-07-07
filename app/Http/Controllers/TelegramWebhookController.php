@@ -16,13 +16,13 @@ class TelegramWebhookController extends Controller
             return response('OK', 200);
         }
 
-        if (!$panel->isEnabled()) {
+        if (! $panel->isEnabled()) {
             return response('OK', 200);
         }
 
         $payload = json_decode($request->getContent(), true);
 
-        if (!is_array($payload)) {
+        if (! is_array($payload)) {
             return response('OK', 200);
         }
 

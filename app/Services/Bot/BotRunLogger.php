@@ -5,7 +5,6 @@ namespace App\Services\Bot;
 use App\Enums\BotRunStatus;
 use App\Enums\TradeSignal;
 use App\Models\Bot;
-use App\Models\BotRun;
 
 class BotRunLogger
 {

@@ -21,7 +21,7 @@ class TelegramNotifier
     {
         $chatId = config('trading.telegram.chat_id');
 
-        if (!filled($chatId)) {
+        if (! filled($chatId)) {
             return false;
         }
 
@@ -44,7 +44,7 @@ class TelegramNotifier
         ?array $replyMarkup = null,
         string $parseMode = 'HTML',
     ): bool {
-        if (!$this->isConfigured()) {
+        if (! $this->isConfigured()) {
             return false;
         }
 
@@ -87,7 +87,7 @@ class TelegramNotifier
      */
     public function request(string $method, array $params = [], int $timeout = 5): ?array
     {
-        if (!filled(config('trading.telegram.bot_token'))) {
+        if (! filled(config('trading.telegram.bot_token'))) {
             return null;
         }
 
@@ -96,7 +96,7 @@ class TelegramNotifier
                 ->timeout($timeout)
                 ->post($this->apiUrl($method), $params);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning('Telegram API request failed', [
                     'method' => $method,
                     'status' => $response->status(),
@@ -108,7 +108,7 @@ class TelegramNotifier
 
             $body = $response->json();
 
-            if (!is_array($body) || !($body['ok'] ?? false)) {
+            if (! is_array($body) || ! ($body['ok'] ?? false)) {
                 Log::warning('Telegram API returned error', [
                     'method' => $method,
                     'body' => $body,

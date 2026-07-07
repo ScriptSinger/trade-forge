@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use Carbon\CarbonImmutable;
 use App\Enums\BotStatus;
 use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
@@ -15,6 +14,7 @@ use App\Models\StrategyBtcTrendFilter;
 use App\Models\StrategyEntrySettings;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 
 class TradingDemoSeeder extends Seeder

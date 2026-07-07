@@ -6,9 +6,6 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Models\User;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules\Enum as EnumRule;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\UI\Components\Layout\Box;

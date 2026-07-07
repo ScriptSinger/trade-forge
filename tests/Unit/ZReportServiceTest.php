@@ -111,15 +111,20 @@ class ZReportServiceTest extends TestCase
         $logger->shouldIgnoreMissing();
 
         $service = new ZReportService(
-            new TelegramNotifier(),
+            new TelegramNotifier,
             new DailyPerformanceService($exchange, $logger),
             $logger,
         );
 
         $at = Carbon::parse('2026-07-06 05:10:00', 'Asia/Yekaterinburg');
+        Carbon::setTestNow($at);
 
-        $this->assertTrue($service->sendForBot($bot, $at));
-        $this->assertTrue($service->alreadySent($bot, $at));
+        try {
+            $this->assertTrue($service->sendForBot($bot, $at));
+            $this->assertTrue($service->alreadySent($bot, $at));
+        } finally {
+            Carbon::setTestNow();
+        }
 
         Http::assertSentCount(1);
     }
@@ -130,7 +135,7 @@ class ZReportServiceTest extends TestCase
         $logger->shouldIgnoreMissing();
 
         return new ZReportService(
-            new TelegramNotifier(),
+            new TelegramNotifier,
             new DailyPerformanceService(
                 Mockery::mock(BybitExchangeService::class),
                 $logger,

@@ -2,14 +2,14 @@
 
 namespace App\Services\Position;
 
-use App\Models\Bot;
-use App\Models\Order;
-use App\Models\Position;
-use App\Models\Trade;
 use App\Enums\OrderSide;
 use App\Enums\OrderStatus;
 use App\Enums\PositionStatus;
 use App\Enums\TradeSignal;
+use App\Models\Bot;
+use App\Models\Order;
+use App\Models\Position;
+use App\Models\Trade;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Bot\StrategyModeResolver;
 use App\Services\Bot\TradePnlCalculator;
@@ -136,7 +136,7 @@ class PositionService
 
         $activation = $entry + ($tp - $entry) * 0.8;
 
-        if ($currentPrice >= $activation && !$position->trailing_active) {
+        if ($currentPrice >= $activation && ! $position->trailing_active) {
             $position->update(['trailing_active' => true]);
 
             $this->tradeTelegram->notifySurferActivation($position->symbol);
@@ -154,10 +154,10 @@ class PositionService
 
     private function handleHybridLogic(Position $position, float $currentPrice, string $runtimeMode): void
     {
-        if (!$position->half_sold && $position->tp > 0 && $currentPrice >= $position->tp) {
+        if (! $position->half_sold && $position->tp > 0 && $currentPrice >= $position->tp) {
             $sold = $this->executePartialExit($position, $currentPrice, 0.5, 'Take Profit (50%)', $runtimeMode);
 
-            if (!$sold) {
+            if (! $sold) {
                 return;
             }
 
@@ -176,7 +176,7 @@ class PositionService
 
     private function updateTrailingStop(Position $position, float $currentPrice): void
     {
-        if (!$position->trailing_active) {
+        if (! $position->trailing_active) {
             return;
         }
 
@@ -376,7 +376,7 @@ class PositionService
         $bot = $position->bot;
         $entrySettings = $bot->strategy->entrySettings;
 
-        if (!$entrySettings) {
+        if (! $entrySettings) {
             return $position->mode ?: 'Sniper';
         }
 

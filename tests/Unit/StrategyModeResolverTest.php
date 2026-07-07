@@ -16,7 +16,7 @@ class StrategyModeResolverTest extends TestCase
     {
         parent::setUp();
 
-        $this->resolver = new StrategyModeResolver();
+        $this->resolver = new StrategyModeResolver;
     }
 
     public function test_mode_1_is_always_surfer(): void

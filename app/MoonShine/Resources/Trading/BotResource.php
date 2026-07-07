@@ -16,6 +16,7 @@ use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\ActionButton;
+use MoonShine\UI\Components\Alert;
 use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
@@ -49,15 +50,15 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
                 'Аккаунт биржи',
                 'exchangeAccount',
-                formatted: static fn(ExchangeAccount $model): string => sprintf(
+                formatted: static fn (ExchangeAccount $model): string => sprintf(
                     '%s (%s)',
-                    $model->name ?: 'Аккаунт #' . $model->id,
+                    $model->name ?: 'Аккаунт #'.$model->id,
                     $model->exchange->value,
                 ),
                 resource: ExchangeAccountResource::class,
@@ -65,13 +66,13 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Стратегия',
                 'strategy',
-                formatted: static fn(Strategy $model): string => $model->name,
+                formatted: static fn (Strategy $model): string => $model->name,
                 resource: StrategyResource::class,
             ),
             Text::make('Название', 'name')->sortable(),
             Enum::make('Статус', 'status')
                 ->attach(BotStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     BotStatus::Active->value => 'green',
                     BotStatus::Paused->value => 'yellow',
                     BotStatus::Archived->value => 'red',
@@ -87,8 +88,7 @@ final class BotResource extends TradingResource
     {
         return [
             Preview::make()->changePreview(
-                fn() =>
-                \MoonShine\UI\Components\Alert::make(
+                fn () => Alert::make(
                     icon: 'information-circle',
                     type: 'info',
                 )->content('<b>Боты</b> связывают аккаунт биржи со стратегией. Риск, размер позиции и лимиты настраиваются в <b>Risk settings</b> выбранной стратегии — не на уровне бота.')
@@ -98,7 +98,7 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Владелец',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             BelongsTo::make(
@@ -123,8 +123,7 @@ final class BotResource extends TradingResource
     {
         return [
             Preview::make()->changePreview(
-                fn() =>
-                \MoonShine\UI\Components\Alert::make(
+                fn () => Alert::make(
                     icon: 'information-circle',
                     type: 'info',
                 )->content('<b>Боты</b> связывают аккаунт биржи со стратегией. Риск, размер позиции и лимиты настраиваются в <b>Risk settings</b> выбранной стратегии — не на уровне бота.')
@@ -135,7 +134,7 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Пользователь',
                     'user',
-                    formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                    formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                     resource: UserResource::class,
                 )
                     ->creatable()
@@ -144,9 +143,9 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Аккаунт биржи',
                     'exchangeAccount',
-                    formatted: static fn(ExchangeAccount $model): string => sprintf(
+                    formatted: static fn (ExchangeAccount $model): string => sprintf(
                         '%s (%s)',
-                        $model->name ?: 'Аккаунт #' . $model->id,
+                        $model->name ?: 'Аккаунт #'.$model->id,
                         $model->exchange->value,
                     ),
                     resource: ExchangeAccountResource::class,
@@ -157,7 +156,7 @@ final class BotResource extends TradingResource
                 BelongsTo::make(
                     'Стратегия',
                     'strategy',
-                    formatted: static fn(Strategy $model): string => $model->name,
+                    formatted: static fn (Strategy $model): string => $model->name,
                     resource: StrategyResource::class,
                 )
                     ->creatable()
@@ -184,11 +183,11 @@ final class BotResource extends TradingResource
         return [
             ActionButton::make(
                 'Запустить',
-                fn(Bot $item) => route('bot.run.manual', ['bot' => $item->id])
+                fn (Bot $item) => route('bot.run.manual', ['bot' => $item->id])
             )
                 ->icon('play-circle')
                 ->primary()
-                ->canSee(fn(Bot $item) => $item->status === BotStatus::Active),
+                ->canSee(fn (Bot $item) => $item->status === BotStatus::Active),
         ];
     }
 
@@ -198,12 +197,12 @@ final class BotResource extends TradingResource
             BelongsTo::make(
                 'Пользователь',
                 'user',
-                formatted: static fn(User $model): string => sprintf('%s (%s)', $model->name, $model->email),
+                formatted: static fn (User $model): string => sprintf('%s (%s)', $model->name, $model->email),
                 resource: UserResource::class,
             ),
             Enum::make('Статус', 'status')
                 ->attach(BotStatus::class)
-                ->badge(fn($value) => match($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     BotStatus::Active->value => 'green',
                     BotStatus::Paused->value => 'yellow',
                     BotStatus::Archived->value => 'red',

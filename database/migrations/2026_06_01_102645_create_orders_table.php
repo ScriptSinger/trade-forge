@@ -31,7 +31,6 @@ return new class extends Migration
 
             $table->json('raw_response')->nullable();
 
-
             $table->index(['bot_id', 'symbol']);
             $table->timestamps();
         });

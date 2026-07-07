@@ -76,7 +76,7 @@ final class ExchangeService
 
     private function sign(int $timestamp, string $apiKey, string $apiSecret, int $recvWindow, string $queryString): string
     {
-        $payload = $timestamp . $apiKey . $recvWindow . $queryString;
+        $payload = $timestamp.$apiKey.$recvWindow.$queryString;
 
         return hash_hmac('sha256', $payload, $apiSecret);
     }

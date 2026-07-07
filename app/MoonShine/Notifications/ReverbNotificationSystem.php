@@ -8,8 +8,8 @@ use App\Events\MoonShineNotificationSent;
 use Illuminate\Support\Collection;
 use MoonShine\Crud\Contracts\Notifications\MoonShineNotificationContract;
 use MoonShine\Crud\Contracts\Notifications\NotificationButtonContract;
-use MoonShine\Support\Enums\Color;
 use MoonShine\Laravel\Notifications\MoonShineNotification;
+use MoonShine\Support\Enums\Color;
 
 class ReverbNotificationSystem implements MoonShineNotificationContract
 {
@@ -18,7 +18,7 @@ class ReverbNotificationSystem implements MoonShineNotificationContract
     public function __construct()
     {
         // Use default MoonShine notification system for database operations
-        $this->baseNotification = new MoonShineNotification();
+        $this->baseNotification = new MoonShineNotification;
     }
 
     /**

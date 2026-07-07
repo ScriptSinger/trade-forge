@@ -40,7 +40,7 @@ class TelegramControlPanelServiceTest extends TestCase
     {
         $bot = $this->createBot(BotStatus::Paused);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message('/start'));
 
         $this->assertSame(BotStatus::Paused, $bot->fresh()->status);
@@ -55,7 +55,7 @@ class TelegramControlPanelServiceTest extends TestCase
     {
         $bot = $this->createBot(BotStatus::Paused);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message(TelegramControlButton::StartBots->value));
 
         $this->assertSame(BotStatus::Active, $bot->fresh()->status);
@@ -65,7 +65,7 @@ class TelegramControlPanelServiceTest extends TestCase
     {
         $bot = $this->createBot(BotStatus::Active);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message(TelegramControlButton::StopBots->value));
 
         $this->assertSame(BotStatus::Paused, $bot->fresh()->status);
@@ -75,7 +75,7 @@ class TelegramControlPanelServiceTest extends TestCase
     {
         $bot = $this->createBot(BotStatus::Paused);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message(TelegramControlButton::StartBots->value, chatId: '999999'));
 
         $this->assertSame(BotStatus::Paused, $bot->fresh()->status);
@@ -87,7 +87,7 @@ class TelegramControlPanelServiceTest extends TestCase
         file_put_contents($logPath, "bot-cycle-line\n");
         touch($logPath, time() + 3600);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message(TelegramLogChannel::Bot->value));
 
         Http::assertSent(function ($request): bool {
@@ -105,7 +105,7 @@ class TelegramControlPanelServiceTest extends TestCase
         file_put_contents($logPath, "exchange-request-line\n");
         touch($logPath, time() + 3600);
 
-        $panel = new TelegramControlPanelService(new TelegramNotifier());
+        $panel = new TelegramControlPanelService(new TelegramNotifier);
         $panel->handleUpdate($this->message(TelegramLogChannel::Exchange->value));
 
         Http::assertSent(function ($request): bool {

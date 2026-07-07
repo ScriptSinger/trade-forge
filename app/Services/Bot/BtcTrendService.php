@@ -18,7 +18,7 @@ class BtcTrendService
     {
         $filter = $bot->strategy?->btcTrendFilter;
 
-        if (!$filter instanceof StrategyBtcTrendFilter || !$filter->enabled) {
+        if (! $filter instanceof StrategyBtcTrendFilter || ! $filter->enabled) {
             return true;
         }
 

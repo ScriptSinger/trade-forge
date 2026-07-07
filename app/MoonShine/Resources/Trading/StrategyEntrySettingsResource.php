@@ -6,7 +6,6 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Enums\StrategyMode;
 use App\Models\StrategyEntrySettings;
-use App\MoonShine\Resources\Trading\StrategyResource;
 use App\Services\Exchange\BybitExchangeService;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;

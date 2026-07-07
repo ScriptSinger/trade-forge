@@ -33,7 +33,7 @@ class BybitExchangeService
 
     public function getTicker(ExchangeAccount $account, string $symbol): float
     {
-        $url = $this->baseUrl($account) . '/v5/market/tickers';
+        $url = $this->baseUrl($account).'/v5/market/tickers';
 
         $this->tradingLog()->exchangeDebug('Bybit request', [
             'method' => 'GET',
@@ -52,7 +52,7 @@ class BybitExchangeService
 
     public function getAllTickers(ExchangeAccount $account): array
     {
-        $url = $this->baseUrl($account) . '/v5/market/tickers';
+        $url = $this->baseUrl($account).'/v5/market/tickers';
 
         $this->tradingLog()->exchangeDebug('Bybit request', [
             'method' => 'GET',
@@ -72,9 +72,8 @@ class BybitExchangeService
         string $symbol,
         string $interval = '15',
         int $limit = self::DEFAULT_KLINE_LIMIT,
-    ): array
-    {
-        $url = $this->baseUrl($account) . '/v5/market/kline';
+    ): array {
+        $url = $this->baseUrl($account).'/v5/market/kline';
 
         $this->tradingLog()->exchangeDebug('Bybit request', [
             'method' => 'GET',
@@ -102,7 +101,7 @@ class BybitExchangeService
 
     public function getWalletBalance(ExchangeAccount $account, string $coin = 'USDT'): array
     {
-        $url = $this->baseUrl($account) . '/v5/account/wallet-balance';
+        $url = $this->baseUrl($account).'/v5/account/wallet-balance';
 
         $params = [
             'accountType' => 'UNIFIED',
@@ -180,7 +179,7 @@ class BybitExchangeService
         $cacheKey = "bybit_lot_size_{$account->id}_{$symbol}";
 
         return Cache::remember($cacheKey, 3600, function () use ($account, $symbol) {
-            $url = $this->baseUrl($account) . '/v5/market/instruments-info';
+            $url = $this->baseUrl($account).'/v5/market/instruments-info';
 
             $this->tradingLog()->exchangeDebug('Bybit request', [
                 'method' => 'GET',
@@ -229,7 +228,7 @@ class BybitExchangeService
         string $side,
         float $qty
     ): array {
-        $url = $this->baseUrl($account) . '/v5/order/create';
+        $url = $this->baseUrl($account).'/v5/order/create';
         $normalizedQty = $this->normalizeQuantity($account, $symbol, $qty);
 
         $payload = [
@@ -260,7 +259,7 @@ class BybitExchangeService
 
             return [
                 'retCode' => -1,
-                'retMsg' => 'Exception: ' . $e->getMessage(),
+                'retMsg' => 'Exception: '.$e->getMessage(),
                 'result' => [],
             ];
         }
@@ -323,7 +322,7 @@ class BybitExchangeService
         string $apiSecret,
         string $body
     ): string {
-        $payload = $timestamp . $apiKey . '5000' . $body;
+        $payload = $timestamp.$apiKey.'5000'.$body;
 
         return hash_hmac('sha256', $payload, $apiSecret);
     }

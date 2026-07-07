@@ -6,9 +6,6 @@ namespace App\MoonShine\Resources\Trading;
 
 use App\Models\Bot;
 use App\Models\BotStat;
-use Illuminate\Validation\Rules\Enum as EnumRule;
-use App\MoonShine\Resources\Trading\Pages\TradingFormPage;
-use App\MoonShine\Resources\Trading\Pages\TradingIndexPage;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Support\Attributes\Icon;
@@ -16,7 +13,6 @@ use MoonShine\UI\Components\Layout\Box;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
-use MoonShine\UI\Fields\Text;
 
 #[Icon('presentation-chart-line')]
 final class BotStatResource extends TradingResource
@@ -129,4 +125,3 @@ final class BotStatResource extends TradingResource
         ];
     }
 }
-

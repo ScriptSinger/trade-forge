@@ -5,9 +5,6 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\Trading;
 
 use App\Models\Strategy;
-use App\MoonShine\Resources\Trading\StrategyEntrySettingsResource;
-use App\MoonShine\Resources\Trading\StrategyRiskSettingsResource;
-use App\MoonShine\Resources\Trading\StrategyBtcTrendFilterResource;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\HasOne;
 use MoonShine\Support\Attributes\Icon;

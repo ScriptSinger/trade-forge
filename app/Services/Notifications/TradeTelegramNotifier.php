@@ -17,16 +17,16 @@ class TradeTelegramNotifier
         float $tp,
         float $costUsdt,
     ): void {
-        if (!$this->telegram->isConfigured()) {
+        if (! $this->telegram->isConfigured()) {
             return;
         }
 
         $message = implode("\n", [
-            '🟢 <b>ВХОД: ' . e($symbol) . '</b>',
-            'Цена: ' . $this->formatPrice($price),
-            'SL: ' . $this->formatPrice($sl),
-            'TP: ' . $this->formatPrice($tp),
-            'Объем: ' . $this->formatUsdt($costUsdt) . '$',
+            '🟢 <b>ВХОД: '.e($symbol).'</b>',
+            'Цена: '.$this->formatPrice($price),
+            'SL: '.$this->formatPrice($sl),
+            'TP: '.$this->formatPrice($tp),
+            'Объем: '.$this->formatUsdt($costUsdt).'$',
         ]);
 
         $this->telegram->send($message);
@@ -34,11 +34,11 @@ class TradeTelegramNotifier
 
     public function notifySurferActivation(string $symbol): void
     {
-        if (!$this->telegram->isConfigured()) {
+        if (! $this->telegram->isConfigured()) {
             return;
         }
 
-        $this->telegram->send('🏄 <b>' . e($symbol) . '</b>: Ракета! Трейлинг активирован.');
+        $this->telegram->send('🏄 <b>'.e($symbol).'</b>: Ракета! Трейлинг активирован.');
     }
 
     public function notifyExit(
@@ -48,7 +48,7 @@ class TradeTelegramNotifier
         float $pnlPct,
         float $profitUsdt,
     ): void {
-        if (!$this->telegram->isConfigured()) {
+        if (! $this->telegram->isConfigured()) {
             return;
         }
 
@@ -59,10 +59,10 @@ class TradeTelegramNotifier
         $portionPct = (int) round($portion * 100);
 
         $message = implode("\n", [
-            $emoji . ' <b>ВЫХОД: ' . e($symbol) . '</b>',
-            'Причина: ' . e($reason) . " ({$portionPct}%)",
-            'ЧИСТЫЙ PnL: ' . $this->formatSigned($pnlPct) . '% ('
-                . $this->formatSigned($profitUsdt) . '$)',
+            $emoji.' <b>ВЫХОД: '.e($symbol).'</b>',
+            'Причина: '.e($reason)." ({$portionPct}%)",
+            'ЧИСТЫЙ PnL: '.$this->formatSigned($pnlPct).'% ('
+                .$this->formatSigned($profitUsdt).'$)',
         ]);
 
         $this->telegram->send($message);

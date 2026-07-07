@@ -25,4 +25,3 @@ final class TradingIndexPage extends IndexPage
         return $component->columnSelection();
     }
 }
-

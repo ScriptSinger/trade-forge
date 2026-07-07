@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Enums\TradeContextStatus;
 use App\Enums\TradeSignal;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
@@ -36,7 +35,7 @@ class StrategyPipelineTest extends TestCase
     {
         $context = $this->makeContext(withEntry: false, withRisk: true);
 
-        $result = (new ValidateStrategySettings())->handle($context, fn ($ctx) => $ctx);
+        $result = (new ValidateStrategySettings)->handle($context, fn ($ctx) => $ctx);
 
         $this->assertTrue($result->isBlocked);
         $this->assertSame('Missing strategy entry settings', $result->reason);
@@ -48,7 +47,7 @@ class StrategyPipelineTest extends TestCase
         $context->candles = [['ts' => 1, 'open' => 100, 'high' => 101, 'low' => 99, 'close' => 100, 'vol' => 10]];
         $context->indicators['prev_resistance'] = 105;
 
-        $result = (new CheckBreakoutLevel())->handle($context, fn ($ctx) => $ctx);
+        $result = (new CheckBreakoutLevel)->handle($context, fn ($ctx) => $ctx);
 
         $this->assertTrue($result->isBlocked);
         $this->assertStringContainsString('No breakout', $result->reason);
@@ -60,7 +59,7 @@ class StrategyPipelineTest extends TestCase
         $context->indicators['adx'] = [22, 24];
         $context->indicators['rsi'] = [40, 48];
 
-        $result = (new DetermineStrategyMode())->handle($context, fn ($ctx) => $ctx);
+        $result = (new DetermineStrategyMode)->handle($context, fn ($ctx) => $ctx);
 
         $this->assertFalse($result->isBlocked);
         $this->assertSame('Sniper', $result->mode);

@@ -24,7 +24,7 @@ class TelegramControlWebhookCommand extends Command
         $botName = (string) config('telegram.default', 'mybot');
         $botConfig = config("telegram.bots.{$botName}");
 
-        if (!is_array($botConfig)) {
+        if (! is_array($botConfig)) {
             $this->error("Bot config [telegram.bots.{$botName}] not found.");
 
             return self::FAILURE;
@@ -66,7 +66,7 @@ class TelegramControlWebhookCommand extends Command
             return self::FAILURE;
         }
 
-        if (!is_string($webhookUrl) || !Str::startsWith($webhookUrl, 'https://')) {
+        if (! is_string($webhookUrl) || ! Str::startsWith($webhookUrl, 'https://')) {
             $this->error('Webhook URL must be HTTPS, e.g. https://xxxx.ngrok-free.app/telegram/webhook');
 
             return self::FAILURE;
@@ -90,7 +90,7 @@ class TelegramControlWebhookCommand extends Command
 
         $this->info('Setting webhook...');
 
-        if (!Telegram::setWebhook($params)) {
+        if (! Telegram::setWebhook($params)) {
             $this->error('Webhook could not be registered. Check TELEGRAM_BOT_TOKEN and URL.');
 
             return self::FAILURE;
@@ -104,7 +104,7 @@ class TelegramControlWebhookCommand extends Command
 
     private function removeWebhook(): int
     {
-        if (!$this->confirm('Remove Telegram webhook?')) {
+        if (! $this->confirm('Remove Telegram webhook?')) {
             return self::SUCCESS;
         }
 
@@ -131,7 +131,7 @@ class TelegramControlWebhookCommand extends Command
             return null;
         }
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             $this->error("ngrok API returned HTTP {$response->status()}.");
 
             return null;
@@ -139,21 +139,21 @@ class TelegramControlWebhookCommand extends Command
 
         $tunnels = $response->json('tunnels');
 
-        if (!is_array($tunnels)) {
+        if (! is_array($tunnels)) {
             $this->error('ngrok API response has no tunnels. Is the ngrok container running?');
 
             return null;
         }
 
         foreach ($tunnels as $tunnel) {
-            if (!is_array($tunnel)) {
+            if (! is_array($tunnel)) {
                 continue;
             }
 
             $publicUrl = $tunnel['public_url'] ?? null;
 
             if (is_string($publicUrl) && Str::startsWith($publicUrl, 'https://')) {
-                return rtrim($publicUrl, '/') . '/telegram/webhook';
+                return rtrim($publicUrl, '/').'/telegram/webhook';
             }
         }
 

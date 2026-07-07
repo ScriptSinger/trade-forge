@@ -14,16 +14,16 @@ class ValidateStrategySettings implements PipeContract
     {
         $strategy = $context->bot->strategy;
 
-        if (!$strategy?->entrySettings) {
+        if (! $strategy?->entrySettings) {
             return $this->block($context, 'Missing strategy entry settings');
         }
 
-        if (!$strategy->riskSettings) {
+        if (! $strategy->riskSettings) {
             return $this->block($context, 'Missing strategy risk settings');
         }
 
         if (empty($context->candles)) {
-            return $this->block($context, 'No market candles available for ' . $context->symbol);
+            return $this->block($context, 'No market candles available for '.$context->symbol);
         }
 
         return $next($context);

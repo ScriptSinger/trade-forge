@@ -32,7 +32,7 @@ class DailyPerformanceService
             ->whereDate('date', $dateKey)
             ->first();
 
-        if (!$stat) {
+        if (! $stat) {
             $stat = BotStat::query()->create([
                 'bot_id' => $bot->id,
                 'date' => $dateKey,
@@ -125,7 +125,7 @@ class DailyPerformanceService
             ->whereDate('date', $dateKey)
             ->first();
 
-        if (!$stat) {
+        if (! $stat) {
             $stat = BotStat::query()->create([
                 'bot_id' => $trade->bot_id,
                 'date' => $dateKey,

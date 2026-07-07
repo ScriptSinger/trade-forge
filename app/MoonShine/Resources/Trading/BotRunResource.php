@@ -12,6 +12,7 @@ use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
+use MoonShine\UI\Components\Alert;
 use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
@@ -29,7 +30,6 @@ final class BotRunResource extends TradingResource
     protected string $column = 'symbol';
 
     protected array $with = ['bot', 'order'];
-
 
     protected bool $isAsync = true;
 
@@ -52,7 +52,7 @@ final class BotRunResource extends TradingResource
             BelongsTo::make(
                 'Бот',
                 'bot',
-                formatted: static fn(Bot $model): string => $model->name,
+                formatted: static fn (Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             Text::make('Пара', 'symbol')->sortable(),
@@ -61,19 +61,19 @@ final class BotRunResource extends TradingResource
             Preview::make('Сумма USDT', 'quantity', function (BotRun $item) {
                 $notional = $item->notionalUsdt();
 
-                return $notional !== null ? number_format($notional, 2) . ' USDT' : '—';
+                return $notional !== null ? number_format($notional, 2).' USDT' : '—';
             }),
             Text::make('Режим', 'mode'),
             Enum::make('Сигнал', 'signal')
                 ->attach(TradeSignal::class)
-                ->badge(fn($value) => match ($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     TradeSignal::Buy->value => 'green',
                     TradeSignal::Sell->value => 'red',
                     default => 'gray',
                 }),
             Enum::make('Статус', 'status')
                 ->attach(BotRunStatus::class)
-                ->badge(fn($value) => match ($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     BotRunStatus::Success->value => 'green',
                     BotRunStatus::Failed->value => 'red',
                     BotRunStatus::Processing->value => 'blue',
@@ -89,8 +89,7 @@ final class BotRunResource extends TradingResource
     {
         return [
             Preview::make()->changePreview(
-                fn() =>
-                \MoonShine\UI\Components\Alert::make(
+                fn () => Alert::make(
                     icon: 'document-text',
                     type: 'info',
                 )->content('<b>Логи ботов</b> — журнал значимых событий: вход в позицию, выход, ошибки. Для исполненных сделок отображаются объём, сумма в USDT, SL/TP и связанный ордер.')
@@ -100,7 +99,7 @@ final class BotRunResource extends TradingResource
             BelongsTo::make(
                 'Торговый бот',
                 'bot',
-                formatted: static fn(Bot $model): string => $model->name,
+                formatted: static fn (Bot $model): string => $model->name,
                 resource: BotResource::class,
             ),
             Text::make('Торговая пара', 'symbol'),
@@ -109,7 +108,7 @@ final class BotRunResource extends TradingResource
             Preview::make('Сумма сделки (USDT)', 'quantity', function (BotRun $item) {
                 $notional = $item->notionalUsdt();
 
-                return $notional !== null ? number_format($notional, 2) . ' USDT' : '—';
+                return $notional !== null ? number_format($notional, 2).' USDT' : '—';
             }),
             Text::make('Режим стратегии', 'mode'),
             Number::make('Stop Loss', 'stop_loss'),
@@ -121,7 +120,7 @@ final class BotRunResource extends TradingResource
             ),
             Enum::make('Сигнал стратегии', 'signal')
                 ->attach(TradeSignal::class)
-                ->badge(fn($value) => match ($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     TradeSignal::Buy->value => 'green',
                     TradeSignal::Sell->value => 'red',
                     default => 'gray',
@@ -130,7 +129,7 @@ final class BotRunResource extends TradingResource
             Json::make('Технические индикаторы (JSON)', 'indicators'),
             Enum::make('Статус выполнения', 'status')
                 ->attach(BotRunStatus::class)
-                ->badge(fn($value) => match ($value?->value ?? $value) {
+                ->badge(fn ($value) => match ($value?->value ?? $value) {
                     BotRunStatus::Success->value => 'green',
                     BotRunStatus::Failed->value => 'red',
                     BotRunStatus::Processing->value => 'blue',
