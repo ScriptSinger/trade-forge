@@ -106,9 +106,10 @@ return [
     ],
 
     // Localizations
-    'locale' => 'en',
+    'locale' => env('MOONSHINE_LOCALE', env('APP_LOCALE', 'en')),
     'locale_key' => ChangeLocale::KEY,
     'locales' => [
-        // en
+        'en' => 'English',
+        'ru' => 'Русский',
     ],
 ];

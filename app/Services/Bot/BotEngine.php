@@ -202,6 +202,7 @@ class BotEngine
             $this->log->strategyDebug('Symbol rejected', [
                 'symbol' => $context->symbol,
                 'status' => $context->status->value,
+                'blocked_by' => $context->blockedBy !== '' ? $context->blockedBy : null,
                 'reason' => $reason,
             ]);
 

@@ -9,6 +9,7 @@ use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\User;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
@@ -31,7 +32,22 @@ final class BotResource extends TradingResource
 
     protected string $column = 'name';
 
-    protected array $with = ['user', 'exchangeAccount', 'strategy'];
+    protected array $with = ['user', 'strategy'];
+
+    protected function modifyQueryBuilder(Builder $builder): Builder
+    {
+        return $builder->with([
+            'exchangeAccount' => static fn (Builder $query): Builder => $query->select([
+                'id',
+                'user_id',
+                'exchange',
+                'name',
+                'api_url',
+                'status',
+                'last_checked_at',
+            ]),
+        ]);
+    }
 
     protected function activeActions(): ListOf
     {

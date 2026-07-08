@@ -10,6 +10,7 @@ use App\Enums\OrderType;
 use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Order;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
@@ -30,7 +31,22 @@ final class OrderResource extends TradingResource
 
     protected string $column = 'symbol';
 
-    protected array $with = ['bot', 'exchangeAccount'];
+    protected array $with = ['bot'];
+
+    protected function modifyQueryBuilder(Builder $builder): Builder
+    {
+        return $builder->with([
+            'exchangeAccount' => static fn (Builder $query): Builder => $query->select([
+                'id',
+                'user_id',
+                'exchange',
+                'name',
+                'api_url',
+                'status',
+                'last_checked_at',
+            ]),
+        ]);
+    }
 
     protected function activeActions(): ListOf
     {

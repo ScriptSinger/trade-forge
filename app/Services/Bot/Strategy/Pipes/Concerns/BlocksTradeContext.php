@@ -14,6 +14,7 @@ trait BlocksTradeContext
     ): TradeContext {
         $context->isBlocked = true;
         $context->reason = $reason;
+        $context->blockedBy = static::class;
         $context->status = $status;
 
         return $context;

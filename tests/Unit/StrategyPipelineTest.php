@@ -13,6 +13,7 @@ use App\Models\StrategyRiskSettings;
 use App\Models\User;
 use App\Services\Bot\PositionSizingService;
 use App\Services\Bot\Strategy\Pipes\ApplyRiskManagement;
+use App\Services\Bot\Strategy\Pipes\CheckAdxStrength;
 use App\Services\Bot\Strategy\Pipes\CheckBreakoutLevel;
 use App\Services\Bot\Strategy\Pipes\DetermineStrategyMode;
 use App\Services\Bot\Strategy\Pipes\ValidateStrategySettings;
@@ -39,6 +40,7 @@ class StrategyPipelineTest extends TestCase
 
         $this->assertTrue($result->isBlocked);
         $this->assertSame('Missing strategy entry settings', $result->reason);
+        $this->assertSame(ValidateStrategySettings::class, $result->blockedBy);
     }
 
     public function test_check_breakout_blocks_when_close_not_above_prev_resistance(): void
@@ -51,6 +53,19 @@ class StrategyPipelineTest extends TestCase
 
         $this->assertTrue($result->isBlocked);
         $this->assertStringContainsString('No breakout', $result->reason);
+        $this->assertSame(CheckBreakoutLevel::class, $result->blockedBy);
+    }
+
+    public function test_check_adx_blocks_with_pipe_class(): void
+    {
+        $context = $this->makeContext();
+        $context->indicators['adx'] = [18, 20];
+
+        $result = (new CheckAdxStrength)->handle($context, fn ($ctx) => $ctx);
+
+        $this->assertTrue($result->isBlocked);
+        $this->assertStringContainsString('Low ADX', $result->reason);
+        $this->assertSame(CheckAdxStrength::class, $result->blockedBy);
     }
 
     public function test_determine_strategy_mode_sets_buy_signal_for_sniper(): void

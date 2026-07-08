@@ -24,6 +24,7 @@ class TradeContext
         public string $mode = 'Sniper',
         public bool $isBlocked = false,
         public string $reason = '',
+        public string $blockedBy = '',
         public TradeContextStatus $status = TradeContextStatus::Pending,
     ) {}
 

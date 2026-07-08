@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ResilientEncrypted;
 use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,8 +29,8 @@ class ExchangeAccount extends Model
     {
         return [
             'exchange' => ExchangeProvider::class,
-            'api_key' => 'encrypted',
-            'api_secret' => 'encrypted',
+            'api_key' => ResilientEncrypted::class,
+            'api_secret' => ResilientEncrypted::class,
             'status' => ExchangeAccountStatus::class,
             'last_checked_at' => 'datetime',
         ];
