@@ -54,6 +54,7 @@ jobs:
             public \
             resources \
             routes \
+            scripts \
             vendor \
             artisan \
             composer.json \
@@ -104,7 +105,15 @@ jobs:
           tar -xzf /tmp/release.tar.gz -C ${DEPLOY_PATH}
           rm -f /tmp/release.tar.gz
           echo "${{ secrets.ENV_FILE }}" > .env
-          bash scripts/ensure-nginx-ssl.sh
+          chmod +x scripts/*.sh 2>/dev/null || true
+          if [ -f scripts/ensure-nginx-ssl.sh ]; then
+            bash scripts/ensure-nginx-ssl.sh
+          elif docker compose -f docker-compose.prod.yml run --rm --no-deps --entrypoint sh certbot \
+            -c 'test -f /etc/letsencrypt/live/136.243.214.62/fullchain.pem' 2>/dev/null; then
+            sed -i 's/^NGINX_CONF=.*/NGINX_CONF=prod.conf/' .env \
+              || echo 'NGINX_CONF=prod.conf' >> .env
+            echo "HTTPS: NGINX_CONF=prod.conf (certificate found, inline fallback)."
+          fi
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d --build
           for i in \$(seq 1 30); do
