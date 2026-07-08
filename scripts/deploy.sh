@@ -12,6 +12,8 @@ if [ -f "$ARCHIVE_PATH" ]; then
   rm -f "$ARCHIVE_PATH"
 fi
 
+bash scripts/ensure-nginx-ssl.sh
+
 docker compose -f "$COMPOSE_FILE" down
 docker compose -f "$COMPOSE_FILE" up -d --build
 

@@ -104,6 +104,7 @@ jobs:
           tar -xzf /tmp/release.tar.gz -C ${DEPLOY_PATH}
           rm -f /tmp/release.tar.gz
           echo "${{ secrets.ENV_FILE }}" > .env
+          bash scripts/ensure-nginx-ssl.sh
           docker compose -f docker-compose.prod.yml down
           docker compose -f docker-compose.prod.yml up -d --build
           for i in \$(seq 1 30); do
