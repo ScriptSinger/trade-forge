@@ -23,7 +23,7 @@ class TradingDemoSeederTest extends TestCase
         Artisan::call('db:seed');
 
         $this->assertDatabaseCount('users', 1);
-        $this->assertDatabaseCount('strategies', 1);
+        $this->assertDatabaseCount('strategies', 2);
         $this->assertDatabaseCount('exchange_accounts', 1);
         $this->assertDatabaseCount('bots', 1);
         $this->assertDatabaseCount('bot_runs', 0);
@@ -33,15 +33,20 @@ class TradingDemoSeederTest extends TestCase
         $this->assertDatabaseCount('bot_stats', 0);
 
         $user = User::query()->firstOrFail();
-        $strategy = Strategy::query()->firstOrFail();
         $exchangeAccount = ExchangeAccount::query()->firstOrFail();
-        $bot = Bot::query()->firstOrFail();
 
         $this->assertSame('test@example.com', $user->email);
-        $this->assertSame('Spot Breakout Mode 4', $strategy->name);
-        $this->assertSame('Bybit Spot Bot', $bot->name);
+        $this->assertTrue(
+            Strategy::query()->where('name', 'Spot Breakout Mode 4')->exists()
+        );
+        $this->assertTrue(
+            Strategy::query()->where('name', 'Andrew Pro V6.3')->exists()
+        );
+
+        $bot = Bot::query()->where('name', 'Bybit Spot Bot')->firstOrFail();
+
         $this->assertSame(BotStatus::Paused, $bot->status);
-        $this->assertSame($bot->id, $exchangeAccount->bots()->firstOrFail()->id);
         $this->assertNull($bot->last_run_at);
+        $this->assertSame(1, $exchangeAccount->bots()->count());
     }
 }

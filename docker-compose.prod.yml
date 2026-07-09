@@ -29,7 +29,7 @@ services:
       - "443:443"
     volumes:
       - ./:/var/www/html
-      - ./docker/nginx/${NGINX_CONF:-prod-init.conf}:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/${NGINX_CONF:-prod.conf}:/etc/nginx/conf.d/default.conf:ro
       - certbot_certs:/etc/letsencrypt:ro
       - certbot_www:/var/www/certbot:ro
     depends_on:
@@ -55,7 +55,16 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--maxmemory",
+        "128mb",
+        "--maxmemory-policy",
+        "allkeys-lru",
+      ]
     volumes:
       - redis_data:/data
     healthcheck:
