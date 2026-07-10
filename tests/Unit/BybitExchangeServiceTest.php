@@ -97,4 +97,74 @@ class BybitExchangeServiceTest extends TestCase
 
         $this->assertEqualsWithDelta(1.2345, $balance, 0.0001);
     }
+
+    public function test_get_coin_free_balance_ignores_empty_available_to_withdraw_on_unified(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/account/wallet-balance*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'coin' => [
+                                [
+                                    'coin' => 'USDT',
+                                    'availableToWithdraw' => '',
+                                    'walletBalance' => '23.0562',
+                                    'locked' => '0',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'USDT');
+
+        $this->assertEqualsWithDelta(23.0562, $balance, 0.0001);
+    }
+
+    public function test_get_coin_free_balance_subtracts_locked_spot_orders(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/account/wallet-balance*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'coin' => [
+                                [
+                                    'coin' => 'USDT',
+                                    'availableToWithdraw' => '0',
+                                    'walletBalance' => '23.0562',
+                                    'locked' => '3.5',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'USDT');
+
+        $this->assertEqualsWithDelta(19.5562, $balance, 0.0001);
+    }
 }

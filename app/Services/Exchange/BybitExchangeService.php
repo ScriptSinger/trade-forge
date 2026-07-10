@@ -147,13 +147,29 @@ class BybitExchangeService
             return 0.0;
         }
 
-        $free = $coinData['availableToWithdraw']
-            ?? $coinData['availableBalance']
-            ?? $coinData['free']
-            ?? $coinData['walletBalance']
-            ?? null;
+        foreach (['availableBalance', 'free'] as $field) {
+            $amount = $this->parsePositiveCoinAmount($coinData[$field] ?? null);
 
-        return $free !== null ? (float) $free : 0.0;
+            if ($amount !== null) {
+                return $amount;
+            }
+        }
+
+        $wallet = $this->parsePositiveCoinAmount($coinData['walletBalance'] ?? null) ?? 0.0;
+        $locked = (float) ($coinData['locked'] ?? 0);
+
+        return max(0.0, $wallet - $locked);
+    }
+
+    private function parsePositiveCoinAmount(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        $amount = (float) $value;
+
+        return $amount > 0 ? $amount : null;
     }
 
     public function normalizeQuantity(ExchangeAccount $account, string $symbol, float $quantity): float
