@@ -137,35 +137,30 @@ final class ExchangeAccountResource extends TradingResource
                     }
 
                     try {
-                        $service = app(BybitExchangeService::class);
-                        $data = $service->getWalletBalance($item);
+                        $query = app(BybitExchangeService::class)->queryAccountBalance($item, 'USDT');
 
-                        $retCode = $data['retCode'] ?? -1;
-                        $retMsg = $data['retMsg'] ?? 'Unknown error';
+                        if (! $query->ok()) {
+                            return '<span class="text-red-500">Ошибка Bybit ['.$query->retCode.']: '.$query->retMsg.'</span>';
+                        }
 
-                        if ($retCode === 0) {
-                            $list = $data['result']['list'] ?? [];
-                            $totalBalance = 0;
-                            $found = false;
+                        $balance = $query->snapshot;
 
-                            foreach ($list as $acc) {
-                                foreach ($acc['coin'] ?? [] as $coinData) {
-                                    if ($coinData['coin'] === 'USDT') {
-                                        $totalBalance = (float) ($coinData['walletBalance'] ?? 0);
-                                        $found = true;
-                                        break 2;
-                                    }
-                                }
-                            }
-
-                            if ($found) {
-                                return '<span class="text-green-500 font-bold">'.number_format($totalBalance, 2).' USDT</span>';
-                            }
-
+                        if ($balance === null || ! $balance->isPresent()) {
                             return '<span class="text-yellow-500">USDT не найден (баланс 0?)</span>';
                         }
 
-                        return '<span class="text-red-500">Ошибка Bybit ['.$retCode.']: '.$retMsg.'</span>';
+                        $wallet = number_format($balance->wallet, 2);
+                        $free = number_format($balance->free, 2);
+
+                        if ($balance->locked > 0) {
+                            $locked = number_format($balance->locked, 2);
+
+                            return '<span class="text-green-500 font-bold">'.$wallet.' USDT</span>'
+                                .'<br><span class="text-gray-500 text-sm">доступно: '.$free.' · заблокировано: '.$locked.'</span>';
+                        }
+
+                        return '<span class="text-green-500 font-bold">'.$wallet.' USDT</span>'
+                            .'<br><span class="text-gray-500 text-sm">доступно: '.$free.'</span>';
                     } catch (\Exception $e) {
                         return '<span class="text-red-500 italic">Ошибка: '.$e->getMessage().'</span>';
                     }

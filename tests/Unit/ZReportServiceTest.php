@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Services\Bot\DailyPerformanceService;
 use App\Services\Bot\TradingLogger;
 use App\Services\Bot\ZReportService;
+use App\Services\Exchange\AccountBalanceSnapshot;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Notifications\TelegramNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -105,7 +106,9 @@ class ZReportServiceTest extends TestCase
         ]);
 
         $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getUsdtWalletBalance')->twice()->andReturn(1000.0);
+        $exchange->shouldReceive('getUsdtBalance')->twice()->andReturn(
+            new AccountBalanceSnapshot('USDT', 1000.0, 1000.0, 0.0, 'walletBalance_minus_locked'),
+        );
 
         $logger = Mockery::mock(TradingLogger::class);
         $logger->shouldIgnoreMissing();

@@ -45,9 +45,9 @@ class DailyPerformanceService
             return $stat;
         }
 
-        $balance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
+        $balance = $this->exchange->getUsdtBalance($bot->exchangeAccount);
 
-        if ($balance === null || $balance <= 0) {
+        if ($balance === null || $balance->wallet <= 0) {
             $this->log->botWarning('DailyPerformance: could not capture start_balance', [
                 'bot_id' => $bot->id,
             ]);
@@ -56,7 +56,7 @@ class DailyPerformanceService
         }
 
         $stat->forceFill([
-            'start_balance' => $balance,
+            'start_balance' => $balance->wallet,
             'start_balance_at' => now(),
         ])->save();
 
@@ -100,9 +100,9 @@ class DailyPerformanceService
         $bot->loadMissing('exchangeAccount');
 
         $stat = $this->ensureTodayStat($bot);
-        $balance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
+        $balance = $this->exchange->getUsdtBalance($bot->exchangeAccount);
 
-        if ($balance === null || $balance <= 0) {
+        if ($balance === null || $balance->wallet <= 0) {
             $this->log->botWarning('DailyPerformance: could not refresh start_balance', [
                 'bot_id' => $bot->id,
             ]);
@@ -111,7 +111,7 @@ class DailyPerformanceService
         }
 
         $stat->forceFill([
-            'start_balance' => $balance,
+            'start_balance' => $balance->wallet,
             'start_balance_at' => now(),
         ])->save();
     }

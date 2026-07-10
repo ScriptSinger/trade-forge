@@ -10,6 +10,7 @@ use App\Models\Strategy;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
 use App\Services\Bot\PositionSizingService;
+use App\Services\Exchange\AccountBalanceSnapshot;
 use App\Services\Exchange\BybitExchangeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -62,8 +63,13 @@ class PositionSizingServiceTest extends TestCase
     private function makeExchangeMock(float $total, float $free, ?float $normalizedQty = null): BybitExchangeService
     {
         $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getUsdtWalletBalance')->once()->andReturn($total);
-        $exchange->shouldReceive('getUsdtFreeBalance')->once()->andReturn($free);
+        $exchange->shouldReceive('getUsdtBalance')->once()->andReturn(new AccountBalanceSnapshot(
+            coin: 'USDT',
+            wallet: $total,
+            free: $free,
+            locked: max(0.0, $total - $free),
+            freeSource: 'walletBalance_minus_locked',
+        ));
 
         if ($normalizedQty !== null) {
             $exchange->shouldReceive('normalizeQuantity')

@@ -65,7 +65,7 @@ class BybitExchangeServiceTest extends TestCase
         });
     }
 
-    public function test_get_coin_free_balance_reads_available_balance_from_wallet(): void
+    public function test_get_account_balance_reads_available_balance_from_wallet(): void
     {
         $user = User::factory()->create();
         $account = ExchangeAccount::factory()
@@ -93,12 +93,13 @@ class BybitExchangeServiceTest extends TestCase
             ], 200),
         ]);
 
-        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'ETH');
+        $snapshot = app(BybitExchangeService::class)->getAccountBalance($account, 'ETH');
 
-        $this->assertEqualsWithDelta(1.2345, $balance, 0.0001);
+        $this->assertNotNull($snapshot);
+        $this->assertEqualsWithDelta(1.2345, $snapshot->free, 0.0001);
     }
 
-    public function test_get_coin_free_balance_ignores_empty_available_to_withdraw_on_unified(): void
+    public function test_get_account_balance_ignores_empty_available_to_withdraw_on_unified(): void
     {
         $user = User::factory()->create();
         $account = ExchangeAccount::factory()
@@ -128,12 +129,13 @@ class BybitExchangeServiceTest extends TestCase
             ], 200),
         ]);
 
-        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'USDT');
+        $snapshot = app(BybitExchangeService::class)->getAccountBalance($account, 'USDT');
 
-        $this->assertEqualsWithDelta(23.0562, $balance, 0.0001);
+        $this->assertNotNull($snapshot);
+        $this->assertEqualsWithDelta(23.0562, $snapshot->free, 0.0001);
     }
 
-    public function test_get_coin_free_balance_subtracts_locked_spot_orders(): void
+    public function test_get_account_balance_subtracts_locked_spot_orders(): void
     {
         $user = User::factory()->create();
         $account = ExchangeAccount::factory()
@@ -163,8 +165,47 @@ class BybitExchangeServiceTest extends TestCase
             ], 200),
         ]);
 
-        $balance = app(BybitExchangeService::class)->getCoinFreeBalance($account, 'USDT');
+        $snapshot = app(BybitExchangeService::class)->getAccountBalance($account, 'USDT');
 
-        $this->assertEqualsWithDelta(19.5562, $balance, 0.0001);
+        $this->assertNotNull($snapshot);
+        $this->assertEqualsWithDelta(19.5562, $snapshot->free, 0.0001);
+    }
+
+    public function test_query_account_balance_returns_snapshot_with_wallet_and_free(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/account/wallet-balance*' => Http::response([
+                'retCode' => 0,
+                'retMsg' => 'OK',
+                'result' => [
+                    'list' => [
+                        [
+                            'coin' => [
+                                [
+                                    'coin' => 'USDT',
+                                    'walletBalance' => '23.0562',
+                                    'locked' => '0',
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $query = app(BybitExchangeService::class)->queryAccountBalance($account, 'USDT');
+
+        $this->assertTrue($query->ok());
+        $this->assertNotNull($query->snapshot);
+        $this->assertEqualsWithDelta(23.0562, $query->snapshot->wallet, 0.0001);
+        $this->assertEqualsWithDelta(23.0562, $query->snapshot->free, 0.0001);
     }
 }

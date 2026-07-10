@@ -99,7 +99,7 @@ class BybitExchangeService
     |--------------------------------------------------------------------------
     */
 
-    public function getWalletBalance(ExchangeAccount $account, string $coin = 'USDT'): array
+    private function fetchWalletBalanceResponse(ExchangeAccount $account, string $coin = 'USDT'): array
     {
         $url = $this->baseUrl($account).'/v5/account/wallet-balance';
 
@@ -121,55 +121,41 @@ class BybitExchangeService
         return $response->json();
     }
 
-    public function getUsdtWalletBalance(ExchangeAccount $account): ?float
+    public function queryAccountBalance(ExchangeAccount $account, string $coin = 'USDT'): AccountBalanceQuery
     {
-        $coin = $this->findUsdtCoin($account);
+        $response = $this->fetchWalletBalanceResponse($account, $coin);
+        $retCode = (int) ($response['retCode'] ?? -1);
+        $retMsg = (string) ($response['retMsg'] ?? 'Unknown error');
 
-        if ($coin === null) {
-            return null;
+        if ($retCode !== 0) {
+            return new AccountBalanceQuery(snapshot: null, retCode: $retCode, retMsg: $retMsg);
         }
 
-        $balance = $coin['walletBalance'] ?? $coin['equity'] ?? null;
-
-        return $balance !== null ? (float) $balance : null;
-    }
-
-    public function getUsdtFreeBalance(ExchangeAccount $account): ?float
-    {
-        return $this->getCoinFreeBalance($account, 'USDT');
-    }
-
-    public function getCoinFreeBalance(ExchangeAccount $account, string $coin): ?float
-    {
-        $coinData = $this->findCoin($account, $coin);
+        $coinData = $this->extractCoinFromWalletResponse($response, $coin);
 
         if ($coinData === null) {
-            return 0.0;
+            return new AccountBalanceQuery(
+                snapshot: null,
+                retCode: $retCode,
+                retMsg: "Coin {$coin} not found in wallet response",
+            );
         }
 
-        foreach (['availableBalance', 'free'] as $field) {
-            $amount = $this->parsePositiveCoinAmount($coinData[$field] ?? null);
-
-            if ($amount !== null) {
-                return $amount;
-            }
-        }
-
-        $wallet = $this->parsePositiveCoinAmount($coinData['walletBalance'] ?? null) ?? 0.0;
-        $locked = (float) ($coinData['locked'] ?? 0);
-
-        return max(0.0, $wallet - $locked);
+        return new AccountBalanceQuery(
+            snapshot: AccountBalanceSnapshot::fromCoinData($coin, $coinData),
+            retCode: $retCode,
+            retMsg: $retMsg,
+        );
     }
 
-    private function parsePositiveCoinAmount(mixed $value): ?float
+    public function getAccountBalance(ExchangeAccount $account, string $coin = 'USDT'): ?AccountBalanceSnapshot
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
+        return $this->queryAccountBalance($account, $coin)->snapshot;
+    }
 
-        $amount = (float) $value;
-
-        return $amount > 0 ? $amount : null;
+    public function getUsdtBalance(ExchangeAccount $account): ?AccountBalanceSnapshot
+    {
+        return $this->getAccountBalance($account, 'USDT');
     }
 
     public function normalizeQuantity(ExchangeAccount $account, string $symbol, float $quantity): float
@@ -213,14 +199,12 @@ class BybitExchangeService
         });
     }
 
-    private function findUsdtCoin(ExchangeAccount $account): ?array
+    /**
+     * @param  array<string, mixed>  $response
+     * @return array<string, mixed>|null
+     */
+    private function extractCoinFromWalletResponse(array $response, string $coin): ?array
     {
-        return $this->findCoin($account, 'USDT');
-    }
-
-    private function findCoin(ExchangeAccount $account, string $coin): ?array
-    {
-        $response = $this->getWalletBalance($account, $coin);
         $coins = $response['result']['list'][0]['coin'] ?? [];
 
         foreach ($coins as $coinData) {

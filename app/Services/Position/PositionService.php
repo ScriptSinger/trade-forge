@@ -428,10 +428,8 @@ class PositionService
     private function resolveSellQuantity(Position $position, float $portion, float $price): array
     {
         $account = $position->bot->exchangeAccount;
-        $actualQty = (float) $this->exchange->getCoinFreeBalance(
-            $account,
-            $this->baseCoinFromSymbol($position->symbol),
-        );
+        $baseCoin = $this->baseCoinFromSymbol($position->symbol);
+        $actualQty = (float) ($this->exchange->getAccountBalance($account, $baseCoin)?->free ?? 0.0);
 
         $storedQty = (float) $position->quantity;
         $targetQty = $portion >= 1.0

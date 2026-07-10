@@ -19,11 +19,13 @@ class PositionSizingService
         }
 
         $risk = $bot->strategy->riskSettings;
-        $totalBalance = $this->exchange->getUsdtWalletBalance($bot->exchangeAccount);
+        $balance = $this->exchange->getUsdtBalance($bot->exchangeAccount);
 
-        if ($totalBalance === null || $totalBalance <= 0) {
+        if ($balance === null || $balance->wallet <= 0) {
             return null;
         }
+
+        $totalBalance = $balance->wallet;
 
         $riskFraction = (float) ($risk?->max_risk_per_trade ?? 0.02);
 
@@ -42,7 +44,7 @@ class PositionSizingService
             $costUsdt = $maxCost;
         }
 
-        $freeUsdt = $this->exchange->getUsdtFreeBalance($bot->exchangeAccount) ?? $totalBalance;
+        $freeUsdt = $balance->free;
         $freeCap = $freeUsdt * $this->freeBalanceBuffer($risk);
         if ($costUsdt > $freeCap) {
             $costUsdt = $freeCap;

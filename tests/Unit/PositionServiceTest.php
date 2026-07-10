@@ -18,6 +18,7 @@ use App\Services\Bot\DailyPerformanceService;
 use App\Services\Bot\StrategyModeResolver;
 use App\Services\Bot\TradePnlCalculator;
 use App\Services\Bot\TradingLogger;
+use App\Services\Exchange\AccountBalanceSnapshot;
 use App\Services\Exchange\BybitExchangeService;
 use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Position\PositionService;
@@ -80,10 +81,10 @@ class PositionServiceTest extends TestCase
         ]);
 
         $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getCoinFreeBalance')
+        $exchange->shouldReceive('getAccountBalance')
             ->once()
             ->with(Mockery::type(ExchangeAccount::class), 'ETH')
-            ->andReturn(0.3);
+            ->andReturn(new AccountBalanceSnapshot('ETH', 0.3, 0.3, 0.0, 'availableBalance'));
         $exchange->shouldReceive('normalizeQuantity')
             ->once()
             ->with(Mockery::type(ExchangeAccount::class), 'ETHUSDT', 0.3)
@@ -112,10 +113,10 @@ class PositionServiceTest extends TestCase
         ]);
 
         $exchange = Mockery::mock(BybitExchangeService::class);
-        $exchange->shouldReceive('getCoinFreeBalance')
+        $exchange->shouldReceive('getAccountBalance')
             ->once()
             ->with(Mockery::type(ExchangeAccount::class), 'ETH')
-            ->andReturn(1.8);
+            ->andReturn(new AccountBalanceSnapshot('ETH', 1.8, 1.8, 0.0, 'availableBalance'));
         $exchange->shouldReceive('normalizeQuantity')
             ->once()
             ->with(Mockery::type(ExchangeAccount::class), 'ETHUSDT', 1.8)
