@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Guards;
 
 use App\Models\Bot;
+use App\Services\Bot\Engine\TradingLogger;
+use App\Services\Bot\Market\BtcTrendService;
+use App\Services\Bot\Performance\DailyPerformanceService;
 
 class SidewaysMarketGuard
 {

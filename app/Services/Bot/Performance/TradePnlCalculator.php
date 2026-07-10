@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Performance;
 
 class TradePnlCalculator
 {

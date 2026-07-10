@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Enums\BotStatus;
 use App\Models\Bot;
-use App\Services\Bot\BotEngine;
-use App\Services\Bot\ZReportService;
+use App\Services\Bot\Engine\BotEngine;
+use App\Services\Bot\Performance\ZReportService;
 use Illuminate\Console\Command;
 
 class BotRunCommand extends Command

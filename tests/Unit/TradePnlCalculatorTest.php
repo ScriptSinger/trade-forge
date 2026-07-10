@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Services\Bot\TradePnlCalculator;
+use App\Services\Bot\Performance\TradePnlCalculator;
 use Tests\TestCase;
 
 class TradePnlCalculatorTest extends TestCase

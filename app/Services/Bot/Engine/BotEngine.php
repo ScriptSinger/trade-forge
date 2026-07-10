@@ -1,10 +1,13 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Engine;
 
 use App\Enums\PositionStatus;
 use App\Enums\TradeContextStatus;
 use App\Models\Bot;
+use App\Services\Bot\Guards\SidewaysMarketGuard;
+use App\Services\Bot\Market\MarketScannerService;
+use App\Services\Bot\Performance\DailyPerformanceService;
 use App\Services\Bot\Strategy\StrategyPipeline;
 use App\Services\Bot\Strategy\TradeContext;
 use App\Services\Bot\Strategy\TradeContextFactory;

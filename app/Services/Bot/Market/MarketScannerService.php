@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Market;
 
 use App\Models\Bot;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Bot\Engine\TradingLogger;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use Illuminate\Support\Facades\Cache;
 
 class MarketScannerService

@@ -8,21 +8,18 @@ use App\Enums\ExchangeAccountStatus;
 use App\Enums\ExchangeProvider;
 use App\Models\ExchangeAccount;
 use App\Models\User;
-use App\MoonShine\Resources\Trading\Handlers\CheckConnectionHandler;
-use App\MoonShine\Resources\Trading\Pages\ExchangeAccountFormPage;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Enum as EnumRule;
 use MoonShine\Contracts\Core\TypeCasts\DataWrapperContract;
-use MoonShine\Crud\Handlers\Handler;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Pages\Crud\DetailPage;
+use MoonShine\Laravel\Pages\Crud\FormPage;
 use MoonShine\Laravel\Pages\Crud\IndexPage;
 use MoonShine\Support\Attributes\Icon;
 use MoonShine\Support\Enums\Action;
 use MoonShine\Support\ListOf;
 use MoonShine\UI\Components\Layout\Box;
-use MoonShine\UI\Fields\Date;
 use MoonShine\UI\Fields\Enum;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Preview;
@@ -47,18 +44,11 @@ final class ExchangeAccountResource extends TradingResource
         return parent::activeActions()->prepend(Action::VIEW);
     }
 
-    protected function handlers(): ListOf
-    {
-        return new ListOf(Handler::class, [
-            CheckConnectionHandler::make('Проверить соединение')->alias('check-connection'),
-        ]);
-    }
-
     protected function pages(): array
     {
         return [
             IndexPage::class,
-            ExchangeAccountFormPage::class,
+            FormPage::class,
             DetailPage::class,
         ];
     }
@@ -100,9 +90,6 @@ final class ExchangeAccountResource extends TradingResource
                     ExchangeAccountStatus::Error->value => 'red',
                     default => 'gray',
                 }),
-            Date::make('Проверен', 'last_checked_at')
-                ->withTime()
-                ->format('d.m.Y H:i'),
         ];
     }
 
@@ -166,9 +153,6 @@ final class ExchangeAccountResource extends TradingResource
                     }
                 }),
 
-            Date::make('Последняя проверка', 'last_checked_at')
-                ->withTime()
-                ->format('d.m.Y H:i'),
         ];
     }
 
@@ -198,10 +182,6 @@ final class ExchangeAccountResource extends TradingResource
                 Enum::make('Статус', 'status')
                     ->attach(ExchangeAccountStatus::class)
                     ->required(),
-                Date::make('Последняя проверка', 'last_checked_at')
-                    ->withTime()
-                    ->format('d.m.Y H:i')
-                    ->nullable(),
             ]),
         ];
     }
@@ -245,7 +225,6 @@ final class ExchangeAccountResource extends TradingResource
             ],
             'api_url' => ['required', 'url', 'max:255'],
             'status' => ['required', new EnumRule(ExchangeAccountStatus::class)],
-            'last_checked_at' => ['nullable', 'date'],
         ];
     }
 }

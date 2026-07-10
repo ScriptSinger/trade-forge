@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\TelegramWebhookController;
 use App\Models\Bot;
-use App\Services\Bot\BotEngine;
+use App\Services\Bot\Engine\BotEngine;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {

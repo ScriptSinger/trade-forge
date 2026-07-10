@@ -11,7 +11,8 @@ use App\Models\Strategy;
 use App\Models\StrategyEntrySettings;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
-use App\Services\Bot\PositionSizingService;
+use App\Services\Bot\Risk\PositionSizingService;
+use App\Services\Bot\Risk\SizingResult;
 use App\Services\Bot\Strategy\Pipes\ApplyRiskManagement;
 use App\Services\Bot\Strategy\Pipes\CheckAdxStrength;
 use App\Services\Bot\Strategy\Pipes\CheckBreakoutLevel;
@@ -88,7 +89,9 @@ class StrategyPipelineTest extends TestCase
         $context->indicators['atr'] = [0, 2];
 
         $sizing = Mockery::mock(PositionSizingService::class);
-        $sizing->shouldReceive('calculateQuantity')->once()->andReturn(0.25);
+        $sizing->shouldReceive('calculateQuantity')->once()->andReturn(
+            new SizingResult(quantity: 0.25, reason: SizingResult::REASON_OK),
+        );
 
         $result = (new ApplyRiskManagement($sizing))->handle($context, fn ($ctx) => $ctx);
 

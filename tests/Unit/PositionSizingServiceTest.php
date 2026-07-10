@@ -9,9 +9,10 @@ use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\StrategyRiskSettings;
 use App\Models\User;
-use App\Services\Bot\PositionSizingService;
-use App\Services\Exchange\AccountBalanceSnapshot;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Bot\Risk\PositionSizingService;
+use App\Services\Bot\Risk\SizingResult;
+use App\Services\Exchange\Balance\AccountBalanceSnapshot;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -33,9 +34,11 @@ class PositionSizingServiceTest extends TestCase
 
         $service = new PositionSizingService($exchange);
 
-        $qty = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
+        $result = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
 
-        $this->assertEqualsWithDelta(3.0, $qty, 0.001);
+        $this->assertTrue($result->ok());
+        $this->assertEqualsWithDelta(3.0, $result->quantity, 0.001);
+        $this->assertSame(SizingResult::REASON_OK, $result->reason);
     }
 
     public function test_caps_cost_by_free_usdt_balance(): void
@@ -45,19 +48,26 @@ class PositionSizingServiceTest extends TestCase
 
         $service = new PositionSizingService($exchange);
 
-        $qty = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
+        $result = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 96.0);
 
-        $this->assertEqualsWithDelta(0.98, $qty, 0.001);
+        $this->assertTrue($result->ok());
+        $this->assertEqualsWithDelta(0.98, $result->quantity, 0.001);
+        $this->assertSame('free_balance', $result->debug['capped_by'] ?? null);
     }
 
-    public function test_returns_null_when_order_below_minimum_usdt(): void
+    public function test_rejects_with_below_min_order_when_cost_too_small(): void
     {
         $bot = $this->makeBot(riskFraction: 0.02);
         $exchange = $this->makeExchangeMock(total: 10.0, free: 10.0);
 
         $service = new PositionSizingService($exchange);
 
-        $this->assertNull($service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 99.0));
+        $result = $service->calculateQuantity($bot, 'BTCUSDT', entryPrice: 100.0, stopLoss: 99.0);
+
+        $this->assertFalse($result->ok());
+        $this->assertSame(SizingResult::REASON_BELOW_MIN_ORDER, $result->reason);
+        $this->assertArrayHasKey('final_cost_usdt', $result->debug);
+        $this->assertArrayHasKey('wallet', $result->debug);
     }
 
     private function makeExchangeMock(float $total, float $free, ?float $normalizedQty = null): BybitExchangeService

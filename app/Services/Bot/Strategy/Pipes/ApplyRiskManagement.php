@@ -3,7 +3,7 @@
 namespace App\Services\Bot\Strategy\Pipes;
 
 use App\Services\Bot\Concerns\ResolvesTradingLogger;
-use App\Services\Bot\PositionSizingService;
+use App\Services\Bot\Risk\PositionSizingService;
 use App\Services\Bot\Strategy\Pipes\Concerns\BlocksTradeContext;
 use App\Services\Bot\Strategy\TradeContext;
 use Closure;
@@ -44,24 +44,31 @@ class ApplyRiskManagement implements PipeContract
             return $this->block($context, 'Invalid price risk calculation');
         }
 
-        $quantity = $this->sizing->calculateQuantity(
+        $sizing = $this->sizing->calculateQuantity(
             $context->bot,
             $context->symbol,
             $entryPrice,
             $context->stopLoss,
         );
 
-        if ($quantity === null || $quantity <= 0) {
-            return $this->block($context, 'Order size below minimum or insufficient balance');
+        if (! $sizing->ok()) {
+            $this->tradingLog()->riskDebug('Risk sizing rejected', [
+                'symbol' => $context->symbol,
+                'reason' => $sizing->reason,
+                'debug' => $sizing->debug,
+            ]);
+
+            return $this->block($context, "Order size rejected ({$sizing->reason})");
         }
 
-        $context->quantity = $quantity;
+        $context->quantity = $sizing->quantity;
 
         $this->tradingLog()->riskDebug('Risk applied', [
             'symbol' => $context->symbol,
             'sl' => $context->stopLoss,
             'tp' => $context->takeProfit,
             'qty' => $context->quantity,
+            'debug' => $sizing->debug,
         ]);
 
         return $next($context);

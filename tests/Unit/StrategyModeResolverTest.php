@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use App\Enums\StrategyMode;
-use App\Services\Bot\StrategyModeResolver;
+use App\Services\Bot\Strategy\StrategyModeResolver;
 use Tests\TestCase;
 
 class StrategyModeResolverTest extends TestCase

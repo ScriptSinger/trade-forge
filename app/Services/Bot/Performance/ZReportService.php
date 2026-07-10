@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Performance;
 
 use App\Models\Bot;
 use App\Models\BotStat;
+use App\Services\Bot\Engine\TradingLogger;
 use App\Services\Notifications\TelegramNotifier;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;

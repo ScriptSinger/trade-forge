@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Exchange;
+namespace App\Services\Exchange\Balance;
 
 readonly class AccountBalanceSnapshot
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Strategy;
 
 use App\Enums\StrategyMode;
 use App\Models\StrategyEntrySettings;

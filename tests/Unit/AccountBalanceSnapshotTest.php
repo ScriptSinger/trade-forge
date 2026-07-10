@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Services\Exchange\AccountBalanceSnapshot;
+use App\Services\Exchange\Balance\AccountBalanceSnapshot;
 use PHPUnit\Framework\TestCase;
 
 class AccountBalanceSnapshotTest extends TestCase

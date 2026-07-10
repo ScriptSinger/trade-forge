@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Performance;
 
 use App\Models\Bot;
 use App\Models\BotStat;
 use App\Models\Trade;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Bot\Engine\TradingLogger;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 

@@ -3,7 +3,7 @@
 namespace App\Services\Bot\Strategy;
 
 use App\Models\Bot;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 
 class TradeContextFactory
 {

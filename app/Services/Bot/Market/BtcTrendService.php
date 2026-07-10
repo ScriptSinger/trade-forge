@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Market;
 
 use App\Models\Bot;
 use App\Models\StrategyBtcTrendFilter;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use App\Services\Strategy\TechnicalIndicatorService;
 
 class BtcTrendService

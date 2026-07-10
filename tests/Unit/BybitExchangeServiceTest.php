@@ -7,7 +7,7 @@ namespace Tests\Unit;
 use App\Enums\ExchangeProvider;
 use App\Models\ExchangeAccount;
 use App\Models\User;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;

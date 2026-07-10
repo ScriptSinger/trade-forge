@@ -2,7 +2,7 @@
 
 namespace App\Services\Bot\Concerns;
 
-use App\Services\Bot\TradingLogger;
+use App\Services\Bot\Engine\TradingLogger;
 
 trait ResolvesTradingLogger
 {

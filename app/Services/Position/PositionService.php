@@ -10,11 +10,11 @@ use App\Models\Bot;
 use App\Models\Order;
 use App\Models\Position;
 use App\Models\Trade;
-use App\Services\Bot\DailyPerformanceService;
-use App\Services\Bot\StrategyModeResolver;
-use App\Services\Bot\TradePnlCalculator;
-use App\Services\Bot\TradingLogger;
-use App\Services\Exchange\BybitExchangeService;
+use App\Services\Bot\Engine\TradingLogger;
+use App\Services\Bot\Performance\DailyPerformanceService;
+use App\Services\Bot\Performance\TradePnlCalculator;
+use App\Services\Bot\Strategy\StrategyModeResolver;
+use App\Services\Exchange\Bybit\BybitExchangeService;
 use App\Services\Notifications\TradeTelegramNotifier;
 use App\Services\Strategy\TechnicalIndicatorService;
 

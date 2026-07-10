@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Bot;
+namespace App\Services\Bot\Engine;
 
 use App\Enums\TradeSignal;
 use App\Models\Bot;

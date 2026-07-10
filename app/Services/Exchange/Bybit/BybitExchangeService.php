@@ -1,9 +1,11 @@
 <?php
 
-namespace App\Services\Exchange;
+namespace App\Services\Exchange\Bybit;
 
 use App\Models\ExchangeAccount;
 use App\Services\Bot\Concerns\ResolvesTradingLogger;
+use App\Services\Exchange\Balance\AccountBalanceQuery;
+use App\Services\Exchange\Balance\AccountBalanceSnapshot;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
