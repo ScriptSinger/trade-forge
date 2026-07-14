@@ -208,4 +208,86 @@ class BybitExchangeServiceTest extends TestCase
         $this->assertEqualsWithDelta(23.0562, $query->snapshot->wallet, 0.0001);
         $this->assertEqualsWithDelta(23.0562, $query->snapshot->free, 0.0001);
     }
+
+    public function test_normalize_quantity_uses_base_precision_when_qty_step_missing(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/market/instruments-info*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'lotSizeFilter' => [
+                                'basePrecision' => '0.01',
+                                'minOrderQty' => '0.01',
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+        ]);
+
+        $normalized = app(BybitExchangeService::class)
+            ->normalizeQuantity($account, 'USD1USDT', 6.916168383161684);
+
+        $this->assertEqualsWithDelta(6.91, $normalized, 0.00001);
+    }
+
+    public function test_place_market_order_formats_qty_to_base_precision(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/market/instruments-info*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'lotSizeFilter' => [
+                                'basePrecision' => '0.01',
+                                'minOrderQty' => '0.01',
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+            'https://api.bybit.com/v5/order/create' => Http::response([
+                'retCode' => 0,
+                'retMsg' => 'OK',
+                'result' => ['orderId' => 'test-order'],
+            ], 200),
+        ]);
+
+        app(BybitExchangeService::class)->placeMarketOrder(
+            $account,
+            'USD1USDT',
+            'buy',
+            6.916168383161684,
+        );
+
+        Http::assertSent(function ($request): bool {
+            if (! str_contains($request->url(), '/v5/order/create')) {
+                return false;
+            }
+
+            $payload = $request->data();
+
+            return ($payload['symbol'] ?? '') === 'USD1USDT'
+                && ($payload['qty'] ?? '') === '6.91';
+        });
+    }
 }

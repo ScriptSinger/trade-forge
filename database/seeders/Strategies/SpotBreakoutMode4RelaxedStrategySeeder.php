@@ -12,13 +12,22 @@ use App\Services\Bot\Market\ScannerSymbolFilter;
 use Illuminate\Database\Seeder;
 
 /**
- * Default spot breakout strategy preset (15m, mode 4).
+ * Relaxed entry preset for spot breakout (mode 4, 15m).
+ *
+ * Same risk profile as Spot Breakout Mode 4; looser entry filters for more signals:
+ * - adx_min 20 (was 25)
+ * - trend_adx_threshold 25 (was 30) — Hybrid RSI limit applies more often
+ * - rsi_limit_sniper 62 (was 55)
+ * - rsi_limit_hybrid 80 (was 75)
  *
  * Seeds only the strategy graph (entry + risk + BTC filter).
+ * Attach to a bot in MoonShine: Strategy → "Spot Breakout Mode 4 Relaxed".
+ *
+ * php artisan db:seed --class=Database\\Seeders\\Strategies\\SpotBreakoutMode4RelaxedStrategySeeder
  */
-class SpotBreakoutMode4StrategySeeder extends Seeder
+class SpotBreakoutMode4RelaxedStrategySeeder extends Seeder
 {
-    public const STRATEGY_NAME = 'Spot Breakout Mode 4';
+    public const STRATEGY_NAME = 'Spot Breakout Mode 4 Relaxed';
 
     public function run(): void
     {
@@ -36,10 +45,10 @@ class SpotBreakoutMode4StrategySeeder extends Seeder
                 'kline_limit' => 1000,
                 'ema_fast' => 50,
                 'ema_slow' => 200,
-                'adx_min' => 25,
-                'trend_adx_threshold' => 30,
-                'rsi_limit_sniper' => 55,
-                'rsi_limit_hybrid' => 75,
+                'adx_min' => 20,
+                'trend_adx_threshold' => 25,
+                'rsi_limit_sniper' => 62,
+                'rsi_limit_hybrid' => 80,
             ],
         );
 

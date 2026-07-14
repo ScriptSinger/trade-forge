@@ -24,6 +24,7 @@ class StrategyRiskSettings extends Model
         'max_balance_pct',
         'free_balance_buffer',
         'scanner_cache_ttl',
+        'scanner_excluded_patterns',
     ];
 
     protected function casts(): array
@@ -41,6 +42,7 @@ class StrategyRiskSettings extends Model
             'max_balance_pct' => 'float',
             'free_balance_buffer' => 'float',
             'scanner_cache_ttl' => 'integer',
+            'scanner_excluded_patterns' => 'array',
         ];
     }
 

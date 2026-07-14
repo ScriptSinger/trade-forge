@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace App\MoonShine\Resources\Trading;
 
 use App\Models\StrategyRiskSettings;
+use App\Services\Bot\Market\ScannerSymbolFilter;
+use Illuminate\Validation\ValidationException;
 use MoonShine\Laravel\Fields\Relationships\BelongsTo;
 use MoonShine\Laravel\Resources\ModelResource;
 use MoonShine\MenuManager\Attributes\SkipMenu;
 use MoonShine\UI\Fields\ID;
 use MoonShine\UI\Fields\Number;
 use MoonShine\UI\Fields\Switcher;
+use MoonShine\UI\Fields\Text;
 
 #[SkipMenu]
 class StrategyRiskSettingsResource extends ModelResource
@@ -115,6 +118,41 @@ class StrategyRiskSettingsResource extends ModelResource
                 ->min(60)
                 ->readonly()
                 ->hint('Интервал обновления TOP-30, по умолчанию 7200 сек (2 ч), не параметр стратегии'),
+
+            Text::make('Исключить из сканера (паттерны)', 'scanner_excluded_patterns')
+                ->tags()
+                ->changeFill(static function (mixed $item): string {
+                    $patterns = is_array($item)
+                        ? ($item['scanner_excluded_patterns'] ?? null)
+                        : ($item->scanner_excluded_patterns ?? null);
+
+                    return ScannerSymbolFilter::toTagsValue(is_array($patterns) ? $patterns : null);
+                })
+                ->placeholder('USD1')
+                ->hint('Кликни в поле, набери паттерн (2–10 символов, A-Z, 0-9), Enter. Пример: USD1 исключит USD1USDT. USDT запрещён. Пустой список = дефолтные стейблкоины.')
+                ->onBeforeApply(static function (StrategyRiskSettings $item, mixed $value, Text $field): StrategyRiskSettings {
+                    if ($value === null || $value === '' || $value === []) {
+                        return $item;
+                    }
+
+                    $errors = ScannerSymbolFilter::validationErrors(
+                        ScannerSymbolFilter::fromRequestValue($value),
+                    );
+
+                    if ($errors !== []) {
+                        throw ValidationException::withMessages([
+                            $field->getNameDot() => $errors,
+                        ]);
+                    }
+
+                    return $item;
+                })
+                ->onApply(static function (StrategyRiskSettings $item, mixed $value): StrategyRiskSettings {
+                    $patterns = ScannerSymbolFilter::fromRequestValue($value);
+                    $item->scanner_excluded_patterns = $patterns !== [] ? $patterns : null;
+
+                    return $item;
+                }),
         ];
     }
 
@@ -135,6 +173,13 @@ class StrategyRiskSettingsResource extends ModelResource
             Number::make('Max balance pct', 'max_balance_pct'),
             Number::make('Free balance buffer', 'free_balance_buffer'),
             Number::make('Scanner cache TTL (sec)', 'scanner_cache_ttl'),
+            Text::make('Исключить из сканера (паттерны)', 'scanner_excluded_patterns')
+                ->modifyRawValue(static fn (
+                    mixed $raw,
+                    mixed $original,
+                ): string => ScannerSymbolFilter::format(
+                    ScannerSymbolFilter::resolve(is_array($raw) ? $raw : null),
+                )),
         ];
     }
 }

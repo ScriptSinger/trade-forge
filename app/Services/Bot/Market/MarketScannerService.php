@@ -20,12 +20,12 @@ class MarketScannerService
         $ttl = (int) ($bot->strategy->riskSettings?->scanner_cache_ttl ?? 7200);
         $cacheKey = "market_scanner_top30_{$account->id}_{$bot->strategy_id}";
 
-        return Cache::remember($cacheKey, $ttl, function () use ($account) {
-            return $this->scanTopVolatileSymbols($account);
+        return Cache::remember($cacheKey, $ttl, function () use ($account, $bot) {
+            return $this->scanTopVolatileSymbols($account, $bot);
         });
     }
 
-    private function scanTopVolatileSymbols($account): array
+    private function scanTopVolatileSymbols($account, Bot $bot): array
     {
         $allTickers = $this->exchange->getAllTickers($account);
 
@@ -37,19 +37,19 @@ class MarketScannerService
             return [];
         }
 
+        $excludedPatterns = ScannerSymbolFilter::resolve(
+            $bot->strategy->riskSettings?->scanner_excluded_patterns,
+        );
+
         return collect($allTickers)
-            ->filter(function ($ticker) {
+            ->filter(function ($ticker) use ($excludedPatterns) {
                 $symbol = $ticker['symbol'] ?? '';
                 $volume = (float) ($ticker['turnover24h'] ?? 0);
 
                 $isUsdt = str_ends_with($symbol, 'USDT');
+                $isExcluded = ScannerSymbolFilter::isExcluded($symbol, $excludedPatterns);
 
-                $isStable = str_contains($symbol, 'USDC')
-                    || str_contains($symbol, 'DAI')
-                    || str_contains($symbol, 'BUSD')
-                    || str_contains($symbol, 'EUR');
-
-                return $isUsdt && ! $isStable && $volume >= 5000000;
+                return $isUsdt && ! $isExcluded && $volume >= 5000000;
             })
             ->map(function ($ticker) {
                 $high = (float) ($ticker['highPrice24h'] ?? 0);

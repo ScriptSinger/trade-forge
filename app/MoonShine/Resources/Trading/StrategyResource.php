@@ -49,7 +49,7 @@ final class StrategyResource extends TradingResource
             Collapse::make('📖 Как работает алгоритм', [
                 Box::make([
                     Heading::make('🔍 Сканер'),
-                    FlexibleRender::make('Бот берёт TOP-30 пар Bybit spot по объёму (кэш в Risk settings). За цикл анализируется до одного входа — после сделки цикл завершается.'),
+                    FlexibleRender::make('Бот берёт TOP-30 пар Bybit spot по волатильности (кэш в Risk settings). Стейблкоины и прочие тикеры исключаются по паттернам в <b>Risk settings → Исключить из сканера</b>. За цикл анализируется до одного входа — после сделки цикл завершается.'),
 
                     Heading::make('✅ Условия входа')->class('mt-4'),
                     FlexibleRender::make('Все фильтры должны пройти:<br>

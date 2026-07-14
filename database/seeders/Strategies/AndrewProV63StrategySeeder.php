@@ -8,6 +8,7 @@ use App\Models\Strategy;
 use App\Models\StrategyBtcTrendFilter;
 use App\Models\StrategyEntrySettings;
 use App\Models\StrategyRiskSettings;
+use App\Services\Bot\Market\ScannerSymbolFilter;
 use Illuminate\Database\Seeder;
 
 /**
@@ -61,6 +62,7 @@ class AndrewProV63StrategySeeder extends Seeder
                 'max_balance_pct' => 0.30,
                 'free_balance_buffer' => 0.98,
                 'scanner_cache_ttl' => 7200,
+                'scanner_excluded_patterns' => ScannerSymbolFilter::defaults(),
             ],
         );
 

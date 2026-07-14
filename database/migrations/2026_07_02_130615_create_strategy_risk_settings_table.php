@@ -33,6 +33,7 @@ return new class extends Migration
             $table->decimal('max_balance_pct', 5, 4)->default(0.30);
             $table->decimal('free_balance_buffer', 5, 4)->default(0.98);
             $table->unsignedInteger('scanner_cache_ttl')->default(7200);
+            $table->json('scanner_excluded_patterns')->nullable();
 
             $table->timestamps();
         });

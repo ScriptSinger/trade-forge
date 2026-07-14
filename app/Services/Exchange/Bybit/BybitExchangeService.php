@@ -162,12 +162,22 @@ class BybitExchangeService
 
     public function normalizeQuantity(ExchangeAccount $account, string $symbol, float $quantity): float
     {
+        return $this->normalizeQuantityWithFilter(
+            $this->getLotSizeFilter($account, $symbol),
+            $quantity,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $filter
+     */
+    private function normalizeQuantityWithFilter(array $filter, float $quantity): float
+    {
         if ($quantity <= 0) {
             return 0.0;
         }
 
-        $filter = $this->getLotSizeFilter($account, $symbol);
-        $step = (float) ($filter['qtyStep'] ?? 0);
+        $step = $this->resolveQtyStepFromFilter($filter);
 
         if ($step <= 0) {
             return $quantity;
@@ -176,6 +186,22 @@ class BybitExchangeService
         $normalized = floor($quantity / $step) * $step;
 
         return $normalized > 0 ? $normalized : 0.0;
+    }
+
+    /**
+     * Spot instruments-info uses basePrecision; legacy fields may use qtyStep.
+     *
+     * @param  array<string, mixed>  $filter
+     */
+    private function resolveQtyStepFromFilter(array $filter): float
+    {
+        $raw = $filter['qtyStep'] ?? $filter['basePrecision'] ?? null;
+
+        if ($raw === null || $raw === '') {
+            return 0.0;
+        }
+
+        return (float) $raw;
     }
 
     private function getLotSizeFilter(ExchangeAccount $account, string $symbol): array
@@ -231,14 +257,16 @@ class BybitExchangeService
         float $qty
     ): array {
         $url = $this->baseUrl($account).'/v5/order/create';
-        $normalizedQty = $this->normalizeQuantity($account, $symbol, $qty);
+        $filter = $this->getLotSizeFilter($account, $symbol);
+        $normalizedQty = $this->normalizeQuantityWithFilter($filter, $qty);
+        $step = $this->resolveQtyStepFromFilter($filter);
 
         $payload = [
             'category' => 'spot',
             'symbol' => $symbol,
             'side' => ucfirst(strtolower($side)),
             'orderType' => 'Market',
-            'qty' => $this->formatQuantity($normalizedQty),
+            'qty' => $this->formatQuantity($normalizedQty, $step),
         ];
 
         $this->tradingLog()->exchangeDebug('Bybit request', [
@@ -273,9 +301,28 @@ class BybitExchangeService
     |--------------------------------------------------------------------------
     */
 
-    private function formatQuantity(float $qty): string
+    private function formatQuantity(float $qty, float $step = 0): string
     {
+        if ($step > 0) {
+            $decimals = $this->decimalPlacesFromStep($step);
+            $formatted = number_format($qty, $decimals, '.', '');
+
+            return rtrim(rtrim($formatted, '0'), '.') ?: '0';
+        }
+
         return rtrim(rtrim(sprintf('%.8F', $qty), '0'), '.');
+    }
+
+    private function decimalPlacesFromStep(float $step): int
+    {
+        $stepStr = rtrim(sprintf('%.12F', $step), '0');
+        $dotPos = strpos($stepStr, '.');
+
+        if ($dotPos === false) {
+            return 0;
+        }
+
+        return strlen(rtrim(substr($stepStr, $dotPos + 1), '0'));
     }
 
     private function baseUrl(ExchangeAccount $account): string
