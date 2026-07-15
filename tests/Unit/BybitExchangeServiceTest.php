@@ -287,7 +287,61 @@ class BybitExchangeServiceTest extends TestCase
             $payload = $request->data();
 
             return ($payload['symbol'] ?? '') === 'USD1USDT'
+                && ($payload['side'] ?? '') === 'Buy'
+                && ($payload['marketUnit'] ?? '') === 'baseCoin'
                 && ($payload['qty'] ?? '') === '6.91';
+        });
+    }
+
+    public function test_place_market_sell_uses_base_coin_market_unit(): void
+    {
+        $user = User::factory()->create();
+        $account = ExchangeAccount::factory()
+            ->for($user)
+            ->create([
+                'exchange' => ExchangeProvider::Bybit->value,
+                'api_url' => 'https://api.bybit.com',
+            ]);
+
+        Http::fake([
+            'https://api.bybit.com/v5/market/instruments-info*' => Http::response([
+                'retCode' => 0,
+                'result' => [
+                    'list' => [
+                        [
+                            'lotSizeFilter' => [
+                                'basePrecision' => '0.01',
+                                'minOrderQty' => '0.01',
+                            ],
+                        ],
+                    ],
+                ],
+            ], 200),
+            'https://api.bybit.com/v5/order/create' => Http::response([
+                'retCode' => 0,
+                'retMsg' => 'OK',
+                'result' => ['orderId' => 'test-sell-order'],
+            ], 200),
+        ]);
+
+        app(BybitExchangeService::class)->placeMarketOrder(
+            $account,
+            'LITUSDT',
+            'sell',
+            2.80523178,
+        );
+
+        Http::assertSent(function ($request): bool {
+            if (! str_contains($request->url(), '/v5/order/create')) {
+                return false;
+            }
+
+            $payload = $request->data();
+
+            return ($payload['symbol'] ?? '') === 'LITUSDT'
+                && ($payload['side'] ?? '') === 'Sell'
+                && ($payload['marketUnit'] ?? '') === 'baseCoin'
+                && ($payload['qty'] ?? '') === '2.8';
         });
     }
 }

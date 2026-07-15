@@ -69,7 +69,7 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'days' => env('LOG_DAILY_DAYS', 14),
+            'days' => env('LOG_DAILY_DAYS', 5),
             'replace_placeholders' => true,
         ],
 
@@ -131,35 +131,35 @@ return [
             'driver' => 'daily',
             'path' => storage_path('logs/bot.log'),
             'level' => env('LOG_BOT_LEVEL', env('LOG_LEVEL', 'info')),
-            'days' => 14,
+            'days' => env('LOG_RETENTION_DAYS', 5),
         ],
 
         'exchange' => [
             'driver' => 'daily',
             'path' => storage_path('logs/exchange.log'),
             'level' => env('LOG_EXCHANGE_LEVEL', env('LOG_LEVEL', 'info')),
-            'days' => 14,
+            'days' => env('LOG_RETENTION_DAYS', 5),
         ],
 
         'strategy' => [
             'driver' => 'daily',
             'path' => storage_path('logs/strategy.log'),
             'level' => env('LOG_STRATEGY_LEVEL', env('LOG_LEVEL', 'info')),
-            'days' => 14,
+            'days' => env('LOG_RETENTION_DAYS', 5),
         ],
 
         'orders' => [
             'driver' => 'daily',
             'path' => storage_path('logs/orders.log'),
             'level' => env('LOG_ORDERS_LEVEL', env('LOG_LEVEL', 'info')),
-            'days' => 30,
+            'days' => env('LOG_RETENTION_DAYS', 5),
         ],
 
         'risk' => [
             'driver' => 'daily',
             'path' => storage_path('logs/risk.log'),
             'level' => env('LOG_RISK_LEVEL', env('LOG_LEVEL', 'info')),
-            'days' => 30,
+            'days' => env('LOG_RETENTION_DAYS', 5),
         ],
     ],
 

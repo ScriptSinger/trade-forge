@@ -266,6 +266,8 @@ class BybitExchangeService
             'symbol' => $symbol,
             'side' => ucfirst(strtolower($side)),
             'orderType' => 'Market',
+            // Spot market buy defaults qty to quote (USDT); we pass base-coin quantity.
+            'marketUnit' => 'baseCoin',
             'qty' => $this->formatQuantity($normalizedQty, $step),
         ];
 
