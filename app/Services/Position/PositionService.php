@@ -219,12 +219,24 @@ class PositionService
             'qty' => $normalizedQty,
         ]);
 
-        $this->exchange->placeMarketOrder(
+        $orderResponse = $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
             $position->symbol,
             'sell',
             $normalizedQty,
         );
+
+        if (! $this->isSuccessfulOrder($orderResponse)) {
+            $this->log->orderError('Partial exit order failed — position unchanged', [
+                'bot_id' => $position->bot_id,
+                'symbol' => $position->symbol,
+                'qty' => $normalizedQty,
+                'retCode' => $orderResponse['retCode'] ?? null,
+                'retMsg' => $orderResponse['retMsg'] ?? null,
+            ]);
+
+            return false;
+        }
 
         $pnl = $this->pnlCalculator->calculate(
             (float) $position->entry_price,
@@ -233,6 +245,7 @@ class PositionService
             $this->spotFeeRate($position),
         );
 
+        // Live daily stats; final close subtracts these via alreadyCounted* args.
         $this->dailyPerformance->recordPartialPnl(
             $position->bot,
             $pnl['profit_loss'],
@@ -241,6 +254,10 @@ class PositionService
 
         $position->update([
             'quantity' => max(0, (float) $position->quantity - $normalizedQty),
+            'sold_quantity' => (float) $position->sold_quantity + $normalizedQty,
+            'realized_pnl' => (float) $position->realized_pnl + $pnl['profit_loss'],
+            'realized_fees' => (float) $position->realized_fees + $pnl['fees'],
+            'realized_exit_value' => (float) $position->realized_exit_value + ($price * $normalizedQty),
         ]);
 
         $this->tradeTelegram->notifyExit(
@@ -282,38 +299,70 @@ class PositionService
             'qty' => $normalizedQty,
         ]);
 
-        $this->exchange->placeMarketOrder(
+        $orderResponse = $this->exchange->placeMarketOrder(
             $position->bot->exchangeAccount,
             $position->symbol,
             'sell',
             $normalizedQty,
         );
 
-        $pnl = $this->pnlCalculator->calculate(
+        if (! $this->isSuccessfulOrder($orderResponse)) {
+            $this->log->orderError('Full exit order failed — position remains open', [
+                'bot_id' => $position->bot_id,
+                'symbol' => $position->symbol,
+                'qty' => $normalizedQty,
+                'retCode' => $orderResponse['retCode'] ?? null,
+                'retMsg' => $orderResponse['retMsg'] ?? null,
+            ]);
+
+            return;
+        }
+
+        $legPnl = $this->pnlCalculator->calculate(
             (float) $position->entry_price,
             $price,
             $normalizedQty,
             $this->spotFeeRate($position),
         );
 
+        $priorPnl = (float) $position->realized_pnl;
+        $priorFees = (float) $position->realized_fees;
+        $priorExitValue = (float) $position->realized_exit_value;
+        $priorSoldQty = (float) $position->sold_quantity;
+
+        $totalQty = $priorSoldQty + $normalizedQty;
+        $totalExitValue = $priorExitValue + ($price * $normalizedQty);
+        $totalPnl = $priorPnl + $legPnl['profit_loss'];
+        $totalFees = $priorFees + $legPnl['fees'];
+
+        $entryPrice = (float) $position->entry_price;
+        $entryCost = $entryPrice * $totalQty;
+        $avgExitPrice = $totalQty > 0 ? $totalExitValue / $totalQty : $price;
+        $profitPercent = $entryCost > 0 ? ($totalPnl / $entryCost) * 100 : 0.0;
+
         $trade = Trade::create([
             'bot_id' => $position->bot_id,
             'symbol' => $position->symbol,
             'entry_price' => $position->entry_price,
-            'exit_price' => $price,
-            'quantity' => $normalizedQty,
-            'profit_loss' => $pnl['profit_loss'],
-            'profit_percent' => $pnl['profit_percent'],
-            'fees' => $pnl['fees'],
+            'exit_price' => $avgExitPrice,
+            'quantity' => $totalQty,
+            'profit_loss' => $totalPnl,
+            'profit_percent' => $profitPercent,
+            'fees' => $totalFees,
             'opened_at' => $position->opened_at,
             'closed_at' => now(),
         ]);
 
-        $this->dailyPerformance->recordClosedTrade($trade);
+        $this->dailyPerformance->recordClosedTrade(
+            $trade,
+            alreadyCountedPnl: $priorPnl,
+            alreadyCountedFees: $priorFees,
+        );
 
         $position->update([
             'status' => PositionStatus::Closed,
             'exit_reason' => $reason,
+            'quantity' => 0,
             'closed_at' => now(),
         ]);
 
@@ -321,16 +370,16 @@ class PositionService
             symbol: $position->symbol,
             reason: $reason,
             portion: 1.0,
-            pnlPct: $pnl['profit_percent'],
-            profitUsdt: $pnl['profit_loss'],
+            pnlPct: $profitPercent,
+            profitUsdt: $totalPnl,
         );
 
         $this->log->auditPositionExit(
             bot: $position->bot,
             signal: TradeSignal::Sell,
             symbol: $position->symbol,
-            price: $price,
-            quantity: $normalizedQty,
+            price: $avgExitPrice,
+            quantity: $totalQty,
             reason: $reason,
             mode: $mode,
         );
@@ -349,6 +398,10 @@ class PositionService
             'mode' => $mode,
             'entry_price' => (float) $order->price,
             'quantity' => (float) $order->quantity,
+            'sold_quantity' => 0,
+            'realized_pnl' => 0,
+            'realized_fees' => 0,
+            'realized_exit_value' => 0,
             'sl' => $sl,
             'tp' => $tp,
             'status' => PositionStatus::Open,
@@ -421,7 +474,8 @@ class PositionService
     }
 
     /**
-     * Python sample sell(): partial uses stored qty × portion, full uses exchange free balance.
+     * Sell qty: stored position size (or portion), never more than exchange free.
+     * Full exits do NOT dump leftover bags of the same base coin.
      *
      * @return array{qty: float, is_dust: bool}
      */
@@ -433,14 +487,16 @@ class PositionService
 
         $storedQty = (float) $position->quantity;
         $targetQty = $portion >= 1.0
-            ? $actualQty
+            ? $storedQty
             : $storedQty * $portion;
 
-        if ($targetQty * $price < self::DUST_USDT) {
+        // Cap by free balance so we never sell more than we hold.
+        $sellQty = min($targetQty, $actualQty);
+
+        if ($sellQty * $price < self::DUST_USDT) {
             return ['qty' => 0.0, 'is_dust' => true];
         }
 
-        $sellQty = min($targetQty, $actualQty);
         $normalizedQty = $this->exchange->normalizeQuantity($account, $position->symbol, $sellQty);
 
         if ($normalizedQty <= 0) {
@@ -448,6 +504,14 @@ class PositionService
         }
 
         return ['qty' => $normalizedQty, 'is_dust' => false];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $orderResponse
+     */
+    private function isSuccessfulOrder(?array $orderResponse): bool
+    {
+        return (int) ($orderResponse['retCode'] ?? -1) === 0;
     }
 
     private function closeDustPosition(Position $position): void

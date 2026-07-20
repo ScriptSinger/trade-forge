@@ -117,8 +117,18 @@ class DailyPerformanceService
         ])->save();
     }
 
-    public function recordClosedTrade(Trade $trade): void
-    {
+    /**
+     * Record a fully closed trade.
+     *
+     * When Hybrid partial legs already hit {@see recordPartialPnl}, pass those
+     * amounts as $alreadyCountedPnl / $alreadyCountedFees so daily profit is
+     * not double-counted. Win/loss uses the full trade PnL.
+     */
+    public function recordClosedTrade(
+        Trade $trade,
+        float $alreadyCountedPnl = 0.0,
+        float $alreadyCountedFees = 0.0,
+    ): void {
         $dateKey = $this->dateKey($trade->closed_at);
 
         $stat = BotStat::query()
@@ -135,12 +145,14 @@ class DailyPerformanceService
             ]);
         }
 
-        $profitLoss = (float) $trade->profit_loss;
-        $fees = (float) ($trade->fees ?? 0);
+        $fullPnl = (float) $trade->profit_loss;
+        $fullFees = (float) ($trade->fees ?? 0);
+        $profitLoss = $fullPnl - $alreadyCountedPnl;
+        $fees = $fullFees - $alreadyCountedFees;
 
         $totalTrades = $stat->total_trades + 1;
-        $wins = $stat->wins + ($profitLoss >= 0 ? 1 : 0);
-        $losses = $stat->losses + ($profitLoss < 0 ? 1 : 0);
+        $wins = $stat->wins + ($fullPnl >= 0 ? 1 : 0);
+        $losses = $stat->losses + ($fullPnl < 0 ? 1 : 0);
 
         $stat->forceFill([
             'profit' => (float) $stat->profit + $profitLoss,

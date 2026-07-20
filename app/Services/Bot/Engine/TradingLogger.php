@@ -106,6 +106,16 @@ class TradingLogger
         Log::channel('orders')->info($message, $context);
     }
 
+    public function orderWarning(string $message, array $context = []): void
+    {
+        Log::channel('orders')->warning($message, $context);
+    }
+
+    public function orderError(string $message, array $context = []): void
+    {
+        Log::channel('orders')->error($message, $context);
+    }
+
     public function orderDebug(string $message, array $context = []): void
     {
         Log::channel('orders')->debug($message, $context);

@@ -37,7 +37,8 @@ class BotEngine
             });
 
             if (! $acquired) {
-                $this->log->botWarning('Bot cycle skipped: lock held', [
+                // Normal under concurrent scheduler ticks — avoid flooding bot logs.
+                $this->log->botDebug('Bot cycle skipped: lock held', [
                     'bot_id' => $bot->id,
                     'bot_name' => $bot->name,
                 ]);
