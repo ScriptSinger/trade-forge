@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use Database\Seeders\Strategies\AndrewProV63StrategySeeder;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -14,11 +13,12 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Strategies ({family}-v{semver}) via TradingDemoSeeder → StrategiesSeeder.
      */
     public function run(): void
     {
         $this->call([
-            AndrewProV63StrategySeeder::class,
             TradingDemoSeeder::class,
         ]);
     }

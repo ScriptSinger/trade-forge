@@ -6,24 +6,24 @@ namespace Database\Seeders;
 
 use Database\Seeders\Bots\BybitSpotBotSeeder;
 use Database\Seeders\ExchangeAccounts\BybitMainExchangeAccountSeeder;
-use Database\Seeders\Strategies\SpotBreakoutMode4StrategySeeder;
+use Database\Seeders\Strategies\StrategiesSeeder;
 use Database\Seeders\Users\DemoUserSeeder;
 use Illuminate\Database\Seeder;
 
 /**
  * Orchestrates the demo trading graph.
  *
+ * Strategies       → {family}-v{semver} presets (see StrategiesSeeder)
  * Users            → database/seeders/Users/
  * ExchangeAccounts → database/seeders/ExchangeAccounts/
- * Bots             → database/seeders/Bots/
- * Strategies       → database/seeders/Strategies/
+ * Bots             → database/seeders/Bots/ (default: smart-hybrid-v1.0.0)
  */
 class TradingDemoSeeder extends Seeder
 {
     public function run(): void
     {
         $this->call([
-            SpotBreakoutMode4StrategySeeder::class,
+            StrategiesSeeder::class,
             DemoUserSeeder::class,
             BybitMainExchangeAccountSeeder::class,
             BybitSpotBotSeeder::class,

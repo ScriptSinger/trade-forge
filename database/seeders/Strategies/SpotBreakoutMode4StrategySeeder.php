@@ -12,13 +12,22 @@ use App\Services\Bot\Market\ScannerSymbolFilter;
 use Illuminate\Database\Seeder;
 
 /**
- * Default spot breakout strategy preset (15m, mode 4).
+ * Default live preset: strategy_mode 4 (Smart Hybrid).
+ * Interval / period / indicators live in entry settings, not in the name.
  *
- * Seeds only the strategy graph (entry + risk + BTC filter).
+ * Naming: {family}-v{MAJOR.MINOR.PATCH}
+ * Bump VERSION only when publishing a new preset (keeps old rows if name changes).
  */
 class SpotBreakoutMode4StrategySeeder extends Seeder
 {
-    public const STRATEGY_NAME = 'Spot Breakout Mode 4';
+    /** Stable family slug (do not change for a version bump). */
+    public const FAMILY = 'smart-hybrid';
+
+    /** Semver of this preset. */
+    public const VERSION = '1.0.0';
+
+    /** Full name in DB / MoonShine: family-vVERSION */
+    public const STRATEGY_NAME = self::FAMILY.'-v'.self::VERSION;
 
     public function run(): void
     {

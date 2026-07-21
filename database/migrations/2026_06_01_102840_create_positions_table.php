@@ -23,6 +23,11 @@ return new class extends Migration
             $table->decimal('current_price', 18, 8)->nullable();
             $table->decimal('pnl_pct', 10, 2)->default(0);
             $table->decimal('quantity', 18, 8);
+            // Hybrid partial exits: remainder qty tracking + realized legs for combined Trade PnL
+            $table->decimal('sold_quantity', 18, 8)->default(0);
+            $table->decimal('realized_pnl', 18, 8)->default(0);
+            $table->decimal('realized_fees', 18, 8)->default(0);
+            $table->decimal('realized_exit_value', 18, 8)->default(0);
 
             $table->decimal('sl', 18, 8)->nullable();
             $table->decimal('tp', 18, 8)->nullable();

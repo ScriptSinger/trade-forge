@@ -9,6 +9,8 @@ use App\Models\Bot;
 use App\Models\ExchangeAccount;
 use App\Models\Strategy;
 use App\Models\User;
+use Database\Seeders\Strategies\AndrewProV63StrategySeeder;
+use Database\Seeders\Strategies\SpotBreakoutMode4StrategySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
@@ -37,10 +39,10 @@ class TradingDemoSeederTest extends TestCase
 
         $this->assertSame('test@example.com', $user->email);
         $this->assertTrue(
-            Strategy::query()->where('name', 'Spot Breakout Mode 4')->exists()
+            Strategy::query()->where('name', SpotBreakoutMode4StrategySeeder::STRATEGY_NAME)->exists()
         );
         $this->assertTrue(
-            Strategy::query()->where('name', 'Andrew Pro V6.3')->exists()
+            Strategy::query()->where('name', AndrewProV63StrategySeeder::STRATEGY_NAME)->exists()
         );
 
         $bot = Bot::query()->where('name', 'Bybit Spot Bot')->firstOrFail();
@@ -48,5 +50,9 @@ class TradingDemoSeederTest extends TestCase
         $this->assertSame(BotStatus::Paused, $bot->status);
         $this->assertNull($bot->last_run_at);
         $this->assertSame(1, $exchangeAccount->bots()->count());
+        $this->assertSame(
+            SpotBreakoutMode4StrategySeeder::STRATEGY_NAME,
+            $bot->strategy->name,
+        );
     }
 }

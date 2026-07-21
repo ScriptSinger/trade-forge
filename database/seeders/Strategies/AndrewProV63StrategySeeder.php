@@ -12,17 +12,25 @@ use App\Services\Bot\Market\ScannerSymbolFilter;
 use Illuminate\Database\Seeder;
 
 /**
- * Strategy preset from Andrew_sample/pro_trade.py V6.3.
+ * Andrew sample pro_trade preset.
+ * Interval / period / indicators live in entry settings, not in the name.
  *
- * Seeds only the strategy graph (entry + risk + BTC filter).
- * Attach to any bot in MoonShine: Strategy → "Andrew Pro V6.3".
+ * Naming: {family}-v{MAJOR.MINOR.PATCH}
+ * Bump VERSION only when publishing a new preset (keeps old rows if name changes).
  *
  * Not mapped yet: dual daily profit targets (2.0% flat / 2.7% trend),
  * daily loss limit 2.5%, pullback entry.
  */
 class AndrewProV63StrategySeeder extends Seeder
 {
-    public const STRATEGY_NAME = 'Andrew Pro V6.3';
+    /** Stable product/family slug (do not change for a version bump). */
+    public const FAMILY = 'andrew-pro';
+
+    /** Semver of this preset (aligned with sample V6.3). */
+    public const VERSION = '6.3.0';
+
+    /** Full name in DB / MoonShine: family-vVERSION */
+    public const STRATEGY_NAME = self::FAMILY.'-v'.self::VERSION;
 
     public function run(): void
     {
