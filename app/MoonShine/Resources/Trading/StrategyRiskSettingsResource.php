@@ -67,6 +67,20 @@ class StrategyRiskSettingsResource extends ModelResource
                 ->hint('Отступ трейлинг-стопа от пика цены в % (TRAILING_STEP 0.985 = 1.5% в sample)')
                 ->required(),
 
+            Number::make('Hybrid TP portion', 'hybrid_tp_portion')
+                ->default(0.5)
+                ->step(0.01)
+                ->min(0.01)
+                ->max(1)
+                ->hint('Hybrid: доля позиции на TP (sample portion=0.5 = 50%). Только Hybrid / Smart Hybrid.')
+                ->required(),
+
+            Number::make('Hybrid BE multiplier', 'hybrid_be_multiplier')
+                ->default(1.0025)
+                ->step(0.0001)
+                ->hint('Hybrid: SL = entry × множитель после partial TP (sample entry * 1.0025).')
+                ->required(),
+
             Number::make('Max Positions', 'max_positions')
                 ->default(3)
                 ->min(1)
@@ -164,6 +178,8 @@ class StrategyRiskSettingsResource extends ModelResource
             Number::make('SL Multiplier', 'sl_multiplier'),
             Number::make('TP Multiplier', 'tp_multiplier'),
             Number::make('Trailing Pct', 'trailing_pct'),
+            Number::make('Hybrid TP portion', 'hybrid_tp_portion'),
+            Number::make('Hybrid BE multiplier', 'hybrid_be_multiplier'),
             Number::make('Max Positions', 'max_positions'),
             Number::make('Risk fraction', 'max_risk_per_trade'),
             Switcher::make('Daily Target Enabled', 'daily_target_enabled'),

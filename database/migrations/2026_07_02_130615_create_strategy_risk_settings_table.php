@@ -22,6 +22,10 @@ return new class extends Migration
             $table->decimal('tp_multiplier', 5, 2)->default(3.0);
             $table->decimal('trailing_pct', 5, 2)->default(1.5);
 
+            // Hybrid exit (sample aza_trade): portion=0.5, SL → entry * 1.0025 after half TP
+            $table->decimal('hybrid_tp_portion', 5, 4)->default(0.5);
+            $table->decimal('hybrid_be_multiplier', 8, 6)->default(1.0025);
+
             $table->unsignedInteger('max_positions')->default(3);
             $table->decimal('max_risk_per_trade', 5, 4)->default(0.02);
 

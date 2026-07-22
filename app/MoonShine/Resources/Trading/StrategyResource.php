@@ -61,10 +61,10 @@ final class StrategyResource extends TradingResource
                     Heading::make('🎯 Strategy mode (1–4)')->class('mt-4'),
                     FlexibleRender::make('<b>Entry settings → Strategy mode</b> (как STRATEGY_MODE в sample):<br>
                         • <b>1 Серфер</b> — trailing без TP, TG «Ракета!» при активации.<br>
-                        • <b>2 Гибрид</b> — всегда 50% на TP + trailing остатка.<br>
+                        • <b>2 Гибрид</b> — partial TP + trailing остатка (доля/BE в Risk settings).<br>
                         • <b>3 Умный Серфер</b> — ADX &gt; порог → Серфер, иначе Sniper.<br>
                         • <b>4 Умный Гибрид</b> — ADX &gt; порог → Hybrid, иначе Sniper (рекомендуется).<br>
-                        <b>Sniper:</b> полный SL/TP. <b>Hybrid:</b> 50% на TP, SL→entry×1.0025, trailing 1.5%.'),
+                        <b>Sniper:</b> полный SL/TP. <b>Hybrid:</b> Hybrid TP portion + BE multiplier + Trailing Pct (Risk).'),
 
                     Heading::make('🛡️ BTC filter (дневная цель)')->class('mt-4'),
                     FlexibleRender::make('<b>BTC Trend Filter</b> не блокирует вход. При достижении дневной цели, если BTC не в аптренде (EMA fast &gt; slow), бот перестаёт открывать позиции и закрывает Sniper-позиции (SidewaysMarketGuard).'),

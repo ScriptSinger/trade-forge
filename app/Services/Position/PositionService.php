@@ -9,6 +9,7 @@ use App\Enums\TradeSignal;
 use App\Models\Bot;
 use App\Models\Order;
 use App\Models\Position;
+use App\Models\StrategyRiskSettings;
 use App\Models\Trade;
 use App\Services\Bot\Engine\TradingLogger;
 use App\Services\Bot\Performance\DailyPerformanceService;
@@ -155,7 +156,17 @@ class PositionService
     private function handleHybridLogic(Position $position, float $currentPrice, string $runtimeMode): void
     {
         if (! $position->half_sold && $position->tp > 0 && $currentPrice >= $position->tp) {
-            $sold = $this->executePartialExit($position, $currentPrice, 0.5, 'Take Profit (50%)', $runtimeMode);
+            $risk = $position->bot->strategy->riskSettings;
+            $portion = $this->hybridTpPortion($risk);
+            $portionPct = (int) round($portion * 100);
+
+            $sold = $this->executePartialExit(
+                $position,
+                $currentPrice,
+                $portion,
+                "Take Profit ({$portionPct}%)",
+                $runtimeMode,
+            );
 
             if (! $sold) {
                 return;
@@ -167,11 +178,35 @@ class PositionService
                 'half_sold' => true,
                 'be_activated' => true,
                 'trailing_active' => true,
-                'sl' => (float) $position->entry_price * 1.0025,
+                'sl' => (float) $position->entry_price * $this->hybridBeMultiplier($risk),
             ]);
         }
 
         $this->updateTrailingStop($position, $currentPrice);
+    }
+
+    /**
+     * Sample aza_trade: portion=0.5 on hybrid TP.
+     */
+    private function hybridTpPortion(?StrategyRiskSettings $risk): float
+    {
+        $portion = (float) ($risk?->hybrid_tp_portion ?? 0.5);
+
+        if ($portion <= 0 || $portion > 1) {
+            return 0.5;
+        }
+
+        return $portion;
+    }
+
+    /**
+     * Sample aza_trade: SL → entry * 1.0025 after half TP.
+     */
+    private function hybridBeMultiplier(?StrategyRiskSettings $risk): float
+    {
+        $mult = (float) ($risk?->hybrid_be_multiplier ?? 1.0025);
+
+        return $mult > 0 ? $mult : 1.0025;
     }
 
     private function updateTrailingStop(Position $position, float $currentPrice): void

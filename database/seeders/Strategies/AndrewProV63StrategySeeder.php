@@ -61,6 +61,8 @@ class AndrewProV63StrategySeeder extends Seeder
                 'sl_multiplier' => 2.0,
                 'tp_multiplier' => 2.5,
                 'trailing_pct' => 1.5,
+                'hybrid_tp_portion' => 0.5,
+                'hybrid_be_multiplier' => 1.0025,
                 'max_positions' => 3,
                 'max_risk_per_trade' => 0.01,
                 'daily_target_enabled' => true,
